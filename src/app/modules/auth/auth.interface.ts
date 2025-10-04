@@ -1,11 +1,6 @@
 export type TAccount = {
     email: string;
     password: string;
-    lastPasswordChange?: Date;
-    isDeleted?: boolean;
-    accountStatus?: "ACTIVE" | "INACTIVE" | "SUSPENDED";
-    role?: "USER" | "ADMIN",
-    isVerified?: boolean,
 }
 
 
@@ -16,9 +11,10 @@ export interface TRegisterPayload extends TAccount {
 export type TLoginPayload = {
     email: string;
     password: string
+    role: "Buyer" | "Seller" | "ADMIN",
 }
 
 export type TJwtUser = {
     email: string,
-    role?: "USER" | "ADMIN",
+    role?: "Buyer" | "Seller" | "ADMIN",
 }
