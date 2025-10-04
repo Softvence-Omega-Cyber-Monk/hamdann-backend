@@ -28,7 +28,7 @@
     "nodemailer": "^7.0.6",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3",
-    "zod": "^4.1.8"
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
