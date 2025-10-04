@@ -16,4 +16,4 @@ const authSchema = new Schema<TAccount>({
 });
 
 
-export const Account_Model = model("account", authSchema)
+export const Account_Model = model("auth", authSchema)
