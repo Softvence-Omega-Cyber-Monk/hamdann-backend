@@ -1,15 +1,30 @@
 import { Types } from "mongoose"
 
 export type TUser = {
+    role: string,
     name: string,
-    photo?: string,
+    email: string,
+    password: string,
+    confirmPassword: string,
+    isDeleted?: boolean;
     address?: {
-        location?: string,
-        city?: string,
         state?: string,
-        postCode?: string,
-        country?: string,
-        timeZone?: string
+        city?: string,
+        zip?: string,
+        streetAddress?: string,
     },
-    accountId?: Types.ObjectId
+    paymentMethod?: [{
+        method?: string,
+        cardNumber?: string,
+        expiryDate?: string,
+        cvv?: number,
+    }],
+    businessInfo?: {
+        businessName?: string,
+        businessType?: string,
+        businessDescription?: string,
+        country?: string,
+        phoneNumber?: string,
+        businessLogo?: string,
+    }
 }
