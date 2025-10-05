@@ -24,7 +24,7 @@ export const create_user = z
         cvv: z.number().optional(),
       })
       .optional(),
-    Preferences: z.enum(["Fashion", "Food", "Beauty", "Perfume"]),
+    Preferences: z.enum(["Fashion", "Food", "Beauty", "Perfume"]).optional(),
     businessInfo: z
       .object({
         businessName: z.string().optional(),
@@ -53,6 +53,18 @@ export const update_user = z.object({
       streetAddress: z.string().optional(),
     })
     .optional(),
+  Preferences: z.enum(["Fashion", "Food", "Beauty", "Perfume"]).optional(),
+  businessInfo: z
+    .object({
+      businessName: z.string().optional(),
+      businessType: z.string().optional(),
+      businessDescription: z.string().optional(),
+      country: z.string().optional(),
+      phoneNumber: z.string().optional(),
+      businessLogo: z.string().optional(),
+    })
+    .optional(),
+    
   paymentMethod: z
     .object({
       method: z.string().optional(),

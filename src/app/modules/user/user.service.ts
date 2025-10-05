@@ -59,7 +59,7 @@ export const user_service = {
       });
       if (emailExists) throw new Error("Email already in use by another user");
     }
-console.log('updateData:', updateData);
+    console.log("updateData:", updateData);
     // Update user and return updated document
     const updatedUser = await User_Model.findByIdAndUpdate(id, updateData, {
       new: true,

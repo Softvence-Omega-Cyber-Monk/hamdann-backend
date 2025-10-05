@@ -22,10 +22,15 @@ const getSingleProductService = async (id: string) => {
   const product = await Product.findById(id);
   return product;
 };
+const getProductByCategoryService = async (category: string) => {
+  const product = await Product.find({category: category});
+  return product;
+};
 
 export const productService = {
   createProductService,
   updateProductService,
   getAllProductsService,
   getSingleProductService,
+  getProductByCategoryService
 };

@@ -8,5 +8,6 @@ router.post("/create", productController.createProduct);          // ✅ Create 
 router.put("/update/:id", productController.updateProduct);        // ✅ Update product
 router.get("/getAll", productController.getAllProducts);          // ✅ Get all products
 router.get("/getSingle/:id", productController.getSingleProduct);     // ✅ Get single product
+router.get("/getSingleCategory/:category", productController.getProductByCategoryService);     // ✅ Get single product
 
 export const productRoutes = router;
