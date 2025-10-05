@@ -20,6 +20,7 @@ const CartSchema = new Schema<ICart>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "user", required: true },
     items: { type: [CartItemSchema], required:true}, // Array of CartItems
+   
   },
   { timestamps: true }
 );
