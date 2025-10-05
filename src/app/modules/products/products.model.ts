@@ -33,6 +33,7 @@ const ProductSchema = new Schema<IProduct>(
     productImages: [{ type: String, required: true }],
     salesCount: { type: Number, default: 0 }, // Flag for best-selling
     isNewArrival: { type: Boolean, default: false }, // Flag for new arrival
+    isWishlisted: { type: Boolean, default: false }, // Flag for wishlist
   },
   { timestamps: true }
 );
