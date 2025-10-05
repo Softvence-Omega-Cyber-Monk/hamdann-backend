@@ -20,7 +20,7 @@ export interface ICart extends Document {
 const CartSchema = new Schema<ICart>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "user", required: true },
-    items: { type: [CartItemSchema], default: [] }, // Array of CartItems
+    items: { type: [CartItemSchema], required: true }, // Array of CartItems
     subTotal: { type: Number, required: true, default: 0 },
   },
   { timestamps: true }

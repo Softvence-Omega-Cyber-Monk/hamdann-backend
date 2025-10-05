@@ -5,4 +5,8 @@ export interface ICartItem {
   price: number;
   quantity: number;
   image?: string;
+  subTotal: number;
+  shippingCost: number;
+  tax: number;
+  totalAmount: number;
 }
