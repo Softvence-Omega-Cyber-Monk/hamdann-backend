@@ -5,7 +5,11 @@ import { OrderService } from "./order.service";
  const createOrder = async (req: Request, res: Response) => {
   try {
     const order = await OrderService.createOrder(req.body);
-    res.status(201).json({ success: true, data: order });
+    res.status(201).json({ success: true, data: {
+      orderId: order._id,
+      status: order.status,
+      items: order.items,
+    } });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message });
   }
