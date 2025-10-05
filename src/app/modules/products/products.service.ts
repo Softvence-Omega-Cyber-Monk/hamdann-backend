@@ -8,7 +8,7 @@ const createProductService = async (payload: IProduct) => {
 };
 
 const updateProductService = async (id: string, payload: Partial<IProduct>) => {
-    // console.log('update payload in service ', payload);
+  // console.log('update payload in service ', payload);
   const product = await Product.findByIdAndUpdate(id, payload, { new: true });
   return product;
 };
@@ -23,8 +23,14 @@ const getSingleProductService = async (id: string) => {
   return product;
 };
 const getProductByCategoryService = async (category: string) => {
-  const product = await Product.find({category: category});
+  const product = await Product.find({ category: category });
   return product;
+};
+const getNewArrivalsProductsService = async (category: string) => {
+  const newArrivals = await Product.find({
+    createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+  });
+  return newArrivals;
 };
 
 export const productService = {
@@ -32,5 +38,6 @@ export const productService = {
   updateProductService,
   getAllProductsService,
   getSingleProductService,
-  getProductByCategoryService
+  getProductByCategoryService,
+  getNewArrivalsProductsService,
 };
