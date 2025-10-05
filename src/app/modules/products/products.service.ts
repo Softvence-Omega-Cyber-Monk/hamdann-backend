@@ -42,14 +42,14 @@ const getBestSellingProductsService = async () => {
 };
 const getWishlistedProductsService = async (
   productId: string,
-  isWishlisted
+  isWishlisted: boolean
 ) => {
-  const bestSellingProducts = await Product.findOneAndUpdate(
+  const wishListedProducts = await Product.findOneAndUpdate(
     { _id: productId },
     { isWishlisted: isWishlisted },
     { new: true }
-  ) // Return the updated document
-  return bestSellingProducts;
+  ); // Return the updated document
+  return wishListedProducts;
 };
 
 export const productService = {
