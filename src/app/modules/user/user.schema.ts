@@ -6,7 +6,7 @@ const user_schema = new Schema<TUser>(
   {
     role: { type: String, required: true },
     name: { type: String, required: true },
-    email: { type: String, required: true ,unique: true},
+    email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     confirmPassword: { type: String, required: true },
     isDeleted: { type: Boolean, default: false },
@@ -26,8 +26,9 @@ const user_schema = new Schema<TUser>(
     ],
     Preferences: {
       type: String,
-      enum: ["Fashion", "Food", "Beauty", "Perfume"],
-      
+
+      trim: true,
+      enum: ["Fashion", "Food", "Beauty", "Perfume"], 
     },
     businessInfo: {
       businessName: { type: String },

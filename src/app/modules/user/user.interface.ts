@@ -21,7 +21,7 @@ export type TUser = {
       cvv?: number;
     }
   ];
-  Preferences?: "Fashion" | "Food" | "Beauty" | "Perfume";
+  Preferences: "Fashion" | "Food" | "Beauty" | "Perfume";
   businessInfo?: {
     businessName?: string;
     businessType?: string;

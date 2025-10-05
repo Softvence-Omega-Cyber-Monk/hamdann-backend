@@ -47,11 +47,26 @@ export const user_service = {
   ) => {
     if (!Types.ObjectId.isValid(id)) throw new Error("Invalid user ID");
 
+    // Check if the user exists
+    const existingUser = await User_Model.findById(id);
+    if (!existingUser) throw new Error("User not found");
+
+    // If updating email, check if it's already used by another user
+    if (updateData.email) {
+      const emailExists = await User_Model.findOne({
+        email: updateData.email,
+        _id: { $ne: id }, // exclude the current user
+      });
+      if (emailExists) throw new Error("Email already in use by another user");
+    }
+console.log('updateData:', updateData);
+    // Update user and return updated document
     const updatedUser = await User_Model.findByIdAndUpdate(id, updateData, {
       new: true,
+      runValidators: true,
     });
 
-    if (!updatedUser) throw new Error("User not found");
+    if (!updatedUser) throw new Error("Failed to update user");
 
     return updatedUser;
   },
