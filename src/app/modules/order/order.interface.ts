@@ -36,17 +36,13 @@ export interface IOrder extends Document {
   orderNumber: string;
   userId: Types.ObjectId;
   items: IOrderItem[];
-
   subtotal: number;
-  
   shippingCost: number;
   tax: number;
   totalAmount: number;
   currency: string;
-
   paymentMethod: string;
   paymentInfo?: IPaymentInfo;
-
   status:
     | "placed"
     | "payment_processed"
@@ -54,7 +50,6 @@ export interface IOrder extends Document {
     | "out_for_delivery"
     | "delivered"
     | "cancelled";
-
   statusDates: IOrderStatusDates;
   shippingAddress: IShippingAddress;
 
