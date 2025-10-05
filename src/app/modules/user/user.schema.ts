@@ -6,7 +6,7 @@ const user_schema = new Schema<TUser>(
   {
     role: { type: String, required: true },
     name: { type: String, required: true },
-    email: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     confirmPassword: { type: String, required: true },
     isDeleted: { type: Boolean, default: false },
@@ -16,12 +16,20 @@ const user_schema = new Schema<TUser>(
       zip: { type: String },
       streetAddress: { type: String },
     },
-    paymentMethod: [{
-      method: { type: String },
-      cardNumber: { type: String },
-      expiryDate: { type: String },
-      cvv: { type: Number },
-    }],
+    paymentMethod: [
+      {
+        method: { type: String },
+        cardNumber: { type: String },
+        expiryDate: { type: String },
+        cvv: { type: Number },
+      },
+    ],
+    Preferences: {
+      type: String,
+
+      trim: true,
+      enum: ["Fashion", "Food", "Beauty", "Perfume"], 
+    },
     businessInfo: {
       businessName: { type: String },
       businesswType: { type: String },

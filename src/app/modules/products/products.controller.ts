@@ -6,7 +6,7 @@ import {
 } from "./products.validation";
 import { productService } from "./products.service";
 
- const createProduct = async (req: Request, res: Response) => {
+const createProduct = async (req: Request, res: Response) => {
   try {
     const validatedData = CreateProductSchema.parse(req.body);
     const product = await productService.createProductService(validatedData);
@@ -16,7 +16,7 @@ import { productService } from "./products.service";
   }
 };
 
- const updateProduct = async (req: Request, res: Response) => {
+const updateProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const validatedData = UpdateProductSchema.parse(req.body);
@@ -37,7 +37,7 @@ import { productService } from "./products.service";
   }
 };
 
- const getAllProducts = async (req: Request, res: Response) => {
+const getAllProducts = async (req: Request, res: Response) => {
   try {
     const products = await productService.getAllProductsService();
     res.status(200).json({ success: true, data: products });
@@ -46,7 +46,7 @@ import { productService } from "./products.service";
   }
 };
 
- const getSingleProduct = async (req: Request, res: Response) => {
+const getSingleProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const product = await productService.getSingleProductService(id);
@@ -62,10 +62,80 @@ import { productService } from "./products.service";
     res.status(500).json({ success: false, message: error.message });
   }
 };
+const getProductByCategoryService = async (req: Request, res: Response) => {
+  try {
+    const { category } = req.params;
+    const product = await productService.getProductByCategoryService(category);
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Products not found" });
+    }
+
+    res.status(200).json({ success: true, data: product });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+const getNewArrivalsProductsService = async (req: Request, res: Response) => {
+  try {
+    const product = await productService.getNewArrivalsProductsService();
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Products not found" });
+    }
+
+    res.status(200).json({ success: true, data: product });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+const getBestSellingProductsService = async (req: Request, res: Response) => {
+  try {
+    const product = await productService.getBestSellingProductsService();
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Products not found" });
+    }
+
+    res.status(200).json({ success: true, data: product });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+const getWishlistedProductsService = async (req: Request, res: Response) => {
+  try {
+    const { productId } = req.params;
+    const { isWishlisted } = req.body;
+    const product = await productService.getWishlistedProductsService(
+      productId,
+      isWishlisted
+    );
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Products not found" });
+    }
+
+    res.status(200).json({ success: true, data: product });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 export const productController = {
   createProduct,
   updateProduct,
   getAllProducts,
   getSingleProduct,
+  getProductByCategoryService,
+  getNewArrivalsProductsService,
+  getBestSellingProductsService,
+  getWishlistedProductsService,
 };

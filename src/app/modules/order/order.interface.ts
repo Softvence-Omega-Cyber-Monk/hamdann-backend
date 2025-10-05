@@ -1,10 +1,10 @@
 import { Types } from "mongoose";
 
 export interface IOrderItem {
-  productId: Types.ObjectId;       // Reference to Product
-  price: number;           // Snapshot of product price at time of order
-  quantity: number;        // How many purchased
-  image?: string;          // Optional product image
+  productId: Types.ObjectId;
+  price: number;
+  quantity: number;
+  image?: string;
 }
 
 export interface IOrderStatusDates {
@@ -16,17 +16,51 @@ export interface IOrderStatusDates {
   cancelledAt?: Date;
 }
 
-export interface IOrder {
-  _id?: string;
-  orderNumber: string;     // e.g. #9834442
-  userId?: Types.ObjectId;          // Reference to User
-  items: IOrderItem[];
+export interface IShippingAddress {
+  fullName: string;
+  addressLine1: string;
+  addressLine2?: string;
+  city: string;
+  postalCode: string;
+  country: string;
+}
+
+export interface IPaymentInfo {
+  cardLast4?: string;
+  paymentStatus?: "pending" | "paid" | "failed";
+  paymentDate?: Date;
+  transactionId?: string;
+}
+
+export interface IContacktInfo {
+  email: string;
+  phone?: string;
+}
+
+export interface IOrder extends Document {
+  orderNumber: string;
+  userId: Types.ObjectId;
+  items: IOrderItem[]; // Array of order items
+  subtotal: number;
+  shippingCost: number;
+  tax: number;
   totalAmount: number;
-  currency: string;        // e.g. "AED", "USD"
-  paymentMethod: string;   // e.g. "Credit Card", "Cash on Delivery"
-  status: "placed" | "payment_processed" | "shipped" | "out_for_delivery" | "delivered" | "cancelled";
-  statusDates: IOrderStatusDates;  // <-- each status has its own timestamp
-  shippingAddress: string; // or better: { street, city, country, zip }
+  currency: string;
+  paymentMethod: string;
+  contactInfo: IContacktInfo;
+  paymentInfo?: IPaymentInfo;
+  status:
+    | "placed"
+    | "payment_processed"
+    | "shipped"
+    | "out_for_delivery"
+    | "delivered"
+    | "cancelled";
+  statusDates: IOrderStatusDates;
+  shippingAddress: IShippingAddress;
+
+  notes?: string;
+
   createdAt?: Date;
   updatedAt?: Date;
 }

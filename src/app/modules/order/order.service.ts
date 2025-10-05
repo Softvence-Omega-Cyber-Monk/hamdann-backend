@@ -7,24 +7,52 @@ interface IOrderFilters {
   status?: string;
 }
 
-// Create Order
-const createOrder = async (orderData: IOrder) => {
-  const totalAmount = orderData.items.reduce(
-    (total: number, item: IOrderItem) => total + item.price * item.quantity,
+// Utility function to calculate subtotal, shipping cost, and total amount
+const calculateOrderAmounts = (items: IOrderItem[]) => {
+  const subtotal = items.reduce(
+    (total, item) => total + item.price * item.quantity,
     0
   );
 
-  const order = new Order({
-    ...orderData,
-    totalAmount, 
-  });
+  // Calculate shipping cost as 10% of the subtotal
+  const shippingCost = subtotal * 0.1; // 10% of subtotal
 
-  return await order.save();
+  // Calculate tax as 5% of the subtotal
+  const tax = subtotal * 0.05; // 5% of subtotal
+
+  // Calculate the total amount (subtotal + shipping cost + tax)
+  const totalAmount = subtotal + shippingCost + tax;
+
+  return { subtotal, shippingCost, tax, totalAmount };
 };
 
-// Get all orders, optionally filtered
+// Create Order
+const createOrder = async (orderData: IOrder) => {
+  // Calculate order amounts
+  const { subtotal, shippingCost, tax, totalAmount } = calculateOrderAmounts(
+    orderData.items
+  );
+
+
+  try {
+    const order = new Order({
+      ...orderData,
+      subtotal,
+      shippingCost,
+      tax, // Include the tax in the order
+      totalAmount,
+    });
+
+    // Save and return the created order
+    return await order.save();
+  } catch (error: any) {
+    throw new Error(`Failed to create order: ${error.message}`);
+  }
+};
+
+// Get all orders with optional filters
 const getAllOrders = async (filters: IOrderFilters = {}): Promise<IOrder[]> => {
-  const query: any = {};
+  const query: Record<string, any> = {};
 
   if (filters.userId) query.userId = filters.userId;
   if (filters.status) query.status = filters.status;
@@ -34,8 +62,8 @@ const getAllOrders = async (filters: IOrderFilters = {}): Promise<IOrder[]> => {
       .populate("userId", "name email")
       .populate("items.productId", "name price")
       .sort({ createdAt: -1 }); // newest orders first
-  } catch (error) {
-    throw new Error(`Failed to fetch orders: ${error}`);
+  } catch (error: any) {
+    throw new Error(`Failed to fetch orders: ${error.message}`);
   }
 };
 
@@ -49,8 +77,8 @@ const getOrderById = async (orderId: string): Promise<IOrder | null> => {
     return await Order.findById(orderId)
       .populate("userId", "name email")
       .populate("items.productId", "name price");
-  } catch (error) {
-    throw new Error(`Failed to fetch order: ${error}`);
+  } catch (error: any) {
+    throw new Error(`Failed to fetch order: ${error.message}`);
   }
 };
 
@@ -67,8 +95,8 @@ const updateOrder = async (
     return await Order.findByIdAndUpdate(orderId, updateData, { new: true })
       .populate("userId", "name email")
       .populate("items.productId", "name price");
-  } catch (error) {
-    throw new Error(`Failed to update order: ${error}`);
+  } catch (error: any) {
+    throw new Error(`Failed to update order: ${error.message}`);
   }
 };
 
