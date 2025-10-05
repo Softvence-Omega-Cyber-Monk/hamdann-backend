@@ -47,7 +47,7 @@ export interface IOrder extends Document {
   totalAmount: number;
   currency: string;
   paymentMethod: string;
-  
+  contactInfo: IContacktInfo;
   paymentInfo?: IPaymentInfo;
   status:
     | "placed"

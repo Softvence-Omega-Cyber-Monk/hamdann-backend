@@ -80,8 +80,8 @@ const OrderSchema = new Schema<IOrder>(
     shippingCost: { type: Number, required: true },
     tax: { type: Number, required: true },
     totalAmount: { type: Number, required: true },
-    currency: { type: String, required: true ,default: 'AED'},
-    paymentMethod: { type: String, required: true },
+    currency: { type: String, required: true, default: "AED" },
+    paymentMethod: { type: String, required: true ,default: "Stripe"},
     paymentInfo: { type: PaymentInfoSchema, default: {} },
     status: {
       type: String,
@@ -95,7 +95,10 @@ const OrderSchema = new Schema<IOrder>(
       ],
       default: "placed",
     },
-
+    contactInfo: {
+      email: { type: String, required: true },
+      phone: { type: String },
+    },
     statusDates: {
       type: OrderStatusDatesSchema,
       default: { placedAt: new Date() },
