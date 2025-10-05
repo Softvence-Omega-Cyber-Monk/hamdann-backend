@@ -19,7 +19,7 @@ export interface IProduct {
   quantity: number;
   price: number;
   productImages?: string[];
-  isBestSeller: boolean; // Flag for best-selling
+  salesCount:number, // Tracks the number of sales
   isNewArrival: boolean; // Flag for new arrival
 
   createdAt?: Date;

@@ -31,7 +31,7 @@ const ProductSchema = new Schema<IProduct>(
     quantity: { type: Number, required: true, default: 0 },
     price: { type: Number, required: true },
     productImages: [{ type: String, required: true }],
-    isBestSeller: { type: Boolean, default: false }, // Flag for best-selling
+    salesCount: { type: Number, default: 0 }, // Flag for best-selling
     isNewArrival: { type: Boolean, default: false }, // Flag for new arrival
   },
   { timestamps: true }

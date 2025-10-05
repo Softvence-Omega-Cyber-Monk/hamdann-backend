@@ -26,10 +26,16 @@ const getProductByCategoryService = async (category: string) => {
   const product = await Product.find({ category: category });
   return product;
 };
-const getNewArrivalsProductsService = async (category: string) => {
+const getNewArrivalsProductsService = async () => {
   const newArrivals = await Product.find({
-    createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-  });
+    createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, // Filter for the last 30 days
+  }).sort({ createdAt: -1 }); // Sort by creation date in descending order (most recent first)
+
+  return newArrivals;
+};
+const getBestSellingProductsService = async () => {
+  const newArrivals = await Product.find()
+
   return newArrivals;
 };
 
@@ -40,4 +46,5 @@ export const productService = {
   getSingleProductService,
   getProductByCategoryService,
   getNewArrivalsProductsService,
+  getBestSellingProductsService
 };

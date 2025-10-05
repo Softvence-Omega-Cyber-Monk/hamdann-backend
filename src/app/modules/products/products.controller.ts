@@ -80,8 +80,24 @@ import { productService } from "./products.service";
 };
  const getNewArrivalsProductsService = async (req: Request, res: Response) => {
   try {
-    const { category } = req.params;
-    const product = await productService.getNewArrivalsProductsService(category);
+
+    const product = await productService.getNewArrivalsProductsService();
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Products not found" });
+    }
+
+    res.status(200).json({ success: true, data: product });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+ const getBestSellingProductsService = async (req: Request, res: Response) => {
+  try {
+
+    const product = await productService.getBestSellingProductsService();
 
     if (!product) {
       return res
@@ -101,5 +117,6 @@ export const productController = {
   getAllProducts,
   getSingleProduct,
   getProductByCategoryService, 
-  getNewArrivalsProductsService
+  getNewArrivalsProductsService,
+  getBestSellingProductsService
 };
