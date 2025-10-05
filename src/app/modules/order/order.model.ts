@@ -83,7 +83,6 @@ const OrderSchema = new Schema<IOrder>(
     currency: { type: String, required: true ,default: 'AED'},
     paymentMethod: { type: String, required: true },
     paymentInfo: { type: PaymentInfoSchema, default: {} },
-
     status: {
       type: String,
       enum: [
