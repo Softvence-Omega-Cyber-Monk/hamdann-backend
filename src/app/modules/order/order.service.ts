@@ -24,6 +24,8 @@ const calculateOrderAmounts = (items: IOrderItem[]) => {
   // Calculate the total amount (subtotal + shipping cost + tax)
   const totalAmount = subtotal + shippingCost + tax;
 
+  console.log({subtotal, shippingCost, tax, totalAmount});
+
   return { subtotal, shippingCost, tax, totalAmount };
 };
 
@@ -35,7 +37,7 @@ const createOrder = async (orderData: IOrder) => {
   const { subtotal, shippingCost, tax, totalAmount } = calculateOrderAmounts(
     cart?.items as [IOrderItem]
   );
-  
+
   try {
     const order = new Order({
       ...orderData,

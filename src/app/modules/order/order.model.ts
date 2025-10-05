@@ -64,19 +64,18 @@ const OrderSchema = new Schema<IOrder>(
       type: String,
       required: true,
       unique: true,
-      default: generateOrderNumber, // Using a function to generate the order number
+      default: generateOrderNumber, 
     },
-    userId: { type: Schema.Types.ObjectId, ref: "User" }, // Reference to User model
+    userId: { type: Schema.Types.ObjectId, ref: "User" }, 
+    cartId: { type: Schema.Types.ObjectId, ref: "Cart", required: true }, 
+    subtotal: { type: Number, required: true }, 
+    shippingCost: { type: Number, required: true }, 
+    tax: { type: Number, required: true }, 
+    totalAmount: { type: Number, required: true },
+    currency: { type: String, required: true }, 
 
-    cartId: { type: Schema.Types.ObjectId, ref: "Cart", required: true }, // Reference to Cart model
-
-    shippingCost: { type: Number, required: true }, // Shipping cost
-    tax: { type: Number, required: true }, // Tax amount
-    totalAmount: { type: Number, required: true }, // Total amount (including tax, shipping)
-    currency: { type: String, required: true }, // Currency of the transaction
-
-    paymentMethod: { type: String, required: true }, // Payment method (e.g., Credit Card, PayPal)
-    paymentInfo: { type: PaymentInfoSchema, default: {} }, // Payment information schema (defaults to an empty object)
+    paymentMethod: { type: String, required: true }, 
+    paymentInfo: { type: PaymentInfoSchema, default: {} }, 
 
     status: {
       type: String,

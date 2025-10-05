@@ -1,21 +1,15 @@
 import { Cart } from "./cart.model";
 import { ICartItem } from "./cart.interface";
 
-// Utility function to calculate the subtotal
-const calculateSubTotal = (items: ICartItem[]) => {
-  return items.reduce((total, item) => total + item.price * item.quantity, 0);
-};
 
 // Create Cart Service
 const createCart = async (userId: string, items: ICartItem[]) => {
   // Calculate subtotal
-  const subTotal = calculateSubTotal(items);
 
   // Create a new cart
   const cart = new Cart({
     userId,
     items,
-    subTotal,
   });
 
   // Save the cart and return the saved cart
