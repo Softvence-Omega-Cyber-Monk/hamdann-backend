@@ -30,7 +30,7 @@ const calculateOrderAmounts = (items: IOrderItem[]) => {
 const createOrder = async (orderData: IOrder) => {
   // Calculate order amounts
   const { subtotal, shippingCost, tax, totalAmount } = calculateOrderAmounts(
-    orderData.items
+    orderData.cartId.items as IOrderItem[]
   );
 
   try {
@@ -61,7 +61,7 @@ const getAllOrders = async (filters: IOrderFilters = {}): Promise<IOrder[]> => {
       .populate("userId", "name email")
       .populate("items.productId", "name price")
       .sort({ createdAt: -1 }); // newest orders first
-  } catch (error : any) {
+  } catch (error: any) {
     throw new Error(`Failed to fetch orders: ${error.message}`);
   }
 };
@@ -76,7 +76,7 @@ const getOrderById = async (orderId: string): Promise<IOrder | null> => {
     return await Order.findById(orderId)
       .populate("userId", "name email")
       .populate("items.productId", "name price");
-  } catch (error : any) {
+  } catch (error: any) {
     throw new Error(`Failed to fetch order: ${error.message}`);
   }
 };
@@ -94,7 +94,7 @@ const updateOrder = async (
     return await Order.findByIdAndUpdate(orderId, updateData, { new: true })
       .populate("userId", "name email")
       .populate("items.productId", "name price");
-  } catch (error : any) {
+  } catch (error: any) {
     throw new Error(`Failed to update order: ${error.message}`);
   }
 };
