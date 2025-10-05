@@ -2,28 +2,14 @@ import { Cart } from "./cart.model";
 import { ICartItem } from "./cart.interface";
 
 // Utility function to calculate the subtotal
-// Utility function to calculate subtotal, shipping cost, and total amount
-const calculateOrderAmounts = (items: ICartItem[]) => {
-  const subtotal = items.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
-
-  // Calculate shipping cost as 10% of the subtotal
-  const shippingCost = subtotal * 0.1; // 10% of subtotal
-
-  // Calculate tax as 5% of the subtotal
-  const tax = subtotal * 0.05; // 5% of subtotal
-
-  // Calculate the total amount (subtotal + shipping cost + tax)
-  const totalAmount = subtotal + shippingCost + tax;
-
-  return { subtotal, shippingCost, tax, totalAmount };
+const calculateSubTotal = (items: ICartItem[]) => {
+  return items.reduce((total, item) => total + item.price * item.quantity, 0);
 };
+
 // Create Cart Service
 const createCart = async (userId: string, items: ICartItem[]) => {
   // Calculate subtotal
-  const {subTotal,shippingCost,tax,totalAmount} = calculateOrderAmounts(items);
+  const subTotal = calculateSubTotal(items);
 
   // Create a new cart
   const cart = new Cart({
@@ -36,6 +22,22 @@ const createCart = async (userId: string, items: ICartItem[]) => {
   return await cart.save();
 };
 
+const getSingleCart = async (userId: string) => {
+  try {
+
+    console.log('user id form service', userId);
+    // Find cart by userId and populate related data like user and items
+    const cart = await Cart.find({ userId })
+      .populate("userId", "name email")
+      .populate("items.productId", "name price image");
+
+    return cart;
+  } catch (error: any) {
+    throw new Error(`Failed to fetch cart data: ${error.message}`);
+  }
+};
+
 export const CartService = {
   createCart,
+  getSingleCart,
 };
