@@ -1,15 +1,12 @@
 import { Cart } from "./cart.model";
 import { ICartItem } from "./cart.interface";
 
-
 // Create Cart Service
-const createCart = async (userId: string, item: ICartItem) => {
-  // Calculate subtotal
-
+const createCart = async (userId: string, items: ICartItem[]) => {
   // Create a new cart
   const cart = new Cart({
     userId,
-    item,
+    items,
   });
 
   // Save the cart and return the saved cart
@@ -18,8 +15,7 @@ const createCart = async (userId: string, item: ICartItem) => {
 
 const getSingleCart = async (userId: string) => {
   try {
-
-    console.log('user id form service', userId);
+    console.log("user id form service", userId);
     // Find cart by userId and populate related data like user and items
     const cart = await Cart.find({ userId })
       .populate("userId", "name email")

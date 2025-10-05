@@ -6,11 +6,6 @@ const createCart = async (req: Request, res: Response) => {
   try {
     const { userId, items } = req.body;
 
-    // Check if userId and items are provided
-    if (!userId || !items || !Array.isArray(items) || items.length === 0) {
-      return res.status(400).json({ message: "Invalid input" });
-    }
-
     // Call service to create a cart
     const cart = await CartService.createCart(userId, items);
 
@@ -21,8 +16,6 @@ const createCart = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Failed to create cart" });
   }
 };
-
-
 
 const getSingleCart = async (req: Request, res: Response) => {
   try {
@@ -47,9 +40,7 @@ const getSingleCart = async (req: Request, res: Response) => {
   }
 };
 
-
-
 export const CartController = {
   createCart,
-  getSingleCart
+  getSingleCart,
 };

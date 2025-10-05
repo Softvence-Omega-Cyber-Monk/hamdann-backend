@@ -80,8 +80,7 @@ const OrderSchema = new Schema<IOrder>(
     shippingCost: { type: Number, required: true },
     tax: { type: Number, required: true },
     totalAmount: { type: Number, required: true },
-    currency: { type: String, required: true },
-
+    currency: { type: String, required: true ,default: 'AED'},
     paymentMethod: { type: String, required: true },
     paymentInfo: { type: PaymentInfoSchema, default: {} },
 
