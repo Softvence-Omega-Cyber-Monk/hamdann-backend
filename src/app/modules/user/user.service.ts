@@ -1,26 +1,3 @@
-// import { Request } from "express"
-// import uploadCloud from "../../utils/cloudinary";
-// import { User_Model } from "./user.schema";
-// import { Account_Model } from "../auth/auth.schema";
-
-// const update_profile_into_db = async (req: Request) => {
-//     // upload file and get link
-//     if (req.file) {
-//         const uploadedImage = await uploadCloud(req.file);
-//         req.body.photo = uploadedImage?.secure_url;
-//     };
-
-//     const isExistUser = await Account_Model.findOne({ email: req?.user?.email }).lean()
-//     const result = await User_Model.findOneAndUpdate({ accountId: isExistUser!._id }, req?.body)
-//     return result
-// }
-
-
-
-// export const user_services = {
-//     update_profile_into_db
-// }
-
 import { User_Model } from "./user.schema";
 import { TUser } from "./user.interface";
 import bcrypt from "bcrypt";
@@ -29,7 +6,13 @@ import { cleanRegex } from "zod/v4/core/util.cjs";
 
 export const user_service = {
   createUser: async (userData: TUser) => {
-    // hash password
+    // Check if email already exists
+    const existingUser = await User_Model.findOne({ email: userData.email });
+    if (existingUser) {
+      throw new Error("Email already exists. Please use a different email.");
+    }
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(userData.password, 10);
 
     const user = new User_Model({
@@ -50,7 +33,7 @@ export const user_service = {
     return user;
   },
 
-    // Get all users
+  // Get all users
   getAllUsers: async () => {
     return await User_Model.find().sort({ createdAt: -1 }); // newest first
   },
@@ -58,7 +41,9 @@ export const user_service = {
   // Update user (only name, email, address, paymentMethod)
   updateUser: async (
     id: string,
-    updateData: Partial<Pick<TUser, "name" | "email" | "address" | "paymentMethod">>
+    updateData: Partial<
+      Pick<TUser, "name" | "email" | "address" | "paymentMethod">
+    >
   ) => {
     if (!Types.ObjectId.isValid(id)) throw new Error("Invalid user ID");
 
@@ -72,24 +57,21 @@ export const user_service = {
   },
 
   delete_user: async (id: string | Types.ObjectId) => {
+    if (!Types.ObjectId.isValid(id)) throw new Error("Invalid user ID");
 
-  if (!Types.ObjectId.isValid(id)) throw new Error("Invalid user ID");
+    // Set isDeleted: true
+    const user = await User_Model.findByIdAndUpdate(
+      id,
+      { isDeleted: true },
+      { new: true } // return the updated document
+    );
 
-  // Set isDeleted: true
-  const user = await User_Model.findByIdAndUpdate(
-    id,
-    { isDeleted: true },
-    { new: true } // return the updated document
-  );
+    if (!user) throw new Error("User not found");
 
-  if (!user) throw new Error("User not found");
-
-  return user;
-},
-
+    return user;
+  },
 };
 
-
 export const user_services = {
-    user_service
-}
+  user_service,
+};

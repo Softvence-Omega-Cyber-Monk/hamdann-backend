@@ -24,6 +24,7 @@ export const create_user = z
         cvv: z.number().optional(),
       })
       .optional(),
+    Preferences: z.enum(["Fashion", "Food", "Beauty", "Perfume"]).optional(),
     businessInfo: z
       .object({
         businessName: z.string().optional(),
