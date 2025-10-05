@@ -19,6 +19,11 @@ export type TUser = {
         expiryDate?: string,
         cvv?: number,
     }],
+    Preferences: {
+        newsletter?: boolean,
+        notifications?: boolean,
+        darkMode?: boolean,
+    },
     businessInfo?: {
         businessName?: string,
         businessType?: string,
