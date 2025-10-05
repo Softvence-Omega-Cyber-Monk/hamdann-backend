@@ -32,6 +32,11 @@ export interface IPaymentInfo {
   transactionId?: string;
 }
 
+export interface IContacktInfo {
+  email: string;
+  phone?: string;
+}
+
 export interface IOrder extends Document {
   orderNumber: string;
   userId: Types.ObjectId;
@@ -42,6 +47,7 @@ export interface IOrder extends Document {
   totalAmount: number;
   currency: string;
   paymentMethod: string;
+  
   paymentInfo?: IPaymentInfo;
   status:
     | "placed"
