@@ -38,6 +38,7 @@ export interface IOrder extends Document {
   items: IOrderItem[];
 
   subtotal: number;
+  
   shippingCost: number;
   tax: number;
   totalAmount: number;
