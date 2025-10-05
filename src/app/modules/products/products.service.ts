@@ -40,6 +40,17 @@ const getBestSellingProductsService = async () => {
 
   return bestSellingProducts;
 };
+const getWishlistedProductsService = async (
+  productId: string,
+  isWishlisted
+) => {
+  const bestSellingProducts = await Product.findOneAndUpdate(
+    { _id: productId },
+    { isWishlisted: isWishlisted },
+    { new: true }
+  ) // Return the updated document
+  return bestSellingProducts;
+};
 
 export const productService = {
   createProductService,
@@ -49,4 +60,5 @@ export const productService = {
   getProductByCategoryService,
   getNewArrivalsProductsService,
   getBestSellingProductsService,
+  getWishlistedProductsService,
 };

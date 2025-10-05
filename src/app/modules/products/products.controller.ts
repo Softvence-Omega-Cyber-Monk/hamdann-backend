@@ -110,6 +110,24 @@ import { productService } from "./products.service";
     res.status(500).json({ success: false, message: error.message });
   }
 };
+ const getWishlistedProductsService = async (req: Request, res: Response) => {
+  try {
+
+    const { productId } = req.params;
+    const {isWishlisted} = req.body;
+    const product = await productService.getWishlistedProductsService(productId ,isWishlisted);
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Products not found" });
+    }
+
+    res.status(200).json({ success: true, data: product });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 export const productController = {
   createProduct,
@@ -118,5 +136,6 @@ export const productController = {
   getSingleProduct,
   getProductByCategoryService, 
   getNewArrivalsProductsService,
-  getBestSellingProductsService
+  getBestSellingProductsService,
+  getWishlistedProductsService
 };
