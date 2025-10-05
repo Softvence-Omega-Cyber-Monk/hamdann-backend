@@ -29,7 +29,7 @@ const getSingleCart = async (userId: string) => {
     // Find cart by userId and populate related data like user and items
     const cart = await Cart.find({ userId })
       .populate("userId", "name email")
-      .populate("items.productId", "name price image");
+      .populate("items.productId", "name price quantity image");
 
     return cart;
   } catch (error: any) {
