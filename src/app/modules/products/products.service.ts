@@ -34,9 +34,11 @@ const getNewArrivalsProductsService = async () => {
   return newArrivals;
 };
 const getBestSellingProductsService = async () => {
-  const newArrivals = await Product.find()
+  const bestSellingProducts = await Product.find()
+    .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
+    .limit(10); // Limit the result to top 10 best sellers (you can adjust the number as needed)
 
-  return newArrivals;
+  return bestSellingProducts;
 };
 
 export const productService = {
@@ -46,5 +48,5 @@ export const productService = {
   getSingleProductService,
   getProductByCategoryService,
   getNewArrivalsProductsService,
-  getBestSellingProductsService
+  getBestSellingProductsService,
 };

@@ -22,7 +22,7 @@ export const ProductSchema = z.object({
   productImages: z
     .array(z.string().url("Must be a valid URL"))
     .min(1, "At least one image is required"),
-  isBestSeller: z.boolean().default(false),
+  salesCount: z.number().min(0).default(0),
   isNewArrival: z.boolean().default(false),
 });
 
