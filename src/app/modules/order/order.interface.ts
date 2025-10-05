@@ -35,7 +35,7 @@ export interface IPaymentInfo {
 export interface IOrder extends Document {
   orderNumber: string;
   userId: Types.ObjectId;
-  cartId: Types.ObjectId;
+  items: IOrderItem[]; // Array of order items
   subtotal: number;
   shippingCost: number;
   tax: number;

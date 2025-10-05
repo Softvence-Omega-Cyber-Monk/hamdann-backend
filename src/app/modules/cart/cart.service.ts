@@ -3,13 +3,13 @@ import { ICartItem } from "./cart.interface";
 
 
 // Create Cart Service
-const createCart = async (userId: string, items: ICartItem[]) => {
+const createCart = async (userId: string, item: ICartItem) => {
   // Calculate subtotal
 
   // Create a new cart
   const cart = new Cart({
     userId,
-    items,
+    item,
   });
 
   // Save the cart and return the saved cart

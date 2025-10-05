@@ -4,9 +4,19 @@ import {
   IOrderStatusDates,
   IShippingAddress,
   IPaymentInfo,
+  IOrderItem,
 } from "./order.interface";
 
-// OrderStatusDates Schema
+const OrderItemSchema = new Schema<IOrderItem>(
+  {
+    productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
+    price: { type: Number, required: true },
+    quantity: { type: Number, required: true },
+    image: { type: String },
+  },
+  { _id: false }
+);
+
 const OrderStatusDatesSchema = new Schema<IOrderStatusDates>(
   {
     placedAt: { type: Date },
@@ -19,7 +29,6 @@ const OrderStatusDatesSchema = new Schema<IOrderStatusDates>(
   { _id: false }
 );
 
-// ShippingAddress Schema
 const ShippingAddressSchema = new Schema<IShippingAddress>(
   {
     fullName: { type: String, required: true },
@@ -32,7 +41,6 @@ const ShippingAddressSchema = new Schema<IShippingAddress>(
   { _id: false }
 );
 
-// PaymentInfo Schema
 const PaymentInfoSchema = new Schema<IPaymentInfo>(
   {
     cardLast4: { type: String },
@@ -47,7 +55,6 @@ const PaymentInfoSchema = new Schema<IPaymentInfo>(
   { _id: false }
 );
 
-// Function to generate a unique order number
 const generateOrderNumber = (): string => {
   const datePart = new Date()
     .toISOString()
@@ -57,25 +64,26 @@ const generateOrderNumber = (): string => {
   return `ORD-${datePart}-${randomPart}`;
 };
 
-// Order Schema
 const OrderSchema = new Schema<IOrder>(
   {
     orderNumber: {
       type: String,
       required: true,
       unique: true,
-      default: generateOrderNumber, 
+      default: generateOrderNumber,
     },
-    userId: { type: Schema.Types.ObjectId, ref: "User" }, 
-    cartId: { type: Schema.Types.ObjectId, ref: "Cart", required: true }, 
-    subtotal: { type: Number, required: true }, 
-    shippingCost: { type: Number, required: true }, 
-    tax: { type: Number, required: true }, 
-    totalAmount: { type: Number, required: true },
-    currency: { type: String, required: true }, 
+    userId: { type: Schema.Types.ObjectId, ref: "User" },
 
-    paymentMethod: { type: String, required: true }, 
-    paymentInfo: { type: PaymentInfoSchema, default: {} }, 
+    items: [OrderItemSchema],
+
+    subtotal: { type: Number, required: true },
+    shippingCost: { type: Number, required: true },
+    tax: { type: Number, required: true },
+    totalAmount: { type: Number, required: true },
+    currency: { type: String, required: true },
+
+    paymentMethod: { type: String, required: true },
+    paymentInfo: { type: PaymentInfoSchema, default: {} },
 
     status: {
       type: String,
@@ -87,25 +95,17 @@ const OrderSchema = new Schema<IOrder>(
         "delivered",
         "cancelled",
       ],
-      default: "placed", // Default status is 'placed'
+      default: "placed",
     },
 
     statusDates: {
       type: OrderStatusDatesSchema,
-      default: { placedAt: new Date() }, // Default status date is 'placedAt' set to current date
+      default: { placedAt: new Date() },
     },
 
-    shippingAddress: { type: ShippingAddressSchema, required: true }, // Shipping address (required)
+    shippingAddress: { type: ShippingAddressSchema, required: true },
   },
-  { timestamps: true } // Automatically adds createdAt and updatedAt fields
+  { timestamps: true }
 );
-
-// Add pre-save hook to generate order number if it's not set
-OrderSchema.pre("save", function (next) {
-  if (!this.orderNumber) {
-    this.orderNumber = generateOrderNumber();
-  }
-  next();
-});
 
 export const Order = mongoose.model<IOrder>("Order", OrderSchema);
