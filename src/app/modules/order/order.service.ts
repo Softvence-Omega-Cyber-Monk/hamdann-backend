@@ -1,6 +1,7 @@
 import { Order } from "./order.model";
 import { IOrder, IOrderItem } from "./order.interface";
 import { Types } from "mongoose";
+import { Cart } from "../cart/cart.model";
 
 interface IOrderFilters {
   userId?: string;
@@ -28,11 +29,13 @@ const calculateOrderAmounts = (items: IOrderItem[]) => {
 
 // Create Order
 const createOrder = async (orderData: IOrder) => {
+  const cart = await Cart.findOne({ _id: orderData.cartId });
+
   // Calculate order amounts
   const { subtotal, shippingCost, tax, totalAmount } = calculateOrderAmounts(
-    orderData.cartId.items as IOrderItem[]
+    cart?.items as [IOrderItem]
   );
-
+  
   try {
     const order = new Order({
       ...orderData,
