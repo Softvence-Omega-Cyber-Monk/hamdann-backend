@@ -4,7 +4,11 @@ import { number, string } from "zod";
 
 const user_schema = new Schema<TUser>(
   {
-    role: { type: String, required: true },
+    role: {
+      type: String,
+      trim: true,
+      enum: ["Admin", "Buyer", "Seller"],
+    },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: true },
@@ -28,7 +32,7 @@ const user_schema = new Schema<TUser>(
       type: String,
 
       trim: true,
-      enum: ["Fashion", "Food", "Beauty", "Perfume"], 
+      enum: ["Fashion", "Food", "Beauty", "Perfume"],
     },
     businessInfo: {
       businessName: { type: String },

@@ -90,30 +90,37 @@ const refresh_token_from_db = async (token: string) => {
 
 const change_password_from_db = async (
   user: JwtPayload,
-  payload: {
-    oldPassword: string;
-    newPassword: string;
-  }
+  payload: { oldPassword: string; newPassword: string }
 ) => {
+
   const isExistAccount = await isAccountExist(user?.email);
 
-  const isCorrectPassword: boolean = await bcrypt.compare(
+
+  if (!isExistAccount) {
+    throw new AppError("Account not found", httpStatus.NOT_FOUND);
+  }
+
+  const isCorrectPassword = await bcrypt.compare(
     payload.oldPassword,
     isExistAccount.password
   );
+
+  // console.log("match pass",isCorrectPassword);
 
   if (!isCorrectPassword) {
     throw new AppError("Old password is incorrect", httpStatus.UNAUTHORIZED);
   }
 
-  const hashedPassword: string = await bcrypt.hash(payload.newPassword, 10);
-  await Account_Model.findOneAndUpdate(
+  const hashedPassword = await bcrypt.hash(payload.newPassword, 10);
+
+  await User_Model.findOneAndUpdate(
     { email: isExistAccount.email },
     {
       password: hashedPassword,
-      lastPasswordChange: Date(),
+      updatedAt: new Date(),
     }
   );
+
   return "Password changed successful.";
 };
 
@@ -124,8 +131,8 @@ const forget_password_from_db = async (email: string) => {
       email: isAccountExists.email,
       role: isAccountExists.role,
     },
-    configs.jwt.reset_secret as Secret,
-    configs.jwt.reset_expires as string
+    configs.jwt.resetToken_secret as Secret,
+    configs.jwt.resetToken_expires as string
   );
 
   const resetPasswordLink = `${configs.jwt.front_end_url}/reset?token=${resetToken}&email=${isAccountExists.email}`;
@@ -141,42 +148,10 @@ const forget_password_from_db = async (email: string) => {
   return "Check your email for reset link";
 };
 
-const reset_password_into_db = async (
-  token: string,
-  email: string,
-  newPassword: string
-) => {
-  let decodedData: JwtPayload;
-  try {
-    decodedData = jwtHelpers.verifyToken(
-      token,
-      configs.jwt.reset_secret as Secret
-    );
-  } catch (err) {
-    throw new AppError(
-      "Your reset link is expire. Submit new link request!!",
-      httpStatus.UNAUTHORIZED
-    );
-  }
-
-  const isAccountExists = await isAccountExist(email);
-
-  const hashedPassword: string = await bcrypt.hash(newPassword, 10);
-
-  await Account_Model.findOneAndUpdate(
-    { email: isAccountExists.email },
-    {
-      password: hashedPassword,
-      lastPasswordChange: Date(),
-    }
-  );
-  return "Password reset successfully!";
-};
 
 export const auth_services = {
   login_user_from_db,
   refresh_token_from_db,
   change_password_from_db,
   forget_password_from_db,
-  reset_password_into_db,
 };

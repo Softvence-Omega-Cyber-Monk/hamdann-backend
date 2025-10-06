@@ -1,7 +1,7 @@
 import { Types } from "mongoose";
 
 export type TUser = {
-  role: string;
+  role: "Buyer" | "Seller" | "Admin";
   name: string;
   email: string;
   password: string;
