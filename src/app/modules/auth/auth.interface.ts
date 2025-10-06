@@ -1,6 +1,7 @@
 export type TAccount = {
     email: string;
     password: string;
+    role: "Buyer" | "Seller" | "Admin",
 }
 
 
@@ -11,10 +12,20 @@ export interface TRegisterPayload extends TAccount {
 export type TLoginPayload = {
     email: string;
     password: string
-    role: "Buyer" | "Seller" | "ADMIN",
+    role: "Buyer" | "Seller" | "Admin",
 }
 
 export type TJwtUser = {
     email: string,
-    role?: "Buyer" | "Seller" | "ADMIN",
+    role?: "Buyer" | "Seller" | "Admin",
+}
+
+export interface IChangePasswordPayload {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export interface IResetPasswordRequest {
+  token: string;
+  password: string;
 }

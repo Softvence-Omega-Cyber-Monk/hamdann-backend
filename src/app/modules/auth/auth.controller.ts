@@ -39,6 +39,7 @@ const refresh_token = catchAsync(async (req, res) => {
 
 const change_password = catchAsync(async (req, res) => {
     const user = req?.user;
+    // console.log("User", user)
     const result = await auth_services.change_password_from_db(user!, req.body);
 
     manageResponse(res, {
@@ -60,21 +61,6 @@ const forget_password = catchAsync(async (req, res) => {
     });
 });
 
-const reset_password = catchAsync(async (req, res) => {
-    const { token, newPassword, email } = req.body;
-    const result = await auth_services.reset_password_into_db(
-        token,
-        email,
-        newPassword,
-    );
-    manageResponse(res, {
-        statusCode: httpStatus.OK,
-        success: true,
-        message: 'Password reset successfully!',
-        data: result,
-    });
-});
-
 
 
 export const auth_controllers = {
@@ -82,7 +68,6 @@ export const auth_controllers = {
     login_user,
     refresh_token,
     change_password,
-    reset_password,
     forget_password,
 
 }
