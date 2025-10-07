@@ -38,4 +38,28 @@ userRoute.put("/delete/:id", user_controllers.delete_user);
 
 
 
+
+// PAYMENT METHODS ROUTES
+
+// Add payment method
+userRoute.post("/:userId/payment-method", user_controllers.addPaymentMethod);
+
+// Update payment method
+userRoute.put(
+  "/:userId/payment-method/:paymentId",
+  user_controllers.updatePaymentMethod
+);
+
+// Set default payment method
+userRoute.patch(
+  "/:userId/payment-method/:paymentId/default",
+  user_controllers.setDefaultPaymentMethod
+);
+
+// Delete payment method
+userRoute.delete(
+  "/:userId/payment-method/:paymentId",
+  user_controllers.deletePaymentMethod
+);
+
 export default userRoute;

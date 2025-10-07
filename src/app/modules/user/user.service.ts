@@ -60,21 +60,7 @@ export const user_service = {
       if (emailExists) throw new Error("Email already in use by another user");
     }
 
-    const updatePayload: any = {};
-
-    // Only update fields that are present in updateData
-    if (updateData.name) updatePayload.name = updateData.name;
-    if (updateData.email) updatePayload.email = updateData.email;
-    if (updateData.address) updatePayload.address = updateData.address;
-
-    // Handle paymentMethods carefully
-    if (updateData.paymentMethods) {
-      updatePayload.paymentMethods = [
-        ...(existingUser.paymentMethods || []),
-        ...updateData.paymentMethods,
-      ];
-    }
-
+    console.log("updateData:", updateData);
     // Update user and return updated document
     const updatedUser = await User_Model.findByIdAndUpdate(id, updateData, {
       new: true,
@@ -102,6 +88,81 @@ export const user_service = {
   },
 };
 
+// 🟢 Add new payment method
+const addPaymentMethodService = async (userId: string, paymentData: any) => {
+  const user = await User_Model.findById(userId);
+  if (!user) throw new Error("User not found");
+  user.paymentMethods = user.paymentMethods || [];
+  user.paymentMethods.push(paymentData);
+  await user.save();
+  await user.save();
+  return user;
+};
+
+// 🟡 Update specific payment method
+const updatePaymentMethodService = async (
+  userId: string,
+  paymentId: string,
+  updateData: any
+) => {
+  const updatedUser = await User_Model.findOneAndUpdate(
+    { _id: userId, "paymentMethods._id": paymentId },
+    {
+      $set: {
+        "paymentMethods.$.method": updateData.method,
+        "paymentMethods.$.cardNumber": updateData.cardNumber,
+        "paymentMethods.$.expiryDate": updateData.expiryDate,
+        "paymentMethods.$.cvv": updateData.cvv,
+      },
+    },
+    { new: true }
+  );
+
+  if (!updatedUser) throw new Error("Payment method not found");
+  return updatedUser;
+};
+
+// 🟠 Set one payment method as default
+const setDefaultPaymentMethodService = async (
+  userId: string,
+  paymentId: string
+) => {
+  // Step 1: unset all defaults
+  await User_Model.updateOne(
+    { _id: userId },
+    { $set: { "paymentMethods.$[].isDefault": false } }
+  );
+
+  // Step 2: set selected as default
+  const updatedUser = await User_Model.findOneAndUpdate(
+    { _id: userId, "paymentMethods._id": paymentId },
+    { $set: { "paymentMethods.$.isDefault": true } },
+    { new: true }
+  );
+
+  if (!updatedUser) throw new Error("Payment method not found");
+  return updatedUser;
+};
+
+// 🔴 Delete a payment method
+const deletePaymentMethodService = async (
+  userId: string,
+  paymentId: string
+) => {
+  const updatedUser = await User_Model.findByIdAndUpdate(
+    userId,
+    { $pull: { paymentMethods: { _id: paymentId } } },
+    { new: true }
+  );
+
+  if (!updatedUser) throw new Error("Payment method not found");
+  return updatedUser;
+};
+
 export const user_services = {
   user_service,
+  addPaymentMethodService,
+  updatePaymentMethodService,
+  setDefaultPaymentMethodService,
+  deletePaymentMethodService,
 };
