@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+
 // Zod schema matching TAccount / authSchema
 
 const login_validation = z.object({
@@ -29,3 +30,5 @@ export const auth_validation = {
     resetPassword,
     verified_account
 }
+
+

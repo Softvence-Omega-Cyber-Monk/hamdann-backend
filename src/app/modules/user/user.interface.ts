@@ -8,7 +8,7 @@ export type TAddress = {
 };
 
 export type TPaymentMethod = {
-  _id?: Types.ObjectId; // 👈 paymentId used for update/delete
+  _id?: string; // 👈 paymentId used for update/delete
   method: "Visa" | "Mastercard" | "PayPal" | "Bank Transfer";
   cardNumber: string;
   expiryDate: string;
@@ -26,8 +26,7 @@ export type TBusinessInfo = {
 };
 
 export type TUser = {
-  _id?: Types.ObjectId;
-  role: "user" | "admin" | "seller";
+  role: "Buyer" | "Seller" | "Admin";
   name: string;
   email: string;
   password: string;

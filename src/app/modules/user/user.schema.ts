@@ -41,12 +41,9 @@ const BusinessInfoSchema = new Schema(
   { _id: false }
 );
 
-// ----------------------
-// ✅ MAIN USER SCHEMA
-// ----------------------
 const UserSchema = new Schema<TUser>(
   {
-    role: { type: String, required: true, enum: ["user", "admin", "seller"] },
+    role: { type: String, required: true, enum: ["Admin", "Buyer", "Seller"] },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
@@ -56,7 +53,10 @@ const UserSchema = new Schema<TUser>(
 
     address: { type: AddressSchema, default: {} },
 
-    paymentMethods: [PaymentMethodSchema], // 👈 changed name to plural for clarity
+    paymentMethods: {
+      type: [PaymentMethodSchema],
+      default: [],
+    },
 
     preferences: {
       type: String,

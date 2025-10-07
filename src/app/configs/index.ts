@@ -8,6 +8,9 @@ export const configs = {
         refreshToken_expires: process.env.REFRESH_TOKEN_EXPIRES,
         accessToken_secret: process.env.ACCESS_TOKEN_SECRET,
         refreshToken_secret: process.env.REFRESH_TOKEN_SECRET,
+        resetToken_secret: process.env.RESET_PASSWORD_SECRET,
+        resetToken_expires: process.env.RESET_PASSWORD_EXPIRES,
+        front_end_url: process.env.FRONTEND_URL || "http://localhost:5000",
 
     },
     db_url: process.env.DB_URL,
