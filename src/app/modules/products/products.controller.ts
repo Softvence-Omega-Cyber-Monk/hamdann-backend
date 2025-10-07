@@ -6,8 +6,20 @@ import {
 } from "./products.validation";
 import { productService } from "./products.service";
 
+
+
 const createProduct = async (req: Request, res: Response) => {
   try {
+
+
+
+  
+
+  
+
+
+    
+
     const validatedData = CreateProductSchema.parse(req.body);
     const product = await productService.createProductService(validatedData);
     res.status(201).json({ success: true, data: product });
@@ -149,6 +161,22 @@ const removeProductsWishlist = async (req: Request, res: Response) => {
   }
 };
 
+const getProductStats = async (req: Request, res: Response) => {
+  try {
+    const stats = await productService.getProductStatsService();
+    
+    res.status(200).json({ 
+      success: true, 
+      data: stats 
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+};
+
 export const productController = {
   createProduct,
   updateProduct,
@@ -159,4 +187,5 @@ export const productController = {
   getBestSellingProductsService,
   getWishlistedProductsService,
   removeProductsWishlist
+  getProductStats,
 };

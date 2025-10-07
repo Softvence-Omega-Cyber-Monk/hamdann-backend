@@ -14,5 +14,7 @@ router.get("/getNewArrivals", productController.getNewArrivalsProductsService);
 router.get("/getBestSelling", productController.getBestSellingProductsService);   
 router.put("/update/wishList/:productId", productController.getWishlistedProductsService);   
 router.put("/remove/wishList", productController.removeProductsWishlist);   
+// New route for product statistics
+router.get("/stats", productController.getProductStats);   
 
 export const productRoutes = router;

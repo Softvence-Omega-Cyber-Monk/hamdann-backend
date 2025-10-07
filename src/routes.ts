@@ -4,6 +4,7 @@ import userRoute from './app/modules/user/user.route';
 import { productRoutes } from './app/modules/products/products.route';
 import { OrderRoute } from './app/modules/order/order.route';
 import { CartRoute } from './app/modules/cart/cart.route';
+import { PromotionRoute } from './app/modules/promotion/promotion.route';
 
 
 const appRouter = Router();
@@ -13,7 +14,8 @@ const moduleRoutes = [
     { path: "/user", route: userRoute },
     { path: "/product", route: productRoutes },
     { path: "/cart", route: CartRoute },
-    { path: "/order", route: OrderRoute }
+    { path: "/order", route: OrderRoute },
+    { path: "/promotion", route: PromotionRoute }
 
 
 ];

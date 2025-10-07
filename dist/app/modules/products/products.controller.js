@@ -135,6 +135,19 @@ const removeProductsWishlist = (req, res) => __awaiter(void 0, void 0, void 0, f
     }
     catch (error) {
         res.status(500).json({ success: false, message: error.message });
+const getProductStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const stats = yield products_service_1.productService.getProductStatsService();
+        res.status(200).json({
+            success: true,
+            data: stats
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
     }
 });
 exports.productController = {
@@ -147,4 +160,5 @@ exports.productController = {
     getBestSellingProductsService,
     getWishlistedProductsService,
     removeProductsWishlist
+    getProductStats,
 };

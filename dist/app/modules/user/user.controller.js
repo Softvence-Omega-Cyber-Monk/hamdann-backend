@@ -65,6 +65,7 @@ const delete_user = (0, catch_async_1.default)((req, res) => __awaiter(void 0, v
         data: result,
     });
 }));
+
 const addPaymentMethod = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId } = req.params;
@@ -113,14 +114,17 @@ const deletePaymentMethod = (req, res) => __awaiter(void 0, void 0, void 0, func
         res.status(400).json({ success: false, message: error.message });
     }
 });
+
 exports.user_controllers = {
     create_user,
     get_single_user,
     get_all_users,
     update_single_user,
     delete_user,
+
     addPaymentMethod,
     updatePaymentMethod,
     setDefaultPaymentMethod,
     deletePaymentMethod
+
 };

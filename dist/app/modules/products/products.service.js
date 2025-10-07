@@ -57,6 +57,47 @@ const removeProductsWishlist = (productIds) => __awaiter(void 0, void 0, void 0,
     // Return updated products
     const updatedProducts = yield products_model_1.Product.find({ _id: { $in: productIds } });
     return updatedProducts;
+// Product statistics
+const getProductStatsService = () => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    // Total Products count
+    const totalProducts = yield products_model_1.Product.countDocuments();
+    // Total Variations - sum of variations array lengths across all products
+    const variationsResult = yield products_model_1.Product.aggregate([
+        {
+            $project: {
+                variationsCount: { $size: { $ifNull: ["$variations", []] } }
+            }
+        },
+        {
+            $group: {
+                _id: null,
+                totalVariations: { $sum: "$variationsCount" }
+            }
+        }
+    ]);
+    const totalVariations = ((_a = variationsResult[0]) === null || _a === void 0 ? void 0 : _a.totalVariations) || 0;
+    // Total Units - sum of quantity across all products
+    const unitsResult = yield products_model_1.Product.aggregate([
+        {
+            $group: {
+                _id: null,
+                totalUnits: { $sum: "$quantity" }
+            }
+        }
+    ]);
+    const totalUnits = ((_b = unitsResult[0]) === null || _b === void 0 ? void 0 : _b.totalUnits) || 0;
+    // Active Products (quantity > 0)
+    const activeProducts = yield products_model_1.Product.countDocuments({ quantity: { $gt: 0 } });
+    // Out of Stock Products (quantity = 0)
+    const outOfStock = yield products_model_1.Product.countDocuments({ quantity: 0 });
+    return {
+        totalProducts,
+        totalVariations,
+        // totalUnits,
+        activeProducts,
+        outOfStock
+    };
 });
 exports.productService = {
     createProductService,
@@ -68,4 +109,5 @@ exports.productService = {
     getBestSellingProductsService,
     getWishlistedProductsService,
     removeProductsWishlist,
+    getProductStatsService,
 };

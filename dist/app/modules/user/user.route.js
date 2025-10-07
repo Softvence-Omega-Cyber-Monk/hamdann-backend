@@ -23,6 +23,7 @@ userRoute.get("/getAll", user_controller_1.user_controllers.get_all_users);
 userRoute.put("/update/:id", validate(user_validation_1.update_user), user_controller_1.user_controllers.update_single_user);
 // Soft delete user
 userRoute.put("/delete/:id", user_controller_1.user_controllers.delete_user);
+
 // PAYMENT METHODS ROUTES
 // Add payment method
 userRoute.post("/:userId/payment-method", user_controller_1.user_controllers.addPaymentMethod);
@@ -32,4 +33,5 @@ userRoute.put("/:userId/payment-method/:paymentId", user_controller_1.user_contr
 userRoute.patch("/:userId/payment-method/:paymentId/setDefault", user_controller_1.user_controllers.setDefaultPaymentMethod);
 // Delete payment method
 userRoute.delete("/:userId/payment-method/:paymentId", user_controller_1.user_controllers.deletePaymentMethod);
+
 exports.default = userRoute;
