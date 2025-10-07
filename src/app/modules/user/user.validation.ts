@@ -18,9 +18,9 @@ export const create_user = z
       .optional(),
     paymentMethod: z
       .object({
-
+        _id: z.string().optional(), // 👈 needed when updating or deleting
         method: z.string().optional(),
-        
+
         cardNumber: z.string().optional(),
         expiryDate: z.string().optional(),
         cvv: z.number().optional(),
@@ -67,7 +67,7 @@ export const update_user = z.object({
       businessLogo: z.string().optional(),
     })
     .optional(),
-    
+
   paymentMethod: z
     .object({
       method: z.string().optional(),
