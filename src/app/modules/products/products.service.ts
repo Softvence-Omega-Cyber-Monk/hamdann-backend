@@ -52,6 +52,53 @@ const getWishlistedProductsService = async (
   return wishListedProducts;
 };
 
+// Product statistics
+const getProductStatsService = async () => {
+  // Total Products count
+  const totalProducts = await Product.countDocuments();
+
+  // Total Variations - sum of variations array lengths across all products
+  const variationsResult = await Product.aggregate([
+    {
+      $project: {
+        variationsCount: { $size: { $ifNull: ["$variations", []] } }
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        totalVariations: { $sum: "$variationsCount" }
+      }
+    }
+  ]);
+  const totalVariations = variationsResult[0]?.totalVariations || 0;
+
+  // Total Units - sum of quantity across all products
+  const unitsResult = await Product.aggregate([
+    {
+      $group: {
+        _id: null,
+        totalUnits: { $sum: "$quantity" }
+      }
+    }
+  ]);
+  const totalUnits = unitsResult[0]?.totalUnits || 0;
+
+  // Active Products (quantity > 0)
+  const activeProducts = await Product.countDocuments({ quantity: { $gt: 0 } });
+
+  // Out of Stock Products (quantity = 0)
+  const outOfStock = await Product.countDocuments({ quantity: 0 });
+
+  return {
+    totalProducts,
+    totalVariations,
+    // totalUnits,
+    activeProducts,
+    outOfStock
+  };
+};
+
 export const productService = {
   createProductService,
   updateProductService,
@@ -61,4 +108,5 @@ export const productService = {
   getNewArrivalsProductsService,
   getBestSellingProductsService,
   getWishlistedProductsService,
+  getProductStatsService,
 };
