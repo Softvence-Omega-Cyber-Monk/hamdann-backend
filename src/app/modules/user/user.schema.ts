@@ -1,47 +1,70 @@
 import { model, Schema } from "mongoose";
 import { TUser } from "./user.interface";
-import { number, string } from "zod";
 
-const user_schema = new Schema<TUser>(
+// Sub-schema for Payment Methods
+const PaymentMethodSchema = new Schema(
   {
-    role: {
+    method: {
       type: String,
-      trim: true,
-      enum: ["Admin", "Buyer", "Seller"],
+      required: true,
+      enum: ["Visa", "Mastercard", "PayPal", "Bank Transfer"], // extendable
     },
+    cardNumber: { type: Number, required: true },
+    expiryDate: { type: String, required: true },
+    cvv: { type: Number, required: true },
+    isDefault: { type: Boolean, default: false },
+  },
+  { _id: true } // 👈 ensures each payment method gets its own ObjectId (paymentId)
+);
+
+// Sub-schema for Address
+const AddressSchema = new Schema(
+  {
+    state: { type: String },
+    city: { type: String },
+    zip: { type: String },
+    streetAddress: { type: String },
+  },
+  { _id: false }
+);
+
+// Sub-schema for Business Info
+const BusinessInfoSchema = new Schema(
+  {
+    businessName: { type: String },
+    businessType: { type: String },
+    businessDescription: { type: String },
+    country: { type: String },
+    phoneNumber: { type: String },
+    businessLogo: { type: String },
+  },
+  { _id: false }
+);
+
+const UserSchema = new Schema<TUser>(
+  {
+    role: { type: String, required: true, enum: ["Admin", "Buyer", "Seller"] },
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     confirmPassword: { type: String, required: true },
-    isDeleted: { type: Boolean, default: false },
-    address: {
-      state: { type: String },
-      city: { type: String },
-      zip: { type: String },
-      streetAddress: { type: String },
-    },
-    paymentMethod: [
-      {
-        method: { type: String },
-        cardNumber: { type: String },
-        expiryDate: { type: String },
-        cvv: { type: Number },
-      },
-    ],
-    Preferences: {
-      type: String,
 
+    isDeleted: { type: Boolean, default: false },
+
+    address: { type: AddressSchema, default: {} },
+
+    paymentMethods: {
+      type: [PaymentMethodSchema],
+      default: [],
+    },
+
+    preferences: {
+      type: String,
       trim: true,
       enum: ["Fashion", "Food", "Beauty", "Perfume"],
     },
-    businessInfo: {
-      businessName: { type: String },
-      businesswType: { type: String },
-      businessDescription: { type: String },
-      country: { type: String },
-      phoneNumber: { type: String },
-      businessLogo: { type: String },
-    },
+
+    businessInfo: { type: BusinessInfoSchema, default: {} },
   },
   {
     versionKey: false,
@@ -49,4 +72,4 @@ const user_schema = new Schema<TUser>(
   }
 );
 
-export const User_Model = model("user", user_schema);
+export const User_Model = model<TUser>("User", UserSchema);

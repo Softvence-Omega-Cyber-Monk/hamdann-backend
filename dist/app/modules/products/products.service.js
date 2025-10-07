@@ -49,6 +49,14 @@ const getWishlistedProductsService = (productId, isWishlisted) => __awaiter(void
     const wishListedProducts = yield products_model_1.Product.findOneAndUpdate({ _id: productId }, { isWishlisted: isWishlisted }, { new: true }); // Return the updated document
     return wishListedProducts;
 });
+const removeProductsWishlist = (productIds) => __awaiter(void 0, void 0, void 0, function* () {
+    // Set `isWishlisted` to false for multiple products
+    console.log('Product IDs to update:', productIds);
+    const result = yield products_model_1.Product.updateMany({ _id: { $in: productIds } }, { $set: { isWishlisted: false } });
+    console.log('Update result:', result);
+    // Return updated products
+    const updatedProducts = yield products_model_1.Product.find({ _id: { $in: productIds } });
+    return updatedProducts;
 // Product statistics
 const getProductStatsService = () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -100,5 +108,6 @@ exports.productService = {
     getNewArrivalsProductsService,
     getBestSellingProductsService,
     getWishlistedProductsService,
+    removeProductsWishlist,
     getProductStatsService,
 };

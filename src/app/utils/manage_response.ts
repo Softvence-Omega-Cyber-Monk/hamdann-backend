@@ -21,7 +21,7 @@ interface IResponse<T> {
 //     })
 // }
 
-export const manageResponse = (res, data) => {
+export const manageResponse = (res : any, data : any) => {
   res.status(data.statusCode).json({
     success: data.success,
     message: data.message,

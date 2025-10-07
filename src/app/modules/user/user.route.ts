@@ -27,12 +27,39 @@ userRoute.get("/get-single/:id", user_controllers.get_single_user);
 userRoute.get("/getAll", user_controllers.get_all_users);
 
 // Update user
-userRoute.put("/update/:id", validate(update_user), user_controllers.update_single_user);
+userRoute.put(
+  "/update/:id",
+  validate(update_user),
+  user_controllers.update_single_user
+);
 
 // Soft delete user
 userRoute.put("/delete/:id", user_controllers.delete_user);
 
 
+
+
+// PAYMENT METHODS ROUTES
+
+// Add payment method
+userRoute.post("/:userId/payment-method", user_controllers.addPaymentMethod);
+
+// Update payment method
+userRoute.put(
+  "/:userId/payment-method/:paymentId",
+  user_controllers.updatePaymentMethod
+);
+
+// Set default payment method
+userRoute.patch(
+  "/:userId/payment-method/:paymentId/setDefault",
+  user_controllers.setDefaultPaymentMethod
+);
+
+// Delete payment method
+userRoute.delete(
+  "/:userId/payment-method/:paymentId",
+  user_controllers.deletePaymentMethod
+);
+
 export default userRoute;
-
-

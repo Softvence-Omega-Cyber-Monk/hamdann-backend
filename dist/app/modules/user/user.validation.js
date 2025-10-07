@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.update_user = exports.create_user = void 0;
-// Create user schema (already exists)
 const zod_1 = require("zod");
+// Create user schema
 exports.create_user = zod_1.z
     .object({
     role: zod_1.z.enum(["Admin", "Buyer", "Saler"]),
@@ -18,13 +18,15 @@ exports.create_user = zod_1.z
         streetAddress: zod_1.z.string().optional(),
     })
         .optional(),
-    paymentMethod: zod_1.z
-        .object({
+    paymentMethods: zod_1.z
+        .array(zod_1.z.object({
+        _id: zod_1.z.string().optional(),
         method: zod_1.z.string().optional(),
-        cardNumber: zod_1.z.string().optional(),
+        cardNumber: zod_1.z.number().optional(),
         expiryDate: zod_1.z.string().optional(),
         cvv: zod_1.z.number().optional(),
-    })
+        isDefault: zod_1.z.boolean().optional(),
+    }))
         .optional(),
     Preferences: zod_1.z.enum(["Fashion", "Food", "Beauty", "Perfume"]).optional(),
     businessInfo: zod_1.z
@@ -42,7 +44,7 @@ exports.create_user = zod_1.z
     message: "Passwords do not match",
     path: ["confirmPassword"],
 });
-// ✅ Update user schema
+// Update user schema
 exports.update_user = zod_1.z.object({
     name: zod_1.z.string().optional(),
     email: zod_1.z.string().email().optional(),
@@ -65,12 +67,14 @@ exports.update_user = zod_1.z.object({
         businessLogo: zod_1.z.string().optional(),
     })
         .optional(),
-    paymentMethod: zod_1.z
-        .object({
+    paymentMethods: zod_1.z
+        .array(zod_1.z.object({
+        _id: zod_1.z.string().optional(),
         method: zod_1.z.string().optional(),
         cardNumber: zod_1.z.string().optional(),
-        expiryDate: zod_1.z.coerce.date().optional(),
-        cvv: zod_1.z.number().optional(),
-    })
+        expiryDate: zod_1.z.string().optional(),
+        cvv: zod_1.z.string().optional(),
+        isDefault: zod_1.z.boolean().optional(),
+    }))
         .optional(),
 });

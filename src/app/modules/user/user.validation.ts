@@ -1,6 +1,6 @@
-// Create user schema (already exists)
 import { z } from "zod";
 
+// Create user schema
 export const create_user = z
   .object({
     role: z.enum(["Admin", "Buyer", "Saler"]),
@@ -16,13 +16,17 @@ export const create_user = z
         streetAddress: z.string().optional(),
       })
       .optional(),
-    paymentMethod: z
-      .object({
-        method: z.string().optional(),
-        cardNumber: z.string().optional(),
-        expiryDate: z.string().optional(),
-        cvv: z.number().optional(),
-      })
+    paymentMethods: z
+      .array(
+        z.object({
+          _id: z.string().optional(), 
+          method: z.string().optional(),
+          cardNumber: z.number().optional(),
+          expiryDate: z.string().optional(),
+          cvv: z.number().optional(),
+          isDefault: z.boolean().optional(),
+        })
+      )
       .optional(),
     Preferences: z.enum(["Fashion", "Food", "Beauty", "Perfume"]).optional(),
     businessInfo: z
@@ -41,7 +45,7 @@ export const create_user = z
     path: ["confirmPassword"],
   });
 
-// ✅ Update user schema
+// Update user schema
 export const update_user = z.object({
   name: z.string().optional(),
   email: z.string().email().optional(),
@@ -64,13 +68,17 @@ export const update_user = z.object({
       businessLogo: z.string().optional(),
     })
     .optional(),
-    
-  paymentMethod: z
-    .object({
-      method: z.string().optional(),
-      cardNumber: z.string().optional(),
-      expiryDate: z.coerce.date().optional(),
-      cvv: z.number().optional(),
-    })
+
+  paymentMethods: z
+    .array(
+      z.object({
+        _id: z.string().optional(),
+        method: z.string().optional(),
+        cardNumber: z.string().optional(),
+        expiryDate: z.string().optional(),
+        cvv: z.string().optional(),
+        isDefault: z.boolean().optional(),
+      })
+    )
     .optional(),
 });

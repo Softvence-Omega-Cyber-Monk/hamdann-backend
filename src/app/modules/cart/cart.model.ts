@@ -13,13 +13,13 @@ const CartItemSchema = new Schema<ICartItem>(
 
 export interface ICart extends Document {
   userId: Schema.Types.ObjectId;
-  items: ICartItem; // Array of cart items
+  items: ICartItem[]; // Array of cart items
 }
 
 const CartSchema = new Schema<ICart>(
   {
     userId: { type: Schema.Types.ObjectId, ref: "user", required: true },
-    items: { type: CartItemSchema, required: true }, // Array of CartItems
+    items: { type: [CartItemSchema], required: true }, 
   },
   { timestamps: true }
 );

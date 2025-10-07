@@ -78,6 +78,52 @@ exports.user_service = {
         return user;
     }),
 };
+// 🟢 Add new payment method
+const addPaymentMethodService = (userId, paymentData) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = yield user_schema_1.User_Model.findById(userId);
+    if (!user)
+        throw new Error("User not found");
+    user.paymentMethods = user.paymentMethods || [];
+    user.paymentMethods.push(paymentData);
+    yield user.save();
+    yield user.save();
+    return user;
+});
+// 🟡 Update specific payment method
+const updatePaymentMethodService = (userId, paymentId, updateData) => __awaiter(void 0, void 0, void 0, function* () {
+    const updatedUser = yield user_schema_1.User_Model.findOneAndUpdate({ _id: userId, "paymentMethods._id": paymentId }, {
+        $set: {
+            "paymentMethods.$.method": updateData.method,
+            "paymentMethods.$.cardNumber": updateData.cardNumber,
+            "paymentMethods.$.expiryDate": updateData.expiryDate,
+            "paymentMethods.$.cvv": updateData.cvv,
+        },
+    }, { new: true });
+    if (!updatedUser)
+        throw new Error("Payment method not found");
+    return updatedUser;
+});
+// 🟠 Set one payment method as default
+const setDefaultPaymentMethodService = (userId, paymentId) => __awaiter(void 0, void 0, void 0, function* () {
+    // Step 1: unset all defaults
+    yield user_schema_1.User_Model.updateOne({ _id: userId }, { $set: { "paymentMethods.$[].isDefault": false } });
+    // Step 2: set selected as default
+    const updatedUser = yield user_schema_1.User_Model.findOneAndUpdate({ _id: userId, "paymentMethods._id": paymentId }, { $set: { "paymentMethods.$.isDefault": true } }, { new: true });
+    if (!updatedUser)
+        throw new Error("Payment method not found");
+    return updatedUser;
+});
+// 🔴 Delete a payment method
+const deletePaymentMethodService = (userId, paymentId) => __awaiter(void 0, void 0, void 0, function* () {
+    const updatedUser = yield user_schema_1.User_Model.findByIdAndUpdate(userId, { $pull: { paymentMethods: { _id: paymentId } } }, { new: true });
+    if (!updatedUser)
+        throw new Error("Payment method not found");
+    return updatedUser;
+});
 exports.user_services = {
     user_service: exports.user_service,
+    addPaymentMethodService,
+    updatePaymentMethodService,
+    setDefaultPaymentMethodService,
+    deletePaymentMethodService,
 };

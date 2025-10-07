@@ -121,6 +121,20 @@ const getWishlistedProductsService = (req, res) => __awaiter(void 0, void 0, voi
         res.status(500).json({ success: false, message: error.message });
     }
 });
+const removeProductsWishlist = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { productIds } = req.body;
+        console.log('Received product IDs:', productIds);
+        const product = yield products_service_1.productService.removeProductsWishlist(productIds);
+        if (!product) {
+            return res
+                .status(404)
+                .json({ success: false, message: "Products not found" });
+        }
+        res.status(200).json({ success: true, data: product });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: error.message });
 const getProductStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const stats = yield products_service_1.productService.getProductStatsService();
@@ -145,5 +159,6 @@ exports.productController = {
     getNewArrivalsProductsService,
     getBestSellingProductsService,
     getWishlistedProductsService,
+    removeProductsWishlist
     getProductStats,
 };

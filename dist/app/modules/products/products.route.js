@@ -9,12 +9,14 @@ const products_controller_1 = require("./products.controller");
 const router = express_1.default.Router();
 router.post("/create", products_controller_1.productController.createProduct); // ✅ Create product
 router.put("/update/:id", products_controller_1.productController.updateProduct); // ✅ Update product
-router.get("/getAll", products_controller_1.productController.getAllProducts); // ✅ Get all products
+// ✅ Get all products
 router.get("/getSingle/:id", products_controller_1.productController.getSingleProduct); // ✅ Get single product
+router.get("/getAll", products_controller_1.productController.getAllProducts);
 router.get("/getSingleCategory/:category", products_controller_1.productController.getProductByCategoryService);
 router.get("/getNewArrivals", products_controller_1.productController.getNewArrivalsProductsService);
 router.get("/getBestSelling", products_controller_1.productController.getBestSellingProductsService);
 router.put("/update/wishList/:productId", products_controller_1.productController.getWishlistedProductsService);
+router.put("/remove/wishList", products_controller_1.productController.removeProductsWishlist);
 // New route for product statistics
 router.get("/stats", products_controller_1.productController.getProductStats);
 exports.productRoutes = router;

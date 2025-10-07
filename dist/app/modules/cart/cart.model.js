@@ -10,6 +10,6 @@ const CartItemSchema = new mongoose_1.Schema({
 }, { _id: false });
 const CartSchema = new mongoose_1.Schema({
     userId: { type: mongoose_1.Schema.Types.ObjectId, ref: "user", required: true },
-    items: { type: CartItemSchema, required: true }, // Array of CartItems
+    items: { type: [CartItemSchema], required: true },
 }, { timestamps: true });
 exports.Cart = (0, mongoose_1.model)("Cart", CartSchema);

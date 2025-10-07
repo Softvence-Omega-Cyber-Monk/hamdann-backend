@@ -65,10 +65,66 @@ const delete_user = (0, catch_async_1.default)((req, res) => __awaiter(void 0, v
         data: result,
     });
 }));
+
+const addPaymentMethod = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId } = req.params;
+        const paymentData = req.body;
+        const result = yield user_service_1.user_services.addPaymentMethodService(userId, paymentData);
+        res.status(201).json({
+            success: true,
+            message: "Payment method added successfully",
+            data: result,
+        });
+    }
+    catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+});
+// ✏️ Update payment method
+const updatePaymentMethod = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId, paymentId } = req.params;
+        const result = yield user_service_1.user_services.updatePaymentMethodService(userId, paymentId, req.body);
+        res.json({ success: true, message: "Payment method updated", data: result });
+    }
+    catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+});
+// 🌟 Set default payment method
+const setDefaultPaymentMethod = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId, paymentId } = req.params;
+        const result = yield user_service_1.user_services.setDefaultPaymentMethodService(userId, paymentId);
+        res.json({ success: true, message: "Default payment method set", data: result });
+    }
+    catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+});
+// ❌ Delete payment method
+const deletePaymentMethod = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId, paymentId } = req.params;
+        const result = yield user_service_1.user_services.deletePaymentMethodService(userId, paymentId);
+        res.json({ success: true, message: "Payment method deleted", data: result });
+    }
+    catch (error) {
+        res.status(400).json({ success: false, message: error.message });
+    }
+});
+
 exports.user_controllers = {
     create_user,
     get_single_user,
     get_all_users,
     update_single_user,
     delete_user,
+
+    addPaymentMethod,
+    updatePaymentMethod,
+    setDefaultPaymentMethod,
+    deletePaymentMethod
+
 };
