@@ -52,7 +52,7 @@ userRoute.put(
 
 // Set default payment method
 userRoute.patch(
-  "/:userId/payment-method/:paymentId/default",
+  "/:userId/payment-method/:paymentId/setDefault",
   user_controllers.setDefaultPaymentMethod
 );
 
