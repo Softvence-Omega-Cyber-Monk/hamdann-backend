@@ -42,7 +42,7 @@ export const user_service = {
   updateUser: async (
     id: string,
     updateData: Partial<
-      Pick<TUser, "name" | "email" | "address" | "paymentMethod">
+      Pick<TUser, "name" | "email" | "address" | "paymentMethods">
     >
   ) => {
     if (!Types.ObjectId.isValid(id)) throw new Error("Invalid user ID");
@@ -59,7 +59,22 @@ export const user_service = {
       });
       if (emailExists) throw new Error("Email already in use by another user");
     }
-    console.log("updateData:", updateData);
+
+    const updatePayload: any = {};
+
+    // Only update fields that are present in updateData
+    if (updateData.name) updatePayload.name = updateData.name;
+    if (updateData.email) updatePayload.email = updateData.email;
+    if (updateData.address) updatePayload.address = updateData.address;
+
+    // Handle paymentMethods carefully
+    if (updateData.paymentMethods) {
+      updatePayload.paymentMethods = [
+        ...(existingUser.paymentMethods || []),
+        ...updateData.paymentMethods,
+      ];
+    }
+
     // Update user and return updated document
     const updatedUser = await User_Model.findByIdAndUpdate(id, updateData, {
       new: true,

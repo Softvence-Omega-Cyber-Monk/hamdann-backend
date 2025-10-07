@@ -19,11 +19,11 @@ export const create_user = z
     paymentMethods: z
       .array(
         z.object({
-          _id: z.string().optional(), // needed when updating or deleting
+          _id: z.string().optional(), 
           method: z.string().optional(),
-          cardNumber: z.numb().optional(),
+          cardNumber: z.number().optional(),
           expiryDate: z.string().optional(),
-          cvv: z.string().optional(),
+          cvv: z.number().optional(),
           isDefault: z.boolean().optional(),
         })
       )

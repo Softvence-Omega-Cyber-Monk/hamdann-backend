@@ -36,4 +36,6 @@ userRoute.put(
 // Soft delete user
 userRoute.put("/delete/:id", user_controllers.delete_user);
 
+
+
 export default userRoute;
