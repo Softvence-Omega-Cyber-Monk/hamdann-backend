@@ -65,6 +65,9 @@ const removeProductsWishlist = async (productIds: string[]) => {
   const updatedProducts = await Product.find({ _id: { $in: productIds } });
   return updatedProducts;
 // Product statistics
+
+}
+
 const getProductStatsService = async () => {
   // Total Products count
   const totalProducts = await Product.countDocuments();

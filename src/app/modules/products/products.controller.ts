@@ -186,6 +186,6 @@ export const productController = {
   getNewArrivalsProductsService,
   getBestSellingProductsService,
   getWishlistedProductsService,
-  removeProductsWishlist
+  removeProductsWishlist,
   getProductStats,
 };
