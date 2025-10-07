@@ -52,6 +52,20 @@ const getWishlistedProductsService = async (
   return wishListedProducts;
 };
 
+const removeProductsWishlist = async (productIds: string[]) => {
+  // Set `isWishlisted` to false for multiple products
+  console.log('Product IDs to update:', productIds);
+  const result = await Product.updateMany(
+    { _id: { $in: productIds } },
+    { $set: { isWishlisted: false } }
+  );
+
+  console.log('Update result:', result);
+  // Return updated products
+  const updatedProducts = await Product.find({ _id: { $in: productIds } });
+  return updatedProducts;
+};
+
 export const productService = {
   createProductService,
   updateProductService,
@@ -61,4 +75,5 @@ export const productService = {
   getNewArrivalsProductsService,
   getBestSellingProductsService,
   getWishlistedProductsService,
+  removeProductsWishlist,
 };

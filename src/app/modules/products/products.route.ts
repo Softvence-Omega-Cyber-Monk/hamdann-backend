@@ -12,5 +12,6 @@ router.get("/getSingleCategory/:category", productController.getProductByCategor
 router.get("/getNewArrivals", productController.getNewArrivalsProductsService);     
 router.get("/getBestSelling", productController.getBestSellingProductsService);   
 router.put("/update/wishList/:productId", productController.getWishlistedProductsService);   
+router.put("/remove/wishList", productController.removeProductsWishlist);   
 
 export const productRoutes = router;
