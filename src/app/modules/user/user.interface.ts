@@ -8,9 +8,9 @@ export type TAddress = {
 };
 
 export type TPaymentMethod = {
-  _id?: string; // 👈 paymentId used for update/delete
+  _id?: Types.ObjectId; // 👈 paymentId used for update/delete
   method: "Visa" | "Mastercard" | "PayPal" | "Bank Transfer";
-  cardNumber: string;
+  cardNumber: number;
   expiryDate: string;
   cvv: number;
   isDefault?: boolean;

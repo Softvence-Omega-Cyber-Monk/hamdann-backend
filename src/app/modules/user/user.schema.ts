@@ -9,7 +9,7 @@ const PaymentMethodSchema = new Schema(
       required: true,
       enum: ["Visa", "Mastercard", "PayPal", "Bank Transfer"], // extendable
     },
-    cardNumber: { type: String, required: true },
+    cardNumber: { type: Number, required: true },
     expiryDate: { type: String, required: true },
     cvv: { type: Number, required: true },
     isDefault: { type: Boolean, default: false },
