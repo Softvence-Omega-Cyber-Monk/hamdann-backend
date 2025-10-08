@@ -1,7 +1,9 @@
-
+import { Types } from "mongoose";
+import { Type } from "typescript";
 
 export interface IProduct {
   _id?: string;
+  userId: Types.ObjectId;
   name: string;
   sku: string;
   category: "Fashion" | "Food" | "Beauty" | "Perfume";

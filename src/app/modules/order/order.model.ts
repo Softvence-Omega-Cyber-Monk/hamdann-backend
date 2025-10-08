@@ -92,6 +92,7 @@ const OrderSchema = new Schema<IOrder>(
         "out_for_delivery",
         "delivered",
         "cancelled",
+        "returned"
       ],
       default: "placed",
     },

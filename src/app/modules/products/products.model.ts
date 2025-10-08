@@ -5,6 +5,7 @@ import { IProduct } from "./products.interface";
 const ProductSchema = new Schema<IProduct>(
   {
     name: { type: String, required: true, trim: true },
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     sku: { type: String, required: true, unique: true, trim: true },
     category: {
       type: String,
