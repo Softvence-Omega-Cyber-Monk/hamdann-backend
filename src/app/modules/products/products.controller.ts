@@ -8,7 +8,7 @@ import { productService } from "./products.service";
 
 export const createProduct = async (req: Request, res: Response) => {
   try {
-    console.log("Uploaded file(s):", req.file || req.files);
+    // console.log("Uploaded file(s):", req.file || req.files);
 
     const singleFile = req.file as Express.Multer.File;
     const multipleFiles = req.files as Express.Multer.File[];
@@ -18,7 +18,6 @@ export const createProduct = async (req: Request, res: Response) => {
       singleFile || multipleFiles // Pass whichever exists
     );
 
-    console.log("Created product:", product);
 
     res.status(201).json({ success: true, data: product });
   } catch (error: any) {
