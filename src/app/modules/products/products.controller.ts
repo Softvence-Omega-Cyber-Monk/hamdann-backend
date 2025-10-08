@@ -8,20 +8,20 @@ import { productService } from "./products.service";
 
 const createProduct = async (req: Request, res: Response) => {
   try {
+    // console.log("Uploaded file(s):", req.file || req.files);
+
+    const singleFile = req.file as Express.Multer.File;
+    const multipleFiles = req.files as Express.Multer.File[];
+
+    const product = await productService.createProductService(
+      req.body,
+      singleFile || multipleFiles // Pass whichever exists
+    );
 
 
-    
-
-
-  
-
-  
-
-
-  
-    const product = await productService.createProductService(req.body);
     res.status(201).json({ success: true, data: product });
   } catch (error: any) {
+    console.error("Error creating product:", error);
     res.status(400).json({ success: false, message: error.message });
   }
 };
@@ -29,10 +29,7 @@ const createProduct = async (req: Request, res: Response) => {
 const updateProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const product = await productService.updateProductService(
-      id,
-      req.body
-    );
+    const product = await productService.updateProductService(id, req.body);
 
     if (!product) {
       return res
@@ -177,6 +174,31 @@ const getProductStats = async (req: Request, res: Response) => {
   }
 };
 
+
+
+export const addReviewToProduct = async (req: Request, res: Response) => {
+  try {
+    const { productId } = req.params;
+    const { rating, comment } = req.body;
+    const userId = req.body.userId; // Assuming userId is sent in the request body
+
+    // Basic validation
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ success: false, message: "Rating must be between 1 and 5" });
+    }
+
+    const updatedProduct = await productService.addProductReviewService(productId,userId, { rating, comment  });
+
+    res.status(200).json({
+      success: true,
+      message: "Review added successfully",
+      data: updatedProduct,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 export const productController = {
   createProduct,
   updateProduct,
@@ -188,4 +210,5 @@ export const productController = {
   getWishlistedProductsService,
   removeProductsWishlist,
   getProductStats,
+  addReviewToProduct
 };

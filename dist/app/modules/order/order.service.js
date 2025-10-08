@@ -84,9 +84,33 @@ const updateOrder = (orderId, updateData) => __awaiter(void 0, void 0, void 0, f
         throw new Error(`Failed to update order: ${error.message}`);
     }
 });
+const getCurrentOrdersService = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const currentStatuses = [
+        "placed",
+        "payment_processed",
+        "shipped",
+        "out_for_delivery",
+    ];
+    const orders = yield order_model_1.Order.find({
+        userId,
+        status: { $in: currentStatuses },
+    }).sort({ createdAt: -1 });
+    return orders;
+});
+// 🟣 Get previous (completed/cancelled) orders
+const getPreviousOrdersService = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const previousStatuses = ["delivered", "cancelled", "returned"];
+    const orders = yield order_model_1.Order.find({
+        userId,
+        status: { $in: previousStatuses },
+    }).sort({ createdAt: -1 });
+    return orders;
+});
 exports.OrderService = {
     createOrder,
     getAllOrders,
     getOrderById,
     updateOrder,
+    getCurrentOrdersService,
+    getPreviousOrdersService,
 };

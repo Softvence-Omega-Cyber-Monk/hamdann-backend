@@ -61,9 +61,46 @@ const updateOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         res.status(400).json({ success: false, message: error.message });
     }
 });
+const getCurrentOrders = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId } = req.params;
+        const result = yield order_service_1.OrderService.getCurrentOrdersService(userId);
+        res.status(200).json({
+            success: true,
+            message: "Current orders fetched successfully",
+            data: result,
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to fetch current orders",
+        });
+    }
+});
+// 🟣 Get previous orders
+const getPreviousOrders = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId } = req.params;
+        const result = yield order_service_1.OrderService.getPreviousOrdersService(userId);
+        res.status(200).json({
+            success: true,
+            message: "Previous orders fetched successfully",
+            data: result,
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to fetch previous orders",
+        });
+    }
+});
 exports.OrderController = {
     createOrder,
     getAllOrders,
     getOrderById,
     updateOrder,
+    getCurrentOrders,
+    getPreviousOrders,
 };

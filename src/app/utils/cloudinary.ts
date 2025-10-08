@@ -4,7 +4,9 @@ import { v2 as cloudinary } from "cloudinary";
 import fs from "fs/promises";
 import { configs } from "../configs";
 
-// Function to delete a file from the local filesystem
+// -----------------------------
+// 🧹 Delete local file
+// -----------------------------
 export const deleteFile = async (filePath: string) => {
   try {
     await fs.unlink(filePath);
@@ -14,7 +16,6 @@ export const deleteFile = async (filePath: string) => {
   }
 };
 
-// Function to upload an image to Cloudinary
 export const uploadImgToCloudinary = async (
   name: string,
   filePath: string,
@@ -28,9 +29,9 @@ export const uploadImgToCloudinary = async (
 
   try {
     const uploadResult = await cloudinary.uploader.upload(filePath, {
-      folder: folder,
-      timeout: 60000, // 60 seconds timeout
+      folder,
       public_id: name,
+      timeout: 60000,
     });
 
     return uploadResult;
@@ -38,12 +39,10 @@ export const uploadImgToCloudinary = async (
     console.error("Error uploading image to Cloudinary:", error);
     throw new Error("Image upload failed");
   } finally {
-    // ✅ Always clean up local file (success or fail)
-    await deleteFile(filePath);
+    await deleteFile(filePath); // Always clean up
   }
 };
 
-// Function to handle multiple image uploads with auto-generated names
 export const uploadMultipleImages = async (
   filePaths: string[],
   folder: string
@@ -52,11 +51,9 @@ export const uploadMultipleImages = async (
     const imageUrls: string[] = [];
 
     for (const filePath of filePaths) {
-      // Generate a unique name for each image
       const imageName = `${Math.floor(
         100 + Math.random() * 900
       )}-${Date.now()}`;
-
       const uploadResult = await uploadImgToCloudinary(
         imageName,
         filePath,
@@ -79,9 +76,7 @@ export const deleteImageFromCloudinary = async (publicId: string) => {
     api_secret: configs.cloudinary.cloud_api_secret,
   });
 
-  console.log("Deleting image from Cloudinary with public ID:", publicId);
   try {
-    // Delete the image from Cloudinary using its public ID
     const result = await cloudinary.uploader.destroy(publicId);
     return result;
   } catch (error) {
@@ -90,24 +85,32 @@ export const deleteImageFromCloudinary = async (publicId: string) => {
   }
 };
 
-// Multer storage configuration for local file saving
+// -----------------------------
+// 🗂️ Multer setup for local uploads
+// -----------------------------
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(process.cwd(), "uploads")); // Define folder for temporary file storage
+    cb(null, path.join(process.cwd(), "uploads")); // temp folder
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-
-    //cb(null, file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname));
-    cb(null, file.fieldname + "-" + uniqueSuffix); // Generate unique file name
+    cb(
+      null,
+      file.fieldname + "-" + uniqueSuffix + path.extname(file.originalname)
+    );
   },
 });
 
-// Multer upload setup
-export const upload = multer({ storage: storage });
+export const upload = multer({ storage }); // Single file or fields
+
+// Single image upload (req.file)
+export const uploadSingle = upload.single("image");
+
+// Multiple image upload (req.files)
 export const uploadMultiple = upload.array("images", 30);
 
-export const Multiupload = multer({ storage }).fields([
+// Fields-based upload (req.files.photo1, req.files.photo2)
+export const MultiUpload = upload.fields([
   { name: "photo1", maxCount: 1 },
-  { name: "photo2", maxCount: 1 }, // optional
+  { name: "photo2", maxCount: 1 },
 ]);

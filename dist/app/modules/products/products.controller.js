@@ -9,24 +9,27 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productController = void 0;
-const products_validation_1 = require("./products.validation");
+exports.productController = exports.addReviewToProduct = exports.createProduct = void 0;
 const products_service_1 = require("./products.service");
 const createProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const validatedData = products_validation_1.CreateProductSchema.parse(req.body);
-        const product = yield products_service_1.productService.createProductService(validatedData);
+        // console.log("Uploaded file(s):", req.file || req.files);
+        const singleFile = req.file;
+        const multipleFiles = req.files;
+        const product = yield products_service_1.productService.createProductService(req.body, singleFile || multipleFiles // Pass whichever exists
+        );
         res.status(201).json({ success: true, data: product });
     }
     catch (error) {
+        console.error("Error creating product:", error);
         res.status(400).json({ success: false, message: error.message });
     }
 });
+exports.createProduct = createProduct;
 const updateProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        const validatedData = products_validation_1.UpdateProductSchema.parse(req.body);
-        const product = yield products_service_1.productService.updateProductService(id, validatedData);
+        const product = yield products_service_1.productService.updateProductService(id, req.body);
         if (!product) {
             return res
                 .status(404)
@@ -124,7 +127,7 @@ const getWishlistedProductsService = (req, res) => __awaiter(void 0, void 0, voi
 const removeProductsWishlist = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { productIds } = req.body;
-        console.log('Received product IDs:', productIds);
+        console.log("Received product IDs:", productIds);
         const product = yield products_service_1.productService.removeProductsWishlist(productIds);
         if (!product) {
             return res
@@ -142,18 +145,38 @@ const getProductStats = (req, res) => __awaiter(void 0, void 0, void 0, function
         const stats = yield products_service_1.productService.getProductStatsService();
         res.status(200).json({
             success: true,
-            data: stats
+            data: stats,
         });
     }
     catch (error) {
         res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message,
         });
     }
 });
+const addReviewToProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { productId } = req.params;
+        const { rating, comment } = req.body;
+        // Basic validation
+        if (!rating || rating < 1 || rating > 5) {
+            return res.status(400).json({ success: false, message: "Rating must be between 1 and 5" });
+        }
+        const updatedProduct = yield products_service_1.productService.addProductReviewService(productId, { rating, comment });
+        res.status(200).json({
+            success: true,
+            message: "Review added successfully",
+            data: updatedProduct,
+        });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+exports.addReviewToProduct = addReviewToProduct;
 exports.productController = {
-    createProduct,
+    createProduct: exports.createProduct,
     updateProduct,
     getAllProducts,
     getSingleProduct,
@@ -163,4 +186,5 @@ exports.productController = {
     getWishlistedProductsService,
     removeProductsWishlist,
     getProductStats,
+    addReviewToProduct: exports.addReviewToProduct
 };

@@ -1,6 +1,14 @@
 import { Request, Response } from "express";
-import { CreatePromotionSchema, UpdatePromotionSchema } from "./promotion.validation";
-import { createPromotionService, getPromotionService, getAllPromotionsService, updatePromotionService } from "./promotion.service";
+import {
+  CreatePromotionSchema,
+  UpdatePromotionSchema,
+} from "./promotion.validation";
+import {
+  createPromotionService,
+  getPromotionService,
+  getAllPromotionsService,
+  updatePromotionService,
+} from "./promotion.service";
 import { PromotionModel } from "./promotion.model";
 import { IPromotion } from "./promotion.interface";
 import { v2 as cloudinary } from "cloudinary";
@@ -22,8 +30,7 @@ export const createPromotion = async (req: Request, res: Response) => {
 
     // Only upload if a file exists
     if (req.file?.buffer) {
-
-        // console.log("Buffer", req.file?.buffer);
+      // console.log("Buffer", req.file?.buffer);
       const result: any = await new Promise((resolve, reject) => {
         const stream = cloudinary.uploader.upload_stream(
           { folder: "promotions" },
@@ -37,7 +44,6 @@ export const createPromotion = async (req: Request, res: Response) => {
 
       imageUrl = result.secure_url;
     }
-    
 
     // Prepare data to save
     const dataToSave: IPromotion = {
@@ -61,7 +67,6 @@ export const createPromotion = async (req: Request, res: Response) => {
 // Get single promotion
 export const getPromotion = async (req: Request, res: Response) => {
   try {
-
     const { id } = req.params;
 
     const promotion = await getPromotionService(id);
@@ -75,9 +80,7 @@ export const getPromotion = async (req: Request, res: Response) => {
 // Get all promotions
 export const getAllPromotions = async (req: Request, res: Response) => {
   try {
-
-
-    console.log("Route hit")
+    console.log("Route hit");
     const promotion = await getAllPromotionsService();
     res.status(200).json({ success: true, data: promotion });
   } catch (error: any) {
@@ -138,13 +141,14 @@ export const updatePromotion = async (req: Request, res: Response) => {
   }
 };
 
-
 // Pause Promotion
 export const pausePromotion = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    const updatedPromotion = await updatePromotionService(id, { isActive: false });
+    const updatedPromotion = await updatePromotionService(id, {
+      isActive: false,
+    });
 
     res.status(200).json({
       success: true,

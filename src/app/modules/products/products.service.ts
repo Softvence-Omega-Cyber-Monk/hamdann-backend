@@ -1,10 +1,43 @@
 import { Product } from "./products.model";
 import { IProduct } from "./products.interface";
+import {
+  uploadImgToCloudinary,
+  uploadMultipleImages,
+} from "../../utils/cloudinary";
+import { User_Model } from "../user/user.schema";
+
+interface ReviewInput {
+  rating: number;
+  comment?: string;
+}
+
+export const createProductService = async (
+  payload: IProduct,
+  imageInput: Express.Multer.File | Express.Multer.File[]
+) => {
+  let imageUrls: string[] = [];
+
+  if (Array.isArray(imageInput)) {
+    // Multiple images
+    const filePaths = imageInput.map((file) => file.path);
+    imageUrls = await uploadMultipleImages(filePaths, "Products");
+  } else if (imageInput) {
+    // Single image
+    const result = await uploadImgToCloudinary(
+      imageInput.filename,
+      imageInput.path,
+      "Products"
+    );
+    imageUrls = [result.secure_url];
+  }
+
+  const productPayload = {
+    ...payload,
+    productImages: imageUrls,
+  };
 import mongoose from "mongoose";
 
-const createProductService = async (payload: IProduct) => {
-  // console.log('product payload in service ', payload);
-  const product = await Product.create(payload);
+  const product = await Product.create(productPayload);
   return product;
 };
 
@@ -30,14 +63,14 @@ const getProductByCategoryService = async (category: string) => {
 const getNewArrivalsProductsService = async () => {
   const newArrivals = await Product.find({
     createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, // Filter for the last 30 days
-  }).sort({ createdAt: -1 }); // Sort by creation date in descending order (most recent first)
+  }).sort({ createdAt: -1 });
 
   return newArrivals;
 };
 const getBestSellingProductsService = async () => {
   const bestSellingProducts = await Product.find()
     .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
-    .limit(10); // Limit the result to top 10 best sellers (you can adjust the number as needed)
+    .limit(10);
 
   return bestSellingProducts;
 };
@@ -119,6 +152,44 @@ const getProductStatsService = async (userId: string) => {
   };
 };
 
+export const addProductReviewService = async (
+  productId: string,
+  userId: string,
+  review: ReviewInput
+) => {
+
+  console.log('dkfsdlf', userId, review)
+  const existingUser = await User_Model.findById({ _id: userId });
+
+
+  const product = (await Product.findById(productId)) as any;
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  const reviewData = {
+    ...review,
+    userId : existingUser?.name
+  }
+
+  console.log('reaq ', reviewData)
+  // Add the new review
+  product.reviews.push(reviewData);
+
+  // Update average rating
+  const totalReviews = product.reviews.length;
+  const totalRating = product.reviews.reduce(
+    (sum: any, r: { rating: any }) => sum + (r.rating || 0),
+    0
+  );
+  product.averageRating = totalRating / totalReviews;
+
+  await product.save();
+
+  return product;
+};
+
 export const productService = {
   createProductService,
   updateProductService,
@@ -130,4 +201,5 @@ export const productService = {
   getWishlistedProductsService,
   removeProductsWishlist,
   getProductStatsService,
+  addProductReviewService,
 };

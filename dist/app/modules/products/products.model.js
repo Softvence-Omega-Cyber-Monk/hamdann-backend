@@ -35,13 +35,13 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Product = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const ProductVariationSchema = new mongoose_1.Schema({
-    image: { type: String },
-    color: { type: String },
-    size: { type: String },
-});
 const ProductSchema = new mongoose_1.Schema({
     name: { type: String, required: true, trim: true },
+    userId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
+    },
     sku: { type: String, required: true, unique: true, trim: true },
     category: {
         type: String,
@@ -58,10 +58,17 @@ const ProductSchema = new mongoose_1.Schema({
     },
     availableSizes: [{ type: String }],
     availableColors: [{ type: String }],
-    variations: [ProductVariationSchema],
+    variations: [{ type: String }], // e.g., ["Red - M", "Blue - L"]
     description: { type: String, required: true },
     quantity: { type: Number, required: true, default: 0 },
     price: { type: Number, required: true },
+    reviews: [
+        {
+            rating: { type: Number, required: true, min: 1, max: 5 },
+            comment: { type: String },
+        },
+    ],
+    averageRating: { type: Number, default: 0 },
     productImages: [{ type: String, required: true }],
     salesCount: { type: Number, default: 0 }, // Flag for best-selling
     isNewArrival: { type: Boolean, default: false }, // Flag for new arrival

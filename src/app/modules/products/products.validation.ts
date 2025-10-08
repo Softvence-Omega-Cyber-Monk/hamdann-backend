@@ -23,6 +23,16 @@ export const ProductSchema = z.object({
   productImages: z
     .array(z.string().url("Must be a valid URL"))
     .min(1, "At least one image is required"),
+  reviews: z
+    .array(
+      z.object({
+        userId: z.string(),
+        rating: z.number().min(1).max(5),
+        comment: z.string().optional(),
+      })
+    )
+    .optional(),
+  averageRating: z.number().min(0).max(5).optional(),
   salesCount: z.number().min(0).default(0),
   isNewArrival: z.boolean().default(false),
   isWishlisted: z.boolean().default(false),

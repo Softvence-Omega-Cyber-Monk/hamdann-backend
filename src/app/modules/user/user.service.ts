@@ -37,6 +37,9 @@ export const user_service = {
   getAllUsers: async () => {
     return await User_Model.find().sort({ createdAt: -1 }); // newest first
   },
+  myProfile: async (userId: string) => {
+    return await User_Model.findOne({ _id: userId });
+  },
 
   // Update user (only name, email, address, paymentMethod)
   updateUser: async (

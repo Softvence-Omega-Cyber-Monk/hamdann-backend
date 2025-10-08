@@ -6,8 +6,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.productRoutes = void 0;
 const express_1 = __importDefault(require("express"));
 const products_controller_1 = require("./products.controller");
+const cloudinary_1 = require("../../utils/cloudinary");
 const router = express_1.default.Router();
-router.post("/create", products_controller_1.productController.createProduct); // ✅ Create product
+router.post("/create", cloudinary_1.upload.any(), products_controller_1.productController.createProduct); // ✅ Create product
 router.put("/update/:id", products_controller_1.productController.updateProduct); // ✅ Update product
 // ✅ Get all products
 router.get("/getSingle/:id", products_controller_1.productController.getSingleProduct); // ✅ Get single product
@@ -19,4 +20,5 @@ router.put("/update/wishList/:productId", products_controller_1.productControlle
 router.put("/remove/wishList", products_controller_1.productController.removeProductsWishlist);
 // New route for product statistics
 router.get("/stats", products_controller_1.productController.getProductStats);
+router.put("/addReview/:productId", products_controller_1.productController.addReviewToProduct);
 exports.productRoutes = router;
