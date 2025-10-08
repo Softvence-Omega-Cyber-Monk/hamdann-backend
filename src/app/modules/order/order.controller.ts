@@ -52,9 +52,76 @@ import { OrderService } from "./order.service";
 };
 
 
+ const getCurrentOrders = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const result = await OrderService.getCurrentOrdersService(userId);
+    res.status(200).json({
+      success: true,
+      message: "Current orders fetched successfully",
+      data: result,
+    });
+  } catch (error : any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch current orders",
+    });
+  }
+};
+
+// 🟣 Get previous orders
+ const getPreviousOrders = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const result = await OrderService.getPreviousOrdersService(userId);
+    res.status(200).json({
+      success: true,
+      message: "Previous orders fetched successfully",
+      data: result,
+    });
+  } catch (error : any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch previous orders",
+    });
+  }
+};
+
+// Add this to your existing order.controller.ts
+
+const getUserOrderStatistics = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    
+    if (!userId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "User ID is required" 
+      });
+    }
+
+    const statistics = await OrderService.getUserOrderStatistics(userId);
+    
+    res.status(200).json({
+      success: true,
+      message: "Order statistics fetched successfully",
+      data: statistics
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch order statistics"
+    });
+  }
+};
+
+
 export const OrderController = {
   createOrder,
   getAllOrders,
   getOrderById,
   updateOrder,
+  getCurrentOrders,
+  getPreviousOrders,
+  getUserOrderStatistics,
 };

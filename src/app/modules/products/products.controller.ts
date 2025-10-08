@@ -8,8 +8,18 @@ import { productService } from "./products.service";
 
 const createProduct = async (req: Request, res: Response) => {
   try {
-    const validatedData = CreateProductSchema.parse(req.body);
-    const product = await productService.createProductService(validatedData);
+
+
+    
+
+
+  
+
+  
+
+
+  
+    const product = await productService.createProductService(req.body);
     res.status(201).json({ success: true, data: product });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message });
@@ -19,10 +29,9 @@ const createProduct = async (req: Request, res: Response) => {
 const updateProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const validatedData = UpdateProductSchema.parse(req.body);
     const product = await productService.updateProductService(
       id,
-      validatedData
+      req.body
     );
 
     if (!product) {
