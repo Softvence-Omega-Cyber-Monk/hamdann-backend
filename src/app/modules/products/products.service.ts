@@ -1,9 +1,27 @@
 import { Product } from "./products.model";
 import { IProduct } from "./products.interface";
+import { uploadImgToCloudinary } from "../../utils/cloudinary";
 
-const createProductService = async (payload: IProduct) => {
+const createProductService = async (
+  payload: IProduct,
+  imagePath: Express.Multer.File
+) => {
+  const result = await uploadImgToCloudinary(
+    imagePath.filename,
+    imagePath.path,
+
+    "Products"
+  );
+
+  console.log("Cloudinary upload result:", result);
+
+  const productPayload = {
+    ...payload,
+    image: result.secure_url, // Use the URL from Cloudinary
+  };
+
   // console.log('product payload in service ', payload);
-  const product = await Product.create(payload);
+  const product = await Product.create(productPayload);
   return product;
 };
 
@@ -54,19 +72,18 @@ const getWishlistedProductsService = async (
 
 const removeProductsWishlist = async (productIds: string[]) => {
   // Set `isWishlisted` to false for multiple products
-  console.log('Product IDs to update:', productIds);
+  console.log("Product IDs to update:", productIds);
   const result = await Product.updateMany(
     { _id: { $in: productIds } },
     { $set: { isWishlisted: false } }
   );
 
-  console.log('Update result:', result);
+  console.log("Update result:", result);
   // Return updated products
   const updatedProducts = await Product.find({ _id: { $in: productIds } });
   return updatedProducts;
-// Product statistics
-
-}
+  // Product statistics
+};
 
 const getProductStatsService = async () => {
   // Total Products count
@@ -76,15 +93,15 @@ const getProductStatsService = async () => {
   const variationsResult = await Product.aggregate([
     {
       $project: {
-        variationsCount: { $size: { $ifNull: ["$variations", []] } }
-      }
+        variationsCount: { $size: { $ifNull: ["$variations", []] } },
+      },
     },
     {
       $group: {
         _id: null,
-        totalVariations: { $sum: "$variationsCount" }
-      }
-    }
+        totalVariations: { $sum: "$variationsCount" },
+      },
+    },
   ]);
   const totalVariations = variationsResult[0]?.totalVariations || 0;
 
@@ -93,9 +110,9 @@ const getProductStatsService = async () => {
     {
       $group: {
         _id: null,
-        totalUnits: { $sum: "$quantity" }
-      }
-    }
+        totalUnits: { $sum: "$quantity" },
+      },
+    },
   ]);
   const totalUnits = unitsResult[0]?.totalUnits || 0;
 
@@ -110,7 +127,7 @@ const getProductStatsService = async () => {
     totalVariations,
     // totalUnits,
     activeProducts,
-    outOfStock
+    outOfStock,
   };
 };
 

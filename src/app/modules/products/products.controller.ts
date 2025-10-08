@@ -6,25 +6,26 @@ import {
 } from "./products.validation";
 import { productService } from "./products.service";
 
-
-
 const createProduct = async (req: Request, res: Response) => {
   try {
 
 
-    console.log('request body in controller ', req.body);
+    // console.log("Body data:", req.body);
+    // console.log("Uploaded file:", req.file);
 
+    const imagePath = req.file
+      ? `/uploads/${req.file.filename}` // accessible if you serve static files
+      : undefined;
 
+    const productData = { ...req.body, image: imagePath };
+    console.log('Product data to be created:', productData);
 
+    const product = await productService.createProductService(req.body,imagePath);
 
-  
+    console.log('Created product:', product);
 
-  
-
-
-  
-    const product = await productService.createProductService(req.body);
     res.status(201).json({ success: true, data: product });
+
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message });
   }
@@ -33,10 +34,7 @@ const createProduct = async (req: Request, res: Response) => {
 const updateProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const product = await productService.updateProductService(
-      id,
-      req.body
-    );
+    const product = await productService.updateProductService(id, req.body);
 
     if (!product) {
       return res
@@ -143,12 +141,9 @@ const getWishlistedProductsService = async (req: Request, res: Response) => {
 };
 const removeProductsWishlist = async (req: Request, res: Response) => {
   try {
-    const {productIds } = req.body;
-    console.log('Received product IDs:', productIds);
-    const product = await productService.removeProductsWishlist(
-     
-      productIds
-    );
+    const { productIds } = req.body;
+    console.log("Received product IDs:", productIds);
+    const product = await productService.removeProductsWishlist(productIds);
 
     if (!product) {
       return res
@@ -165,15 +160,15 @@ const removeProductsWishlist = async (req: Request, res: Response) => {
 const getProductStats = async (req: Request, res: Response) => {
   try {
     const stats = await productService.getProductStatsService();
-    
-    res.status(200).json({ 
-      success: true, 
-      data: stats 
+
+    res.status(200).json({
+      success: true,
+      data: stats,
     });
   } catch (error: any) {
-    res.status(500).json({ 
-      success: false, 
-      message: error.message 
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };
