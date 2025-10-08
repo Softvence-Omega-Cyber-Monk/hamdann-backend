@@ -5,6 +5,7 @@ import {
   uploadMultipleImages,
 } from "../../utils/cloudinary";
 import { User_Model } from "../user/user.schema";
+import mongoose from "mongoose";
 
 interface ReviewInput {
   rating: number;
@@ -35,7 +36,7 @@ export const createProductService = async (
     ...payload,
     productImages: imageUrls,
   };
-import mongoose from "mongoose";
+
 
   const product = await Product.create(productPayload);
   return product;
