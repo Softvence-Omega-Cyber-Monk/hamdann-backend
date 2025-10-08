@@ -23,7 +23,6 @@ const ProductSchema = new Schema<IProduct>(
       enum: ["male", "female"],
       default: "male",
     },
-
     availableSizes: [{ type: String }],
     availableColors: [{ type: String }],
     variations: [{ type: String }], // e.g., ["Red - M", "Blue - L"]
@@ -32,6 +31,7 @@ const ProductSchema = new Schema<IProduct>(
     price: { type: Number, required: true },
     reviews: [
       {
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         rating: { type: Number, required: true, min: 1, max: 5 },
         comment: { type: String },
       },

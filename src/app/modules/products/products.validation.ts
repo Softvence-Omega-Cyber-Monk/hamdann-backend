@@ -26,6 +26,7 @@ export const ProductSchema = z.object({
   reviews: z
     .array(
       z.object({
+        userId: z.string().min(1, "User ID is required"),
         rating: z.number().min(1).max(5),
         comment: z.string().optional(),
       })

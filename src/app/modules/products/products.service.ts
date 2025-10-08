@@ -6,6 +6,7 @@ import {
 } from "../../utils/cloudinary";
 
 interface ReviewInput {
+  userId: string;
   rating: number;
   comment?: string;
 }
@@ -46,29 +47,41 @@ const updateProductService = async (id: string, payload: Partial<IProduct>) => {
 };
 
 const getAllProductsService = async () => {
-  const products = await Product.find();
+  const products = await Product.find().populate(
+    "reviews.userId",
+    "name email"
+  );
   return products;
 };
 
 const getSingleProductService = async (id: string) => {
-  const product = await Product.findById(id);
+  const product = await Product.findById(id).populate(
+    "reviews.userId",
+    "name email"
+  );
   return product;
 };
 const getProductByCategoryService = async (category: string) => {
-  const product = await Product.find({ category: category });
+  const product = await Product.find({ category: category }).populate(
+    "reviews.userId",
+    "name email"
+  );
   return product;
 };
 const getNewArrivalsProductsService = async () => {
   const newArrivals = await Product.find({
     createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, // Filter for the last 30 days
-  }).sort({ createdAt: -1 }); // Sort by creation date in descending order (most recent first)
+  })
+    .sort({ createdAt: -1 })
+    .populate("reviews.userId", "name email"); // Sort by creation date in descending order (most recent first)
 
   return newArrivals;
 };
 const getBestSellingProductsService = async () => {
   const bestSellingProducts = await Product.find()
     .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
-    .limit(10); // Limit the result to top 10 best sellers (you can adjust the number as needed)
+    .limit(10)
+    .populate("reviews.userId", "name email"); // Limit the result to top 10 best sellers (you can adjust the number as needed)
 
   return bestSellingProducts;
 };
@@ -161,7 +174,7 @@ export const addProductReviewService = async (
   // Update average rating
   const totalReviews = product.reviews.length;
   const totalRating = product.reviews.reduce(
-    (sum: any, r: { rating: any; }) => sum + (r.rating || 0),
+    (sum: any, r: { rating: any }) => sum + (r.rating || 0),
     0
   );
   product.averageRating = totalRating / totalReviews;
