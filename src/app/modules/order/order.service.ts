@@ -33,7 +33,6 @@ const createOrder = async (orderData: IOrder) => {
     orderData.items
   );
 
-
   try {
     const order = new Order({
       ...orderData,
@@ -100,9 +99,35 @@ const updateOrder = async (
   }
 };
 
+ const getCurrentOrdersService = async (userId: string) => {
+  const currentStatuses = [
+    "placed",
+    "payment_processed",
+    "shipped",
+    "out_for_delivery",
+  ];
+  const orders = await Order.find({
+    userId,
+    status: { $in: currentStatuses },
+  }).sort({ createdAt: -1 });
+  return orders;
+};
+
+// 🟣 Get previous (completed/cancelled) orders
+ const getPreviousOrdersService = async (userId: string) => {
+  const previousStatuses = ["delivered", "cancelled", "returned"];
+  const orders = await Order.find({
+    userId,
+    status: { $in: previousStatuses },
+  }).sort({ createdAt: -1 });
+  return orders;
+};
+
 export const OrderService = {
   createOrder,
   getAllOrders,
   getOrderById,
   updateOrder,
+  getCurrentOrdersService,
+  getPreviousOrdersService,
 };
