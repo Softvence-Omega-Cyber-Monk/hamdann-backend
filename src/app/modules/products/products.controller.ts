@@ -12,7 +12,9 @@ const createProduct = async (req: Request, res: Response) => {
   try {
 
 
-    
+    console.log('request body in controller ', req.body);
+
+
 
 
   

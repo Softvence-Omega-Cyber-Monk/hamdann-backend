@@ -1,10 +1,11 @@
 import express from "express";
 import { productController } from "./products.controller";
+import uploader from "../../middlewares/uploader";
 
 
 const router = express.Router();
 
-router.post("/create", productController.createProduct);          // ✅ Create product
+router.post("/create",uploader.single("image"), productController.createProduct);          // ✅ Create product
 router.put("/update/:id", productController.updateProduct);        // ✅ Update product
         // ✅ Get all products
 router.get("/getSingle/:id", productController.getSingleProduct);     // ✅ Get single product
