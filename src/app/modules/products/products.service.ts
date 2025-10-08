@@ -4,9 +4,9 @@ import {
   uploadImgToCloudinary,
   uploadMultipleImages,
 } from "../../utils/cloudinary";
+import { User_Model } from "../user/user.schema";
 
 interface ReviewInput {
-  userId: string;
   rating: number;
   comment?: string;
 }
@@ -47,45 +47,29 @@ const updateProductService = async (id: string, payload: Partial<IProduct>) => {
 };
 
 const getAllProductsService = async () => {
-  const products = await Product.find()
-    .populate({
-      path: "reviews.userId", // nested path
-      select: "name email ", // include more fields if needed
-    })
-    .lean();
+  const products = await Product.find();
   return products;
 };
 
 const getSingleProductService = async (id: string) => {
-  const product = await Product.findById(id)
-    .populate({
-      path: "reviews.userId", // nested path
-      select: "name email ", // include more fields if needed
-    })
-    .lean();
+  const product = await Product.findById(id);
   return product;
 };
 const getProductByCategoryService = async (category: string) => {
-  const product = await Product.find({ category: category }).populate(
-    "reviews.userId",
-    "name "
-  );
+  const product = await Product.find({ category: category });
   return product;
 };
 const getNewArrivalsProductsService = async () => {
   const newArrivals = await Product.find({
     createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, // Filter for the last 30 days
-  })
-    .sort({ createdAt: -1 })
-    .populate("reviews.userId", "name "); // Sort by creation date in descending order (most recent first)
+  }).sort({ createdAt: -1 });
 
   return newArrivals;
 };
 const getBestSellingProductsService = async () => {
   const bestSellingProducts = await Product.find()
     .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
-    .limit(10)
-    .populate("reviews.userId", "name "); // Limit the result to top 10 best sellers (you can adjust the number as needed)
+    .limit(10);
 
   return bestSellingProducts;
 };
@@ -164,8 +148,14 @@ const getProductStatsService = async () => {
 
 export const addProductReviewService = async (
   productId: string,
+  userId: string,
   review: ReviewInput
 ) => {
+
+  console.log( 'dkfljdkf', userId,review)
+  const exitUser = await User_Model.findOne({ userId: userId });
+  console.log("exiting user", exitUser);
+
   const product = (await Product.findById(productId)) as any;
 
   if (!product) {
