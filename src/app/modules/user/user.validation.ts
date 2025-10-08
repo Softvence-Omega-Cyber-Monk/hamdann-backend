@@ -3,7 +3,7 @@ import { z } from "zod";
 // Create user schema
 export const create_user = z
   .object({
-    role: z.enum(["Admin", "Buyer", "Saler"]),
+    role: z.enum(["Admin", "Buyer", "Seller"]),
     name: z.string().min(2, "Name is required"),
     email: z.string().email("Invalid email"),
     password: z.string().min(6, "Password must be at least 6 characters"),

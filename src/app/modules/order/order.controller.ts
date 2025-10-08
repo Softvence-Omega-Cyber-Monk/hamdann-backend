@@ -87,6 +87,34 @@ import { OrderService } from "./order.service";
   }
 };
 
+// Add this to your existing order.controller.ts
+
+const getUserOrderStatistics = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    
+    if (!userId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "User ID is required" 
+      });
+    }
+
+    const statistics = await OrderService.getUserOrderStatistics(userId);
+    
+    res.status(200).json({
+      success: true,
+      message: "Order statistics fetched successfully",
+      data: statistics
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch order statistics"
+    });
+  }
+};
+
 
 export const OrderController = {
   createOrder,
@@ -95,4 +123,5 @@ export const OrderController = {
   updateOrder,
   getCurrentOrders,
   getPreviousOrders,
+  getUserOrderStatistics,
 };

@@ -12,4 +12,7 @@ router.get("/current-orders/:userId", OrderController.getCurrentOrders);
 
 // Get all previous orders for a user
 router.get("/previous-orders/:userId", OrderController.getPreviousOrders);
+
+// Get order statistics
+router.get("/statistics/:userId", OrderController.getUserOrderStatistics);
 export const OrderRoute = router;

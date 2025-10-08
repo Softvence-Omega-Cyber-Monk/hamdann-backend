@@ -6,8 +6,6 @@ import {
 } from "./products.validation";
 import { productService } from "./products.service";
 
-
-
 const createProduct = async (req: Request, res: Response) => {
   try {
 
@@ -141,12 +139,9 @@ const getWishlistedProductsService = async (req: Request, res: Response) => {
 };
 const removeProductsWishlist = async (req: Request, res: Response) => {
   try {
-    const {productIds } = req.body;
-    console.log('Received product IDs:', productIds);
-    const product = await productService.removeProductsWishlist(
-     
-      productIds
-    );
+    const { productIds } = req.body;
+    console.log("Received product IDs:", productIds);
+    const product = await productService.removeProductsWishlist(productIds);
 
     if (!product) {
       return res
@@ -162,16 +157,22 @@ const removeProductsWishlist = async (req: Request, res: Response) => {
 
 const getProductStats = async (req: Request, res: Response) => {
   try {
-    const stats = await productService.getProductStatsService();
-    
-    res.status(200).json({ 
-      success: true, 
-      data: stats 
+    // Assuming auth middleware sets req.user._id
+    const {userId} = req.params;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const stats = await productService.getProductStatsService(userId);
+
+    res.status(200).json({
+      success: true,
+      data: stats,
     });
   } catch (error: any) {
-    res.status(500).json({ 
-      success: false, 
-      message: error.message 
+    res.status(500).json({
+      success: false,
+      message: error.message || "Server Error",
     });
   }
 };
