@@ -17,6 +17,8 @@ export interface IProduct {
   quantity: number;
   price: number;
   productImages?: string[];
+  reviews?: { rating: number; comment?: string }[];
+  averageRating?: number;
   salesCount: number; // Tracks the number of sales
   isNewArrival: boolean; // Flag for new arrival
   isWishlisted?: boolean; // Flag for wishlist

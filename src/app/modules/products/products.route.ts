@@ -23,4 +23,6 @@ router.put("/remove/wishList", productController.removeProductsWishlist);
 // New route for product statistics
 router.get("/stats", productController.getProductStats);
 
+router.put("/addReview/:productId", productController.addReviewToProduct);
+
 export const productRoutes = router;

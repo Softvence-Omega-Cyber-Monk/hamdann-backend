@@ -20,12 +20,20 @@ const ProductSchema = new Schema<IProduct>(
       enum: ["male", "female"],
       default: "male",
     },
+
     availableSizes: [{ type: String }],
     availableColors: [{ type: String }],
     variations: [{ type: String }], // e.g., ["Red - M", "Blue - L"]
     description: { type: String, required: true },
     quantity: { type: Number, required: true, default: 0 },
     price: { type: Number, required: true },
+    reviews: [
+      {
+        rating: { type: Number, required: true, min: 1, max: 5 },
+        comment: { type: String  },
+      },
+    ],
+    averageRating: { type: Number, default: 0 },
     productImages: [{ type: String, required: true }],
     salesCount: { type: Number, default: 0 }, // Flag for best-selling
     isNewArrival: { type: Boolean, default: false }, // Flag for new arrival

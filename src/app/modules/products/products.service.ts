@@ -1,11 +1,19 @@
 import { Product } from "./products.model";
 import { IProduct } from "./products.interface";
-import { uploadImgToCloudinary, uploadMultipleImages } from "../../utils/cloudinary";
+import {
+  uploadImgToCloudinary,
+  uploadMultipleImages,
+} from "../../utils/cloudinary";
+
+interface ReviewInput {
+  rating: number;
+  comment?: string;
+}
+
 export const createProductService = async (
   payload: IProduct,
   imageInput: Express.Multer.File | Express.Multer.File[]
 ) => {
-
   let imageUrls: string[] = [];
 
   if (Array.isArray(imageInput)) {
@@ -137,6 +145,32 @@ const getProductStatsService = async () => {
   };
 };
 
+export const addProductReviewService = async (
+  productId: string,
+  review: ReviewInput
+) => {
+  const product = (await Product.findById(productId)) as any;
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  // Add the new review
+  product.reviews.push(review);
+
+  // Update average rating
+  const totalReviews = product.reviews.length;
+  const totalRating = product.reviews.reduce(
+    (sum: any, r: { rating: any; }) => sum + (r.rating || 0),
+    0
+  );
+  product.averageRating = totalRating / totalReviews;
+
+  await product.save();
+
+  return product;
+};
+
 export const productService = {
   createProductService,
   updateProductService,
@@ -148,4 +182,5 @@ export const productService = {
   getWishlistedProductsService,
   removeProductsWishlist,
   getProductStatsService,
+  addProductReviewService,
 };
