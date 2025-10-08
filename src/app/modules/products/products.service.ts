@@ -47,24 +47,28 @@ const updateProductService = async (id: string, payload: Partial<IProduct>) => {
 };
 
 const getAllProductsService = async () => {
-  const products = await Product.find().populate(
-    "reviews.userId",
-    "name email"
-  );
+  const products = await Product.find()
+    .populate({
+      path: "reviews.userId", // nested path
+      select: "name email ", // include more fields if needed
+    })
+    .lean();
   return products;
 };
 
 const getSingleProductService = async (id: string) => {
-  const product = await Product.findById(id).populate(
-    "reviews.userId",
-    "name email"
-  );
+  const product = await Product.findById(id)
+    .populate({
+      path: "reviews.userId", // nested path
+      select: "name email ", // include more fields if needed
+    })
+    .lean();
   return product;
 };
 const getProductByCategoryService = async (category: string) => {
   const product = await Product.find({ category: category }).populate(
     "reviews.userId",
-    "name email"
+    "name "
   );
   return product;
 };
@@ -73,7 +77,7 @@ const getNewArrivalsProductsService = async () => {
     createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, // Filter for the last 30 days
   })
     .sort({ createdAt: -1 })
-    .populate("reviews.userId", "name email"); // Sort by creation date in descending order (most recent first)
+    .populate("reviews.userId", "name "); // Sort by creation date in descending order (most recent first)
 
   return newArrivals;
 };
@@ -81,7 +85,7 @@ const getBestSellingProductsService = async () => {
   const bestSellingProducts = await Product.find()
     .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
     .limit(10)
-    .populate("reviews.userId", "name email"); // Limit the result to top 10 best sellers (you can adjust the number as needed)
+    .populate("reviews.userId", "name "); // Limit the result to top 10 best sellers (you can adjust the number as needed)
 
   return bestSellingProducts;
 };
