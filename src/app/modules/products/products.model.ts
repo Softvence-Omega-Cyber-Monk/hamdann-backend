@@ -1,11 +1,6 @@
 import mongoose, { Schema } from "mongoose";
-import { IProduct, IProductVariation } from "./products.interface";
+import { IProduct } from "./products.interface";
 
-const ProductVariationSchema = new Schema<IProductVariation>({
-  image: { type: String },
-  color: { type: String },
-  size: { type: String },
-});
 
 const ProductSchema = new Schema<IProduct>(
   {
@@ -26,7 +21,7 @@ const ProductSchema = new Schema<IProduct>(
     },
     availableSizes: [{ type: String }],
     availableColors: [{ type: String }],
-    variations: [ProductVariationSchema],
+    variations: [{ type: String }], // e.g., ["Red - M", "Blue - L"]
     description: { type: String, required: true },
     quantity: { type: Number, required: true, default: 0 },
     price: { type: Number, required: true },

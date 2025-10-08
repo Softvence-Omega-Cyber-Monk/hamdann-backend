@@ -15,7 +15,7 @@ export const ProductSchema = z.object({
   gender: z.enum(["male", "female"]).default("male"),
   availableSizes: z.array(z.string()).optional(),
   availableColors: z.array(z.string()).optional(),
-  variations: z.array(ProductVariationSchema).optional(),
+  variations: z.array(z.string()).optional(), // e.g., ["Red - M", "Blue - L"]
   description: z.string().min(5, "Description must be at least 5 characters"),
   quantity: z.number().min(0, "Quantity must be 0 or more").default(0),
   price: z.number().positive("Price must be greater than 0"),

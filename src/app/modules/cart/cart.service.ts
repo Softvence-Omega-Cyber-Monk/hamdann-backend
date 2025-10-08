@@ -1,5 +1,6 @@
-import { Cart } from "./cart.model";
+
 import { ICartItem } from "./cart.interface";
+import { Cart } from "./cart.model";
 
 // Create Cart Service
 const createCart = async (userId: string, items: ICartItem[]) => {
