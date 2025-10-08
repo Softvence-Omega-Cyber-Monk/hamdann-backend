@@ -17,7 +17,7 @@ export interface IProduct {
   quantity: number;
   price: number;
   productImages?: string[];
-  reviews?: { rating: number; comment?: string ; userId :Types.ObjectId }[];
+  reviews?: { rating: number; comment?: string ; userId :string }[];
   averageRating?: number;
   salesCount: number; // Tracks the number of sales       
   isNewArrival: boolean; // Flag for new arrival      

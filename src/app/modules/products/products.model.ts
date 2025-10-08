@@ -31,13 +31,12 @@ const ProductSchema = new Schema<IProduct>(
     price: { type: Number, required: true },
     reviews: [
       {
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+        userId: { type: String, required: true },
         rating: { type: Number, required: true, min: 1, max: 5 },
         comment: { type: String },
       },
     ],
 
-    
     averageRating: { type: Number, default: 0 },
     productImages: [{ type: String, required: true }],
     salesCount: { type: Number, default: 0 }, // Flag for best-selling

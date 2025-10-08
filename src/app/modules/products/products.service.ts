@@ -152,9 +152,9 @@ export const addProductReviewService = async (
   review: ReviewInput
 ) => {
 
-  console.log( 'dkfljdkf', userId,review)
-  const exitUser = await User_Model.findOne({ userId: userId });
-  console.log("exiting user", exitUser);
+  console.log('dkfsdlf', userId, review)
+  const existingUser = await User_Model.findById({ _id: userId });
+
 
   const product = (await Product.findById(productId)) as any;
 
@@ -162,8 +162,14 @@ export const addProductReviewService = async (
     throw new Error("Product not found");
   }
 
+  const reviewData = {
+    ...review,
+    userId : existingUser?.name
+  }
+
+  console.log('reaq ', reviewData)
   // Add the new review
-  product.reviews.push(review);
+  product.reviews.push(reviewData);
 
   // Update average rating
   const totalReviews = product.reviews.length;
