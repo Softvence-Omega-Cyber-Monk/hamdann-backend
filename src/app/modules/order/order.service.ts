@@ -1,6 +1,7 @@
 import { Order } from "./order.model";
 import { IOrder, IOrderItem } from "./order.interface";
 import { Types } from "mongoose";
+import { cleanRegex } from "zod/v4/core/util.cjs";
 
 interface IOrderFilters {
   userId?: string;
@@ -123,6 +124,58 @@ const updateOrder = async (
   return orders;
 };
 
+// Add this to your existing order.service.ts
+
+const getUserOrderStatistics = async (userId: string) => {
+  try {
+    const totalOrders = await Order.countDocuments({ userId });
+
+    const pendingOrders = await Order.countDocuments({
+      userId,
+      status: { 
+        $in: ["placed", "payment_processed", "shipped", "out_for_delivery"] 
+      }
+    });
+
+    // console.log('pending orders ',pendingOrders)
+
+    const salesResult = await Order.aggregate([
+      {
+        $match: {
+          userId: new Types.ObjectId(userId),
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalSales: { $sum: "$totalAmount" }
+        }
+      }
+    ]);
+
+  // console.log('sales reslult ',salesResult)
+
+    const returnedOrders = await Order.countDocuments({
+      userId,
+      status: "returned"
+    });
+
+    const totalSales = salesResult.length > 0 ? salesResult[0].totalSales : 0;
+
+    return {
+      totalOrders,
+      pendingOrders,
+      totalSales,
+      returnedOrders
+    };
+  } catch (error: any) {
+    throw new Error(`Failed to get order statistics: ${error.message}`);
+  }
+};
+
+
+
+
 export const OrderService = {
   createOrder,
   getAllOrders,
@@ -130,4 +183,6 @@ export const OrderService = {
   updateOrder,
   getCurrentOrdersService,
   getPreviousOrdersService,
+  getUserOrderStatistics,
 };
+

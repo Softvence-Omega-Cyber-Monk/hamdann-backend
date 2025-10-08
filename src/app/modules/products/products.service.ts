@@ -35,6 +35,7 @@ export const createProductService = async (
     ...payload,
     productImages: imageUrls,
   };
+import mongoose from "mongoose";
 
   const product = await Product.create(productPayload);
   return product;
@@ -100,12 +101,14 @@ const removeProductsWishlist = async (productIds: string[]) => {
   // Product statistics
 };
 
-const getProductStatsService = async () => {
-  // Total Products count
-  const totalProducts = await Product.countDocuments();
 
-  // Total Variations - sum of variations array lengths across all products
+const getProductStatsService = async (userId: string) => {
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  const totalProducts = await Product.countDocuments({ userId: userObjectId });
+
   const variationsResult = await Product.aggregate([
+    { $match: { userId: userObjectId } },
     {
       $project: {
         variationsCount: { $size: { $ifNull: ["$variations", []] } },
@@ -120,8 +123,8 @@ const getProductStatsService = async () => {
   ]);
   const totalVariations = variationsResult[0]?.totalVariations || 0;
 
-  // Total Units - sum of quantity across all products
   const unitsResult = await Product.aggregate([
+    { $match: { userId: userObjectId } },
     {
       $group: {
         _id: null,
@@ -131,12 +134,15 @@ const getProductStatsService = async () => {
   ]);
   const totalUnits = unitsResult[0]?.totalUnits || 0;
 
-  // Active Products (quantity > 0)
-  const activeProducts = await Product.countDocuments({ quantity: { $gt: 0 } });
+  const activeProducts = await Product.countDocuments({
+    userId: userObjectId,
+    quantity: { $gt: 0 },
+  });
 
-  // Out of Stock Products (quantity = 0)
-  const outOfStock = await Product.countDocuments({ quantity: 0 });
-
+  const outOfStock = await Product.countDocuments({
+    userId: userObjectId,
+    quantity: 0,
+  });
   return {
     totalProducts,
     totalVariations,

@@ -6,7 +6,7 @@ import {
 } from "./products.validation";
 import { productService } from "./products.service";
 
-export const createProduct = async (req: Request, res: Response) => {
+const createProduct = async (req: Request, res: Response) => {
   try {
     // console.log("Uploaded file(s):", req.file || req.files);
 
@@ -154,7 +154,13 @@ const removeProductsWishlist = async (req: Request, res: Response) => {
 
 const getProductStats = async (req: Request, res: Response) => {
   try {
-    const stats = await productService.getProductStatsService();
+    // Assuming auth middleware sets req.user._id
+    const {userId} = req.params;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const stats = await productService.getProductStatsService(userId);
 
     res.status(200).json({
       success: true,
@@ -163,7 +169,7 @@ const getProductStats = async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: error.message || "Server Error",
     });
   }
 };
