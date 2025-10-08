@@ -1,11 +1,14 @@
 import mongoose, { Schema } from "mongoose";
 import { IProduct } from "./products.interface";
 
-
 const ProductSchema = new Schema<IProduct>(
   {
     name: { type: String, required: true, trim: true },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     sku: { type: String, required: true, unique: true, trim: true },
     category: {
       type: String,
@@ -30,9 +33,11 @@ const ProductSchema = new Schema<IProduct>(
     reviews: [
       {
         rating: { type: Number, required: true, min: 1, max: 5 },
-        comment: { type: String  },
+        comment: { type: String },
       },
     ],
+
+    
     averageRating: { type: Number, default: 0 },
     productImages: [{ type: String, required: true }],
     salesCount: { type: Number, default: 0 }, // Flag for best-selling
