@@ -1,26 +1,33 @@
 import { Product } from "./products.model";
 import { IProduct } from "./products.interface";
-import { uploadImgToCloudinary } from "../../utils/cloudinary";
-
-const createProductService = async (
+import { uploadImgToCloudinary, uploadMultipleImages } from "../../utils/cloudinary";
+export const createProductService = async (
   payload: IProduct,
-  imagePath: Express.Multer.File
+  imageInput: Express.Multer.File | Express.Multer.File[]
 ) => {
-  const result = await uploadImgToCloudinary(
-    imagePath.filename,
-    imagePath.path,
+  console.log("Image input received in service:", imageInput);
 
-    "Products"
-  );
+  let imageUrls: string[] = [];
 
-  console.log("Cloudinary upload result:", result);
+  if (Array.isArray(imageInput)) {
+    // Multiple images
+    const filePaths = imageInput.map((file) => file.path);
+    imageUrls = await uploadMultipleImages(filePaths, "Products");
+  } else if (imageInput) {
+    // Single image
+    const result = await uploadImgToCloudinary(
+      imageInput.filename,
+      imageInput.path,
+      "Products"
+    );
+    imageUrls = [result.secure_url];
+  }
 
   const productPayload = {
     ...payload,
-    image: result.secure_url, // Use the URL from Cloudinary
+    productImages: imageUrls,
   };
 
-  // console.log('product payload in service ', payload);
   const product = await Product.create(productPayload);
   return product;
 };

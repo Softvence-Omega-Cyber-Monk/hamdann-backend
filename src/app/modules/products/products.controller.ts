@@ -6,27 +6,23 @@ import {
 } from "./products.validation";
 import { productService } from "./products.service";
 
-const createProduct = async (req: Request, res: Response) => {
+export const createProduct = async (req: Request, res: Response) => {
   try {
+    console.log("Uploaded file(s):", req.file || req.files);
 
+    const singleFile = req.file as Express.Multer.File;
+    const multipleFiles = req.files as Express.Multer.File[];
 
-    // console.log("Body data:", req.body);
-    // console.log("Uploaded file:", req.file);
+    const product = await productService.createProductService(
+      req.body,
+      singleFile || multipleFiles // Pass whichever exists
+    );
 
-    const imagePath = req.file
-      ? `/uploads/${req.file.filename}` // accessible if you serve static files
-      : undefined;
-
-    const productData = { ...req.body, image: imagePath };
-    console.log('Product data to be created:', productData);
-
-    const product = await productService.createProductService(req.body,imagePath);
-
-    console.log('Created product:', product);
+    console.log("Created product:", product);
 
     res.status(201).json({ success: true, data: product });
-
   } catch (error: any) {
+    console.error("Error creating product:", error);
     res.status(400).json({ success: false, message: error.message });
   }
 };
