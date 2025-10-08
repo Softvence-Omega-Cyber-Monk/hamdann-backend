@@ -7,6 +7,7 @@ export const ProductVariationSchema = z.object({
 });
 
 export const ProductSchema = z.object({
+  userId: z.string().min(1, "User ID is required"),
   name: z.string().min(2, "Product name must be at least 2 characters"),
   sku: z.string().min(1, "SKU is required"),
   category: z.enum(["Fashion", "Food", "Beauty", "Perfume"]),
@@ -15,7 +16,7 @@ export const ProductSchema = z.object({
   gender: z.enum(["male", "female"]).default("male"),
   availableSizes: z.array(z.string()).optional(),
   availableColors: z.array(z.string()).optional(),
-  variations: z.array(ProductVariationSchema).optional(),
+  variations: z.array(z.string()).optional(), // e.g., ["Red - M", "Blue - L"]
   description: z.string().min(5, "Description must be at least 5 characters"),
   quantity: z.number().min(0, "Quantity must be 0 or more").default(0),
   price: z.number().positive("Price must be greater than 0"),

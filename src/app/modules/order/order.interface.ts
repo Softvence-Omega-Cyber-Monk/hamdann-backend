@@ -55,7 +55,8 @@ export interface IOrder extends Document {
     | "shipped"
     | "out_for_delivery"
     | "delivered"
-    | "cancelled";
+    | "cancelled"
+    | "returned";
   statusDates: IOrderStatusDates;
   shippingAddress: IShippingAddress;
 

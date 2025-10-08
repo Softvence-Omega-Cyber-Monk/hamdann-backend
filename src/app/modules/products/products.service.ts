@@ -1,5 +1,6 @@
 import { Product } from "./products.model";
 import { IProduct } from "./products.interface";
+import mongoose from "mongoose";
 
 const createProductService = async (payload: IProduct) => {
   // console.log('product payload in service ', payload);
@@ -54,63 +55,112 @@ const getWishlistedProductsService = async (
 
 const removeProductsWishlist = async (productIds: string[]) => {
   // Set `isWishlisted` to false for multiple products
-  console.log('Product IDs to update:', productIds);
+  console.log("Product IDs to update:", productIds);
   const result = await Product.updateMany(
     { _id: { $in: productIds } },
     { $set: { isWishlisted: false } }
   );
 
-  console.log('Update result:', result);
+  console.log("Update result:", result);
   // Return updated products
   const updatedProducts = await Product.find({ _id: { $in: productIds } });
   return updatedProducts;
-// Product statistics
+  // Product statistics
+};
 
-}
+// const getProductStatsService = async () => {
+//   // Total Products count
+//   const totalProducts = await Product.countDocuments();
 
-const getProductStatsService = async () => {
-  // Total Products count
-  const totalProducts = await Product.countDocuments();
+//   // Total Variations - sum of variations array lengths across all products
+//   const variationsResult = await Product.aggregate([
+//     {
+//       $project: {
+//         variationsCount: { $size: { $ifNull: ["$variations", []] } }
+//       }
+//     },
+//     {
+//       $group: {
+//         _id: null,
+//         totalVariations: { $sum: "$variationsCount" }
+//       }
+//     }
+//   ]);
+//   const totalVariations = variationsResult[0]?.totalVariations || 0;
 
-  // Total Variations - sum of variations array lengths across all products
+//   // Total Units - sum of quantity across all products
+//   const unitsResult = await Product.aggregate([
+//     {
+//       $group: {
+//         _id: null,
+//         totalUnits: { $sum: "$quantity" }
+//       }
+//     }
+//   ]);
+//   const totalUnits = unitsResult[0]?.totalUnits || 0;
+
+//   // Active Products (quantity > 0)
+//   const activeProducts = await Product.countDocuments({ quantity: { $gt: 0 } });
+
+//   // Out of Stock Products (quantity = 0)
+//   const outOfStock = await Product.countDocuments({ quantity: 0 });
+
+//   return {
+//     totalProducts,
+//     totalVariations,
+//     // totalUnits,
+//     activeProducts,
+//     outOfStock
+//   };
+// };
+
+const getProductStatsService = async (userId: string) => {
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+
+  const totalProducts = await Product.countDocuments({ userId: userObjectId });
+
   const variationsResult = await Product.aggregate([
+    { $match: { userId: userObjectId } },
     {
       $project: {
-        variationsCount: { $size: { $ifNull: ["$variations", []] } }
-      }
+        variationsCount: { $size: { $ifNull: ["$variations", []] } },
+      },
     },
     {
       $group: {
         _id: null,
-        totalVariations: { $sum: "$variationsCount" }
-      }
-    }
+        totalVariations: { $sum: "$variationsCount" },
+      },
+    },
   ]);
   const totalVariations = variationsResult[0]?.totalVariations || 0;
 
-  // Total Units - sum of quantity across all products
   const unitsResult = await Product.aggregate([
+    { $match: { userId: userObjectId } },
     {
       $group: {
         _id: null,
-        totalUnits: { $sum: "$quantity" }
-      }
-    }
+        totalUnits: { $sum: "$quantity" },
+      },
+    },
   ]);
   const totalUnits = unitsResult[0]?.totalUnits || 0;
 
-  // Active Products (quantity > 0)
-  const activeProducts = await Product.countDocuments({ quantity: { $gt: 0 } });
+  const activeProducts = await Product.countDocuments({
+    userId: userObjectId,
+    quantity: { $gt: 0 },
+  });
 
-  // Out of Stock Products (quantity = 0)
-  const outOfStock = await Product.countDocuments({ quantity: 0 });
-
+  const outOfStock = await Product.countDocuments({
+    userId: userObjectId,
+    quantity: 0,
+  });
   return {
     totalProducts,
     totalVariations,
     // totalUnits,
     activeProducts,
-    outOfStock
+    outOfStock,
   };
 };
 
