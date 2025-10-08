@@ -57,7 +57,8 @@ const removeProductsWishlist = (productIds) => __awaiter(void 0, void 0, void 0,
     // Return updated products
     const updatedProducts = yield products_model_1.Product.find({ _id: { $in: productIds } });
     return updatedProducts;
-// Product statistics
+    // Product statistics
+});
 const getProductStatsService = () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     // Total Products count
