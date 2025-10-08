@@ -124,7 +124,9 @@ exports.updatePromotion = updatePromotion;
 const pausePromotion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
-        const updatedPromotion = yield (0, promotion_service_1.updatePromotionService)(id, { isActive: false });
+        const updatedPromotion = yield (0, promotion_service_1.updatePromotionService)(id, {
+            isActive: false,
+        });
         res.status(200).json({
             success: true,
             message: "Promotion paused successfully",

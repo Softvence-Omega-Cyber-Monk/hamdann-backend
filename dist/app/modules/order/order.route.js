@@ -8,4 +8,7 @@ router.post("/create", order_controller_1.OrderController.createOrder); // Creat
 router.get("/getAll", order_controller_1.OrderController.getAllOrders); // Get All Orders
 router.get("/get-single/:id", order_controller_1.OrderController.getOrderById); // Get Single Order
 router.put("/update/:id", order_controller_1.OrderController.updateOrder); // Update Order
+router.get("/current-orders/:userId", order_controller_1.OrderController.getCurrentOrders);
+// Get all previous orders for a user
+router.get("/previous-orders/:userId", order_controller_1.OrderController.getPreviousOrders);
 exports.OrderRoute = router;
