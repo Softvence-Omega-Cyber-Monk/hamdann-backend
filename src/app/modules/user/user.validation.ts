@@ -19,7 +19,7 @@ export const create_user = z
     paymentMethods: z
       .array(
         z.object({
-          _id: z.string().optional(), 
+          _id: z.string().optional(),
           method: z.string().optional(),
           cardNumber: z.number().optional(),
           expiryDate: z.string().optional(),
@@ -28,7 +28,7 @@ export const create_user = z
         })
       )
       .optional(),
-    Preferences: z.enum(["Fashion", "Food", "Beauty", "Perfume"]).optional(),
+    preferences: z.enum(["Fashion", "Food", "Beauty", "Perfume"]).optional(),
     businessInfo: z
       .object({
         businessName: z.string().optional(),
@@ -57,7 +57,7 @@ export const update_user = z.object({
       streetAddress: z.string().optional(),
     })
     .optional(),
-  Preferences: z.enum(["Fashion", "Food", "Beauty", "Perfume"]).optional(),
+  preferences: z.enum(["Fashion", "Food", "Beauty", "Perfume"]).optional(),
   businessInfo: z
     .object({
       businessName: z.string().optional(),

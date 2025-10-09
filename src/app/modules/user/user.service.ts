@@ -6,6 +6,7 @@ import { cleanRegex } from "zod/v4/core/util.cjs";
 
 export const user_service = {
   createUser: async (userData: TUser) => {
+    console.log('user data ', userData)
     // Check if email already exists
     const existingUser = await User_Model.findOne({ email: userData.email });
     if (existingUser) {
