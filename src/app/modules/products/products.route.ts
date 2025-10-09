@@ -8,6 +8,7 @@ router.post("/create", upload.any(), productController.createProduct); // ✅ Cr
 router.put("/update/:id", productController.updateProduct); // ✅ Update product
 // ✅ Get all products
 router.get("/getSingle/:id", productController.getSingleProduct); // ✅ Get single product
+router.get("/getUserProduct/:userId", productController.getSingleUserProductService); // ✅ Get single product
 router.get("/getAll", productController.getAllProducts);
 router.get(
   "/getSingleCategory/:category",
