@@ -155,6 +155,26 @@ const getOrderStatusCounts = async (req: Request, res: Response) => {
   }
 };
 
+const getOrderStatusSummary = async (req: Request, res: Response) => {
+  try {
+    const statusSummary = await OrderService.getOrderStatusSummaryService();
+
+    res.status(200).json({
+      success: true,
+      message: "Order status summary retrieved successfully",
+      data: statusSummary
+    });
+  } catch (error: any) {
+    console.error("Error in getOrderStatusSummary controller:", error);
+    
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+};
+
 export const OrderController = {
   createOrder,
   getAllOrders,
@@ -165,4 +185,5 @@ export const OrderController = {
   getUserOrderStatistics,
   getAdminStatistics,
   getOrderStatusCounts,
+  getOrderStatusSummary,
 };

@@ -50,6 +50,12 @@ export interface IOrderStatusCounts {
   completed: number;
 }
 
+export interface IOrderStatusSummary {
+  status: string;
+  count: number;
+  percentage: number;
+}
+
 export interface IOrder extends Document {
   orderNumber: string;
   userId: Types.ObjectId;

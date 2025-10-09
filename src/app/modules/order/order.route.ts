@@ -22,4 +22,7 @@ router.get("/admin/statistics", OrderController.getAdminStatistics);
 // Order status counts route
 router.get("/order-status-counts",OrderController.getOrderStatusCounts);
 
+// Order status summary route
+router.get("/status-summary", OrderController.getOrderStatusSummary);
+
 export const OrderRoute = router;

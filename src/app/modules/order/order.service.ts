@@ -1,5 +1,5 @@
 import { Order } from "./order.model";
-import { IOrder, IOrderItem, IAdminStatistics, IOrderStatusCounts } from "./order.interface";
+import { IOrder, IOrderItem, IAdminStatistics, IOrderStatusCounts, IOrderStatusSummary } from "./order.interface";
 import { Types } from "mongoose";
 import { cleanRegex } from "zod/v4/core/util.cjs";
 import { Product } from "../products/products.model";
@@ -9,6 +9,8 @@ interface IOrderFilters {
   userId?: string;
   status?: string;
 }
+
+
 
 // Utility function to calculate subtotal, shipping cost, and total amount
 const calculateOrderAmounts = (items: IOrderItem[]) => {
@@ -252,6 +254,47 @@ const getOrderStatusCountsService = async (): Promise<IOrderStatusCounts> => {
   }
 };
 
+const getOrderStatusSummaryService = async (): Promise<IOrderStatusSummary[]> => {
+  try {
+    // Get total orders count
+    const totalOrders = await Order.countDocuments();
+
+    if (totalOrders === 0) {
+      return [];
+    }
+
+    // Get count for each status
+    const statusCounts = await Order.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Map to the required format and calculate percentages
+    const statusSummary = statusCounts.map((statusCount) => {
+      const percentage = Math.round((statusCount.count / totalOrders) * 100);
+      
+      return {
+        status: statusCount._id,
+        count: statusCount.count,
+        percentage: percentage
+      };
+    });
+
+    return statusSummary;
+  } catch (error) {
+    console.error("Error in getOrderStatusSummaryService:", error);
+    throw new Error(
+      error instanceof Error 
+        ? error.message 
+        : "Failed to fetch order status summary"
+    );
+  }
+};
+
 export const OrderService = {
   createOrder,
   getAllOrders,
@@ -262,5 +305,6 @@ export const OrderService = {
   getUserOrderStatistics,
   getAdminStatisticsService,
   getOrderStatusCountsService,
+  getOrderStatusSummaryService,
 };
 
