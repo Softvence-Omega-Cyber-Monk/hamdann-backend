@@ -8,7 +8,7 @@ const authRoute = Router()
 authRoute.post("/login", auth_controllers.login_user)
 
 
-authRoute.post('/refresh-token', auth_controllers.refresh_token);
+authRoute.post('/refresh-token', auth('Admin','Buyer','Seller'), auth_controllers.refresh_token);
 authRoute.post(
     '/change-password',
     auth("Buyer", "Seller", "Admin"),

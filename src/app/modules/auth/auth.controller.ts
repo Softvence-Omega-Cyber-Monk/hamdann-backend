@@ -10,6 +10,8 @@ const login_user = catchAsync(async (req, res) => {
     const result = await auth_services.login_user_from_db(req.body);
 
 
+    console.log(' login result from controller ',result)
+    
     res.cookie('refreshToken', result.refreshToken, {
         secure: configs.env == 'production',
         httpOnly: true,
@@ -21,7 +23,8 @@ const login_user = catchAsync(async (req, res) => {
         data: {
             accessToken: result.accessToken,
             refresh_token : result.refreshToken,
-            role: result?.role
+            role: result?.role,
+            userId: result?.userId
         },
     });
 });
