@@ -116,7 +116,8 @@ const getBestSellingProductsService = async (req: Request, res: Response) => {
 };
 const getWishlistedProductsService = async (req: Request, res: Response) => {
   try {
-    const product = await productService.getWishlistedProductsService();
+    const { userId } = req.params;
+    const product = await productService.getWishlistedProductsService( userId);
 
     if (!product) {
       return res

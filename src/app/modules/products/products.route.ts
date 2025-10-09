@@ -17,7 +17,7 @@ router.get("/getNewArrivals", productController.getNewArrivalsProductsService);
 router.get("/getBestSelling", productController.getBestSellingProductsService);
 
 
-router.get("/getWishlist-product", productController.getWishlistedProductsService);
+router.get("/getWishlist-product/:userId", productController.getWishlistedProductsService);
 router.put(
   "/update/wishList/:productId",
   productController.updateWishlistedProductsService

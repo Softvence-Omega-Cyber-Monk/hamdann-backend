@@ -77,8 +77,10 @@ const getBestSellingProductsService = async () => {
 };
 
 const getWishlistedProductsService = async (
+  userId: string
 ) => {
-  const wishListedProducts = await Product.find({ isWishlisted: true });
+  console.log('userid ', userId)
+  const wishListedProducts = await Product.find({ isWishlisted: true , userId: userId });
   return wishListedProducts;
 };
 const updateWishlistedProductsService = async (
