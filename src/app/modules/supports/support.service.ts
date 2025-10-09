@@ -1,5 +1,7 @@
 import { Support } from "./support.model";
-import { ISupport } from "./support.interface";
+import { ISupport, ISupportReply } from "./support.interface";
+import { sendSupportReplyEmail } from '../../utils/mail_sender';
+import { User_Model } from "../user/user.schema";
 import { Types } from "mongoose";
 
 const createSupport = async (supportData: ISupport): Promise<ISupport> => {
@@ -84,10 +86,77 @@ const getSupportStats = async (): Promise<{
   }
 };
 
+// Create reply to support ticket
+const createReply = async (
+  supportId: string, 
+  replyData: { userId: string; message: string }
+): Promise<ISupport | null> => {
+  try {
+    if (!Types.ObjectId.isValid(supportId)) {
+      throw new Error("Invalid support ID");
+    }
+
+    if (!replyData.userId || !replyData.message) {
+      throw new Error("User ID and message are required");
+    }
+
+    if (replyData.message.trim().length === 0) {
+      throw new Error("Message cannot be empty");
+    }
+
+    // Create the reply object
+    const newReply: ISupportReply = {
+      userId: new Types.ObjectId(replyData.userId),
+      message: replyData.message.trim(),
+    };
+
+    // Add reply to the support ticket
+    const updatedSupport = await Support.findByIdAndUpdate(
+      supportId,
+      { 
+        $push: { replies: newReply },
+        $set: { status: 'Pending' } // Set back to Pending when there's a new reply
+      },
+      { new: true }
+    )
+    .populate("userId", "name email")
+    .populate("replies.userId", "name email role");
+
+    if (!updatedSupport) {
+      throw new Error("Support ticket not found");
+    }
+
+    // Check if ticketId exists and provide a fallback
+    const ticketId = updatedSupport.ticketId || 'Unknown Ticket ID';
+
+    // Get the user who created the reply
+    const replyUser = await User_Model.findById(replyData.userId).select("name email role");
+    
+    // Send email notification to the original ticket creator
+    if (updatedSupport.userId && replyUser) {
+      const ticketUser = updatedSupport.userId as any;
+      
+      await sendSupportReplyEmail(
+        ticketUser.email,
+        ticketUser.name,
+        ticketId, // Use the checked ticketId
+        updatedSupport.supportSubject,
+        replyData.message,
+        replyUser.role === 'Admin' ? 'Support Team' : replyUser.name
+      );
+    }
+
+    return updatedSupport;
+  } catch (error: any) {
+    throw new Error(`Failed to create reply: ${error.message}`);
+  }
+};
+
 export const SupportService = {
   createSupport,
   getSupportById,
   getUserSupports,
   getAllSupports,
   getSupportStats,
+  createReply,
 };
