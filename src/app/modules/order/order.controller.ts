@@ -115,6 +115,45 @@ const getUserOrderStatistics = async (req: Request, res: Response) => {
   }
 };
 
+const getAdminStatistics = async (req: Request, res: Response) => {
+  try {
+    const statistics = await OrderService.getAdminStatisticsService();
+
+    res.status(200).json({
+      success: true,
+      message: "Admin statistics retrieved successfully",
+      data: statistics
+    });
+  } catch (error) {
+    console.error("Error in getAdminStatistics controller:", error);
+    
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+};
+
+const getOrderStatusCounts = async (req: Request, res: Response) => {
+  try {
+    const statusCounts = await OrderService.getOrderStatusCountsService();
+
+    res.status(200).json({
+      success: true,
+      message: "Order status counts retrieved successfully",
+      data: statusCounts
+    });
+  } catch (error) {
+    console.error("Error in getOrderStatusCounts controller:", error);
+    
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+};
 
 export const OrderController = {
   createOrder,
@@ -124,4 +163,6 @@ export const OrderController = {
   getCurrentOrders,
   getPreviousOrders,
   getUserOrderStatistics,
+  getAdminStatistics,
+  getOrderStatusCounts,
 };
