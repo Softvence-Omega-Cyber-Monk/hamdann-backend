@@ -75,7 +75,13 @@ const getBestSellingProductsService = async () => {
 
   return bestSellingProducts;
 };
+
 const getWishlistedProductsService = async (
+) => {
+  const wishListedProducts = await Product.find({ isWishlisted: true });
+  return wishListedProducts;
+};
+const updateWishlistedProductsService = async (
   productId: string,
   isWishlisted: boolean
 ) => {
@@ -200,6 +206,7 @@ export const productService = {
   getNewArrivalsProductsService,
   getBestSellingProductsService,
   getWishlistedProductsService,
+  updateWishlistedProductsService,
   removeProductsWishlist,
   getProductStatsService,
   addProductReviewService,

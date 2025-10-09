@@ -15,9 +15,12 @@ router.get(
 );
 router.get("/getNewArrivals", productController.getNewArrivalsProductsService);
 router.get("/getBestSelling", productController.getBestSellingProductsService);
+
+
+router.get("/getWishlist-product", productController.getWishlistedProductsService);
 router.put(
   "/update/wishList/:productId",
-  productController.getWishlistedProductsService
+  productController.updateWishlistedProductsService
 );
 router.put("/remove/wishList", productController.removeProductsWishlist);
 // New route for product statistics
