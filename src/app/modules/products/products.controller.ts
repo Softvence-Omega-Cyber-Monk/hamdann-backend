@@ -131,6 +131,7 @@ const getBestSellingProductsService = async (req: Request, res: Response) => {
   }
 };
 const getSellerBestSellingProductsService = async (req: Request, res: Response) => {
+
   const { userId } = req.params;
   try {
     const product = await productService.getSellerBestSellingProductsService(userId);
