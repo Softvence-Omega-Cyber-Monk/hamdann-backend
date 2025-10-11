@@ -68,6 +68,22 @@ const getSingleProduct = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+const getSingleUserProductService = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    const product = await productService.getSingleUserProductService(userId);
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
+    }
+
+    res.status(200).json({ success: true, data: product });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 const getProductByCategoryService = async (req: Request, res: Response) => {
   try {
     const { category } = req.params;
@@ -116,9 +132,25 @@ const getBestSellingProductsService = async (req: Request, res: Response) => {
 };
 const getWishlistedProductsService = async (req: Request, res: Response) => {
   try {
+    const { userId } = req.params;
+    const product = await productService.getWishlistedProductsService( userId);
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Products not found" });
+    }
+
+    res.status(200).json({ success: true, data: product });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+const updateWishlistedProductsService = async (req: Request, res: Response) => {
+  try {
     const { productId } = req.params;
     const { isWishlisted } = req.body;
-    const product = await productService.getWishlistedProductsService(
+    const product = await productService.updateWishlistedProductsService(
       productId,
       isWishlisted
     );
@@ -204,10 +236,12 @@ export const productController = {
   updateProduct,
   getAllProducts,
   getSingleProduct,
+  getSingleUserProductService,
   getProductByCategoryService,
   getNewArrivalsProductsService,
   getBestSellingProductsService,
   getWishlistedProductsService,
+  updateWishlistedProductsService,
   removeProductsWishlist,
   getProductStats,
   addReviewToProduct

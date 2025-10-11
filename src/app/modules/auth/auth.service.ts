@@ -21,6 +21,8 @@ const login_user_from_db = async (payload: TLoginPayload) => {
     isDeleted: false,
   });
 
+
+
   if (!user) {
     throw new AppError("User not found", httpStatus.NOT_FOUND);
   }
@@ -52,10 +54,13 @@ const login_user_from_db = async (payload: TLoginPayload) => {
     configs.jwt.refreshToken_expires as string
   );
 
+
+  console.log(' User role from service ',user.role, user._id)
   return {
     accessToken,
     refreshToken,
     role: user.role,
+    userId: user._id,
   };
 };
 

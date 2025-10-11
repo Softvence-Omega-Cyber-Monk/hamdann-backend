@@ -58,14 +58,23 @@ const createOrder = async (orderData: IOrder) => {
 const getAllOrders = async (filters: IOrderFilters = {}): Promise<IOrder[]> => {
   const query: Record<string, any> = {};
 
+  // Apply filters
   if (filters.userId) query.userId = filters.userId;
   if (filters.status) query.status = filters.status;
 
   try {
-    return await Order.find(query)
-      .populate("userId", "name email")
-      .populate("items.productId", "name price")
-      .sort({ createdAt: -1 }); // newest orders first
+    const orders = await Order.find(query)
+      .populate({
+        path: "userId",
+        select: "name email", // only return these fields
+      })
+      .populate({
+        path: "items.productId",
+        select: "name price stock image", // you can add more fields as needed
+      })
+      .sort({ createdAt: -1 }); // newest first
+
+    return orders;
   } catch (error: any) {
     throw new Error(`Failed to fetch orders: ${error.message}`);
   }
@@ -104,7 +113,7 @@ const updateOrder = async (
   }
 };
 
- const getCurrentOrdersService = async (userId: string) => {
+const getCurrentOrdersService = async (userId: string) => {
   const currentStatuses = [
     "placed",
     "payment_processed",
@@ -119,7 +128,7 @@ const updateOrder = async (
 };
 
 // 🟣 Get previous (completed/cancelled) orders
- const getPreviousOrdersService = async (userId: string) => {
+const getPreviousOrdersService = async (userId: string) => {
   const previousStatuses = ["delivered", "cancelled", "returned"];
   const orders = await Order.find({
     userId,
@@ -136,9 +145,9 @@ const getUserOrderStatistics = async (userId: string) => {
 
     const pendingOrders = await Order.countDocuments({
       userId,
-      status: { 
-        $in: ["placed", "payment_processed", "shipped", "out_for_delivery"] 
-      }
+      status: {
+        $in: ["placed", "payment_processed", "shipped", "out_for_delivery"],
+      },
     });
 
     // console.log('pending orders ',pendingOrders)
@@ -147,21 +156,21 @@ const getUserOrderStatistics = async (userId: string) => {
       {
         $match: {
           userId: new Types.ObjectId(userId),
-        }
+        },
       },
       {
         $group: {
           _id: null,
-          totalSales: { $sum: "$totalAmount" }
-        }
-      }
+          totalSales: { $sum: "$totalAmount" },
+        },
+      },
     ]);
 
-  // console.log('sales reslult ',salesResult)
+    // console.log('sales reslult ',salesResult)
 
     const returnedOrders = await Order.countDocuments({
       userId,
-      status: "returned"
+      status: "returned",
     });
 
     const totalSales = salesResult.length > 0 ? salesResult[0].totalSales : 0;
@@ -170,7 +179,7 @@ const getUserOrderStatistics = async (userId: string) => {
       totalOrders,
       pendingOrders,
       totalSales,
-      returnedOrders
+      returnedOrders,
     };
   } catch (error: any) {
     throw new Error(`Failed to get order statistics: ${error.message}`);
@@ -307,4 +316,3 @@ export const OrderService = {
   getOrderStatusCountsService,
   getOrderStatusSummaryService,
 };
-

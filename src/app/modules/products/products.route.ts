@@ -8,6 +8,7 @@ router.post("/create", upload.any(), productController.createProduct); // ✅ Cr
 router.put("/update/:id", productController.updateProduct); // ✅ Update product
 // ✅ Get all products
 router.get("/getSingle/:id", productController.getSingleProduct); // ✅ Get single product
+router.get("/getUserProduct/:userId", productController.getSingleUserProductService); // ✅ Get single product
 router.get("/getAll", productController.getAllProducts);
 router.get(
   "/getSingleCategory/:category",
@@ -15,9 +16,12 @@ router.get(
 );
 router.get("/getNewArrivals", productController.getNewArrivalsProductsService);
 router.get("/getBestSelling", productController.getBestSellingProductsService);
+
+
+router.get("/getWishlist-product/:userId", productController.getWishlistedProductsService);
 router.put(
   "/update/wishList/:productId",
-  productController.getWishlistedProductsService
+  productController.updateWishlistedProductsService
 );
 router.put("/remove/wishList", productController.removeProductsWishlist);
 // New route for product statistics

@@ -57,6 +57,10 @@ const getSingleProductService = async (id: string) => {
   const product = await Product.findById(id);
   return product;
 };
+const getSingleUserProductService = async (userId: string) => {
+  const product = await Product.find({userId: userId});
+  return product;
+};
 const getProductByCategoryService = async (category: string) => {
   const product = await Product.find({ category: category });
   return product;
@@ -75,7 +79,15 @@ const getBestSellingProductsService = async () => {
 
   return bestSellingProducts;
 };
+
 const getWishlistedProductsService = async (
+  userId: string
+) => {
+  console.log('userid ', userId)
+  const wishListedProducts = await Product.find({ isWishlisted: true , userId: userId });
+  return wishListedProducts;
+};
+const updateWishlistedProductsService = async (
   productId: string,
   isWishlisted: boolean
 ) => {
@@ -196,10 +208,12 @@ export const productService = {
   updateProductService,
   getAllProductsService,
   getSingleProductService,
+  getSingleUserProductService,
   getProductByCategoryService,
   getNewArrivalsProductsService,
   getBestSellingProductsService,
   getWishlistedProductsService,
+  updateWishlistedProductsService,
   removeProductsWishlist,
   getProductStatsService,
   addProductReviewService,
