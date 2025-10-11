@@ -16,6 +16,7 @@ router.get(
 );
 router.get("/getNewArrivals", productController.getNewArrivalsProductsService);
 router.get("/getBestSelling", productController.getBestSellingProductsService);
+router.get("/getSellerBestSelling/:userId", productController.getSellerBestSellingProductsService);
 
 
 router.get("/getWishlist-product/:userId", productController.getWishlistedProductsService);
