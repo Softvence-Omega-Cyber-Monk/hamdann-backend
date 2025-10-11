@@ -1,12 +1,16 @@
 import { Order } from "./order.model";
-import { IOrder, IOrderItem } from "./order.interface";
+import { IOrder, IOrderItem, IAdminStatistics, IOrderStatusCounts, IOrderStatusSummary } from "./order.interface";
 import { Types } from "mongoose";
 import { cleanRegex } from "zod/v4/core/util.cjs";
+import { Product } from "../products/products.model";
+import { User_Model } from "../user/user.schema";
 
 interface IOrderFilters {
   userId?: string;
   status?: string;
 }
+
+
 
 // Utility function to calculate subtotal, shipping cost, and total amount
 const calculateOrderAmounts = (items: IOrderItem[]) => {
@@ -182,6 +186,124 @@ const getUserOrderStatistics = async (userId: string) => {
   }
 };
 
+const getAdminStatisticsService = async (): Promise<IAdminStatistics> => {
+  try {
+    const [revenueResult, totalOrders, totalProducts, activeUsers] = await Promise.all([
+      // Total Sales (Revenue)
+      Order.aggregate([
+        {
+          $match: {
+            status: { $ne: "cancelled" }
+          }
+        },
+        {
+          $group: {
+            _id: null,
+            totalSales: { $sum: "$totalAmount" }
+          }
+        }
+      ]),
+      
+      // Total Orders
+      Order.countDocuments({ status: { $ne: "cancelled" } }),
+      
+      // Total Products
+      Product.countDocuments(),
+      
+      // Active Users
+      User_Model.countDocuments({ isDeleted: false })
+    ]);
+
+    return {
+      totalSales: revenueResult[0]?.totalSales || 0,
+      totalOrders,
+      activeUsers,
+      totalProducts
+    };
+  } catch (error) {
+    console.error("Error in getAdminStatisticsService:", error);
+    throw new Error(
+      error instanceof Error 
+        ? error.message 
+        : "Failed to fetch admin statistics"
+    );
+  }
+};
+
+const getOrderStatusCountsService = async (): Promise<IOrderStatusCounts> => {
+  try {
+    const [newOrdersCount, processingCount, completedCount] = await Promise.all([
+      Order.countDocuments({ 
+        status: "placed" 
+      }),
+      
+      Order.countDocuments({
+        status: { 
+          $in: ["payment_processed", "shipped", "out_for_delivery"] 
+        }
+      }),
+      
+      Order.countDocuments({ 
+        status: "delivered" 
+      })
+    ]);
+
+    return {
+      newOrders: newOrdersCount,
+      processing: processingCount,
+      completed: completedCount
+    };
+  } catch (error) {
+    console.error("Error in getOrderStatusCountsService:", error);
+    throw new Error(
+      error instanceof Error 
+        ? error.message 
+        : "Failed to fetch order status counts"
+    );
+  }
+};
+
+const getOrderStatusSummaryService = async (): Promise<IOrderStatusSummary[]> => {
+  try {
+    // Get total orders count
+    const totalOrders = await Order.countDocuments();
+
+    if (totalOrders === 0) {
+      return [];
+    }
+
+    // Get count for each status
+    const statusCounts = await Order.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    // Map to the required format and calculate percentages
+    const statusSummary = statusCounts.map((statusCount) => {
+      const percentage = Math.round((statusCount.count / totalOrders) * 100);
+      
+      return {
+        status: statusCount._id,
+        count: statusCount.count,
+        percentage: percentage
+      };
+    });
+
+    return statusSummary;
+  } catch (error) {
+    console.error("Error in getOrderStatusSummaryService:", error);
+    throw new Error(
+      error instanceof Error 
+        ? error.message 
+        : "Failed to fetch order status summary"
+    );
+  }
+};
+
 export const OrderService = {
   createOrder,
   getAllOrders,
@@ -190,4 +312,7 @@ export const OrderService = {
   getCurrentOrdersService,
   getPreviousOrdersService,
   getUserOrderStatistics,
+  getAdminStatisticsService,
+  getOrderStatusCountsService,
+  getOrderStatusSummaryService,
 };

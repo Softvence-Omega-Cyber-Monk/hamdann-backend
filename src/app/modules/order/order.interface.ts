@@ -37,6 +37,25 @@ export interface IContacktInfo {
   phone?: string;
 }
 
+export interface IAdminStatistics {
+  totalSales: number;
+  totalOrders: number;
+  activeUsers: number;
+  totalProducts: number;
+}
+
+export interface IOrderStatusCounts {
+  newOrders: number;
+  processing: number;
+  completed: number;
+}
+
+export interface IOrderStatusSummary {
+  status: string;
+  count: number;
+  percentage: number;
+}
+
 export interface IOrder extends Document {
   orderNumber: string;
   userId: Types.ObjectId;

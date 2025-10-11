@@ -7,6 +7,24 @@ const generateTicketId = (): string => {
   return `TICKET-${timestamp}-${random}`;
 };
 
+const SupportReplySchema: Schema = new Schema(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
+    message: {
+      type: String,
+      required: true,
+      trim: true
+    }
+  },
+  {
+    timestamps: true
+  }
+);
+
 const SupportSchema: Schema = new Schema(
   {
     userId: {
@@ -34,7 +52,8 @@ const SupportSchema: Schema = new Schema(
       type: String,
       enum: ['Pending', 'Resolved'],
       default: 'Pending'
-    }
+    },
+    replies: [SupportReplySchema],
   },
   {
     timestamps: true
