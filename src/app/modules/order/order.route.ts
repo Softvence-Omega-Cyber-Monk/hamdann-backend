@@ -25,4 +25,7 @@ router.get("/order-status-counts",OrderController.getOrderStatusCounts);
 // Order status summary route
 router.get("/status-summary", OrderController.getOrderStatusSummary);
 
+// Activity list route
+router.get("/admin/activities-list", OrderController.getActivityList);
+
 export const OrderRoute = router;
