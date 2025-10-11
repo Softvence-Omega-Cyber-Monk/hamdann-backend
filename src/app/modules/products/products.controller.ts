@@ -130,6 +130,22 @@ const getBestSellingProductsService = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+const getSellerBestSellingProductsService = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  try {
+    const product = await productService.getSellerBestSellingProductsService(userId);
+
+    if (!product) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Products not found" });
+    }
+
+    res.status(200).json({ success: true, data: product });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 const getWishlistedProductsService = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
@@ -240,6 +256,7 @@ export const productController = {
   getProductByCategoryService,
   getNewArrivalsProductsService,
   getBestSellingProductsService,
+  getSellerBestSellingProductsService,
   getWishlistedProductsService,
   updateWishlistedProductsService,
   removeProductsWishlist,

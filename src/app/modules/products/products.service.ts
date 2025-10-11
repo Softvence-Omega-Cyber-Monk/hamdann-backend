@@ -79,6 +79,13 @@ const getBestSellingProductsService = async () => {
 
   return bestSellingProducts;
 };
+const getSellerBestSellingProductsService = async (userId : string) => {
+  const bestSellingProducts = await Product.find({ userId: userId })
+    .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
+    .limit(10);
+
+  return bestSellingProducts;
+};
 
 const getWishlistedProductsService = async (
   userId: string
@@ -212,6 +219,7 @@ export const productService = {
   getProductByCategoryService,
   getNewArrivalsProductsService,
   getBestSellingProductsService,
+  getSellerBestSellingProductsService,
   getWishlistedProductsService,
   updateWishlistedProductsService,
   removeProductsWishlist,
