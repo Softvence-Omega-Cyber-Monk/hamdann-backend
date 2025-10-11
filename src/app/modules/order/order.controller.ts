@@ -175,6 +175,26 @@ const getOrderStatusSummary = async (req: Request, res: Response) => {
   }
 };
 
+const getActivityList = async (req: Request, res: Response) => {
+  try {
+    const activities = await OrderService.getActivityListService();
+
+    res.status(200).json({
+      success: true,
+      message: "Activity list retrieved successfully",
+      data: activities
+    });
+  } catch (error: any) {
+    console.error("Error in getActivityList controller:", error);
+    
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error instanceof Error ? error.message : "Unknown error"
+    });
+  }
+};
+
 export const OrderController = {
   createOrder,
   getAllOrders,
@@ -186,4 +206,5 @@ export const OrderController = {
   getAdminStatistics,
   getOrderStatusCounts,
   getOrderStatusSummary,
+  getActivityList,
 };
