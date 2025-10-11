@@ -75,7 +75,7 @@ const getNewArrivalsProductsService = async () => {
 const getBestSellingProductsService = async () => {
   const bestSellingProducts = await Product.find()
     .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
-    .limit(10);
+
 
     console.log('bestSellingProducts ', bestSellingProducts.length)
 
@@ -85,7 +85,7 @@ const getSellerBestSellingProductsService = async (userId : string) => {
   console.log('userId in service ', userId)
   const bestSellingProducts = await Product.find({ userId: userId })
     .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
-    .limit(10);
+
 
     console.log('bestSellingProducts ', bestSellingProducts.length)
 

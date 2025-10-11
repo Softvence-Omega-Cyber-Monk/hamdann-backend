@@ -34,7 +34,7 @@ export const createCart = async (userId: string, items: ICartItem[]) => {
   if (duplicateItem) {
     return {
       success: false,
-      message: "Item already exists in cart.",
+      message: "This item already exists in cart.",
       productId: duplicateItem.productId,
     };
   }
