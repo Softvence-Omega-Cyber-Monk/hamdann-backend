@@ -65,6 +65,11 @@ const UserSchema = new Schema<TUser>(
     },
 
     businessInfo: { type: BusinessInfoSchema, default: {} },
+    profileImage: {
+      type: String,
+      default:
+        "https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg",
+    },
   },
   {
     versionKey: false,

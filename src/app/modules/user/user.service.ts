@@ -3,6 +3,9 @@ import { TUser } from "./user.interface";
 import bcrypt from "bcrypt";
 import { Types } from "mongoose";
 import { cleanRegex } from "zod/v4/core/util.cjs";
+import {
+  uploadImgToCloudinary,
+} from "../../utils/cloudinary";
 
 export const user_service = {
   createUser: async (userData: TUser) => {
@@ -46,8 +49,8 @@ export const user_service = {
   updateUser: async (
     id: string,
     updateData: Partial<
-      Pick<TUser, "name" | "email" | "address" | "paymentMethods">
-    >
+      Pick<TUser, "name" | "email" | "address" | "paymentMethods" | "profileImage">
+    > & { file?: Express.Multer.File }
   ) => {
     if (!Types.ObjectId.isValid(id)) throw new Error("Invalid user ID");
 
@@ -63,6 +66,29 @@ export const user_service = {
       });
       if (emailExists) throw new Error("Email already in use by another user");
     }
+
+     // Handle image upload if file exists
+    if (updateData.file) {
+      try {
+        // Upload image to Cloudinary
+        const uploadResult = await uploadImgToCloudinary(
+          `user-${id}-${Date.now()}`,
+          updateData.file.path,
+          "user-profiles"
+        );
+        
+        // Add the Cloudinary URL to updateData
+        updateData.profileImage = uploadResult.secure_url;
+        
+        // Remove the file property as we don't want to save it in the database
+        delete updateData.file;
+        
+      } catch (error) {
+        throw new Error("Failed to upload profile image");
+      }
+    }
+
+    
 
     console.log("updateData:", updateData);
     // Update user and return updated document

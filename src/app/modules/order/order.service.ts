@@ -20,6 +20,14 @@ interface IOrderFilters {
   status?: string;
 }
 
+interface IUserStatistics {
+  totalRevenue: number;
+  totalOrders: number;
+  conversionRate: number;
+  productsSold: number;
+  averageOrderValue: number;
+}
+
 // Utility function to calculate subtotal, shipping cost, and total amount
 const calculateOrderAmounts = (items: IOrderItem[]) => {
   const subtotal = items.reduce(
@@ -356,17 +364,7 @@ const getActivityListService = async () => {
     Time: dayjs(user.createdAt).fromNow(),
   }));
 
-  // 3️⃣ Fetch Products
-  // const products = await Product.find().populate("createdBy", "email").sort({ updatedAt: -1 }).exec();
-  // const productActivities = products.map((product) => ({
-  //   Type: "Product",
-  //   Description: `Product updated: ${product.name}`,
-  //   User: "admin@store.com" , // or track product updater if available
-  //   Amount: "-",
-  //   Status: "Updated",
-  //   Time: dayjs(product.updatedAt).fromNow(),
-  // }));
-   const products = await Product.find()
+  const products = await Product.find()
     .populate("userId", "email") // Populate the user who created the product
     .sort({ updatedAt: -1 })
     .exec();
@@ -374,10 +372,12 @@ const getActivityListService = async () => {
   const productActivities = products.map((product) => {
     // Cast through unknown first to access populated fields
     const createdByUser = product.userId as unknown as { email: string } | null;
-    
+
     return {
       Type: "Product",
-      Description: `Product ${product.createdAt === product.updatedAt ? 'created' : 'updated'}: ${product.name}`,
+      Description: `Product ${
+        product.createdAt === product.updatedAt ? "created" : "updated"
+      }: ${product.name}`,
       User: createdByUser ? createdByUser.email : "admin@store.com",
       Amount: "-",
       Status: product.createdAt === product.updatedAt ? "Created" : "Updated",
@@ -391,12 +391,91 @@ const getActivityListService = async () => {
     ...userActivities,
     ...productActivities,
   ];
-  allActivities.sort(
-    (a, b) => new Date(b.Time).getTime() - new Date(a.Time).getTime()
-  );
-  
+
+  allActivities.sort((a, b) => {
+    // Convert "2 min ago", "5 min ago" etc. to proper sorting
+    // This is a simple approach - for better accuracy, consider using timestamps
+    // return a.Time.localeCompare(b.Time);
+    const getTimeValue = (timeStr: string) => {
+      if (timeStr.includes("min")) return parseInt(timeStr);
+      if (timeStr.includes("hour")) return parseInt(timeStr) * 60;
+      if (timeStr.includes("day")) return parseInt(timeStr) * 1440;
+      return 0;
+    };
+
+    return getTimeValue(a.Time) - getTimeValue(b.Time);
+  });
 
   return allActivities;
+};
+
+const getUserStatisticsService = async (
+  userId: string
+): Promise<IUserStatistics> => {
+  try {
+    if (!Types.ObjectId.isValid(userId)) {
+      throw new Error("Invalid user ID");
+    }
+
+    const userObjectId = new Types.ObjectId(userId);
+
+    // Get all orders for the user
+    const [orders, allOrders] = await Promise.all([
+      Order.find({ userId: userObjectId }),
+      Order.find({ userId: userObjectId }).populate("items.productId"),
+    ]);
+
+    if (orders.length === 0) {
+      return {
+        totalRevenue: 0,
+        totalOrders: 0,
+        conversionRate: 0,
+        productsSold: 0,
+        averageOrderValue: 0,
+      };
+    }
+
+    // Calculate total revenue (only from delivered orders)
+    const totalRevenue = orders
+      .filter((order) => order.status === "delivered")
+      .reduce((sum, order) => sum + order.totalAmount, 0);
+
+    // Calculate total orders
+    const totalOrders = await Order.countDocuments({
+      status: { $ne: "cancelled" },
+    });
+
+    // Calculate products sold (only from delivered orders)
+    const productsSold = allOrders
+      .filter((order) => order.status === "delivered")
+      .reduce(
+        (sum, order) =>
+          sum +
+          order.items.reduce((itemSum, item) => itemSum + item.quantity, 0),
+        0
+      );
+
+    // Calculate average order value
+    const averageOrderValue =
+      totalRevenue /
+        orders.filter((order) => order.status === "delivered").length || 0;
+
+    // Calculate conversion rate (delivered orders / total orders)
+    const deliveredOrders = orders.filter(
+      (order) => order.status === "delivered"
+    ).length;
+    const conversionRate = (deliveredOrders / totalOrders) * 100;
+
+    return {
+      totalRevenue: Number(totalRevenue.toFixed(2)),
+      totalOrders,
+      conversionRate: Number(conversionRate.toFixed(2)),
+      productsSold,
+      averageOrderValue: Number(averageOrderValue.toFixed(2)),
+    };
+  } catch (error: any) {
+    throw new Error(`Failed to get user statistics: ${error.message}`);
+  }
 };
 
 export const OrderService = {
@@ -411,4 +490,5 @@ export const OrderService = {
   getOrderStatusCountsService,
   getOrderStatusSummaryService,
   getActivityListService,
+  getUserStatisticsService,
 };
