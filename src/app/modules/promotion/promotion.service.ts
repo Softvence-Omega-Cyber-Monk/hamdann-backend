@@ -8,6 +8,7 @@ export const createPromotionService = async (payload: IPromotion) => {
   // Optional: validate product IDs exist
   if (payload.allProducts?.length) {
     const existing = await Product.find({ _id: { $in: payload.allProducts } });
+    
     if (existing.length !== payload.allProducts.length) {
       throw new Error("Some products in allProducts do not exist");
     }
