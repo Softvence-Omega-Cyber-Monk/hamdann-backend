@@ -2,21 +2,24 @@ import { Request, Response } from "express";
 import { OrderService } from "./order.service";
 
 // Create Order
- const createOrder = async (req: Request, res: Response) => {
+const createOrder = async (req: Request, res: Response) => {
   try {
     const order = await OrderService.createOrder(req.body);
-    res.status(201).json({ success: true, data: {
-      orderId: order._id,
-      status: order.status,
-      items: order.items,
-    } });
+    res.status(201).json({
+      success: true,
+      data: {
+        orderId: order._id,
+        status: order.status,
+        items: order.items,
+      },
+    });
   } catch (error: any) {
     res.status(400).json({ success: false, message: error.message });
   }
 };
 
 // Get All Orders
- const getAllOrders = async (req: Request, res: Response) => {
+const getAllOrders = async (req: Request, res: Response) => {
   try {
     const orders = await OrderService.getAllOrders();
     res.status(200).json({ success: true, data: orders });
@@ -26,11 +29,13 @@ import { OrderService } from "./order.service";
 };
 
 // Get Single Order
- const getOrderById = async (req: Request, res: Response) => {
+const getOrderById = async (req: Request, res: Response) => {
   try {
     const order = await OrderService.getOrderById(req.params.id);
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
     }
     res.status(200).json({ success: true, data: order });
   } catch (error: any) {
@@ -39,11 +44,13 @@ import { OrderService } from "./order.service";
 };
 
 // Update Order
- const updateOrder = async (req: Request, res: Response) => {
+const updateOrder = async (req: Request, res: Response) => {
   try {
     const order = await OrderService.updateOrder(req.params.id, req.body);
     if (!order) {
-      return res.status(404).json({ success: false, message: "Order not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
     }
     res.status(200).json({ success: true, data: order });
   } catch (error: any) {
@@ -51,8 +58,7 @@ import { OrderService } from "./order.service";
   }
 };
 
-
- const getCurrentOrders = async (req: Request, res: Response) => {
+const getCurrentOrders = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
     const result = await OrderService.getCurrentOrdersService(userId);
@@ -61,7 +67,7 @@ import { OrderService } from "./order.service";
       message: "Current orders fetched successfully",
       data: result,
     });
-  } catch (error : any) {
+  } catch (error: any) {
     res.status(500).json({
       success: false,
       message: error.message || "Failed to fetch current orders",
@@ -70,7 +76,7 @@ import { OrderService } from "./order.service";
 };
 
 // 🟣 Get previous orders
- const getPreviousOrders = async (req: Request, res: Response) => {
+const getPreviousOrders = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
     const result = await OrderService.getPreviousOrdersService(userId);
@@ -79,7 +85,7 @@ import { OrderService } from "./order.service";
       message: "Previous orders fetched successfully",
       data: result,
     });
-  } catch (error : any) {
+  } catch (error: any) {
     res.status(500).json({
       success: false,
       message: error.message || "Failed to fetch previous orders",
@@ -92,25 +98,25 @@ import { OrderService } from "./order.service";
 const getUserOrderStatistics = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    
+
     if (!userId) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "User ID is required" 
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
       });
     }
 
     const statistics = await OrderService.getUserOrderStatistics(userId);
-    
+
     res.status(200).json({
       success: true,
       message: "Order statistics fetched successfully",
-      data: statistics
+      data: statistics,
     });
   } catch (error: any) {
     res.status(500).json({
       success: false,
-      message: error.message || "Failed to fetch order statistics"
+      message: error.message || "Failed to fetch order statistics",
     });
   }
 };
@@ -122,15 +128,15 @@ const getAdminStatistics = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "Admin statistics retrieved successfully",
-      data: statistics
+      data: statistics,
     });
   } catch (error) {
     console.error("Error in getAdminStatistics controller:", error);
-    
+
     res.status(500).json({
       success: false,
       message: "Internal server error",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
@@ -142,15 +148,15 @@ const getOrderStatusCounts = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "Order status counts retrieved successfully",
-      data: statusCounts
+      data: statusCounts,
     });
   } catch (error) {
     console.error("Error in getOrderStatusCounts controller:", error);
-    
+
     res.status(500).json({
       success: false,
       message: "Internal server error",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
@@ -162,15 +168,15 @@ const getOrderStatusSummary = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "Order status summary retrieved successfully",
-      data: statusSummary
+      data: statusSummary,
     });
   } catch (error: any) {
     console.error("Error in getOrderStatusSummary controller:", error);
-    
+
     res.status(500).json({
       success: false,
       message: "Internal server error",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
     });
   }
 };
@@ -182,15 +188,41 @@ const getActivityList = async (req: Request, res: Response) => {
     res.status(200).json({
       success: true,
       message: "Activity list retrieved successfully",
-      data: activities
+      data: activities,
     });
   } catch (error: any) {
     console.error("Error in getActivityList controller:", error);
-    
+
     res.status(500).json({
       success: false,
       message: "Internal server error",
-      error: error instanceof Error ? error.message : "Unknown error"
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
+  }
+};
+
+const getUserStatistics = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
+      });
+    }
+
+    const statistics = await OrderService.getUserStatisticsService(userId);
+
+    res.status(200).json({
+      success: true,
+      message: "Seller statistics fetched successfully",
+      data: statistics,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch Seller statistics",
     });
   }
 };
@@ -207,4 +239,5 @@ export const OrderController = {
   getOrderStatusCounts,
   getOrderStatusSummary,
   getActivityList,
+  getUserStatistics,
 };
