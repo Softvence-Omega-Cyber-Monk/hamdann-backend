@@ -12,3 +12,9 @@ export interface IPromotion {
   termsAndConditions?: string;
   isActive?: boolean;
 }
+
+
+
+
+
+

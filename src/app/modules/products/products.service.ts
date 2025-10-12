@@ -12,12 +12,32 @@ interface ReviewInput {
   comment?: string;
 }
 
+const shopReview = (userId :any)=>{
+
+  const reviews = Product.aggregate([
+    { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+    { $unwind: "$reviews" },
+    {
+      $group: {
+        _id: "$userId",
+        averageRating: { $avg: "$reviews.rating" },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+  return reviews
+}
+
+
 export const createProductService = async (
   payload: IProduct,
   imageInput: Express.Multer.File | Express.Multer.File[]
 ) => {
   const { userId } = payload;
 
+
+  const shopReviews = await shopReview(userId);
+  console.log("shopReviews ", shopReviews[0].averageRating);
   const exitUser = await User_Model.findById({ _id: userId });
   if (!exitUser) {
     throw new Error("User not found");
@@ -48,6 +68,7 @@ export const createProductService = async (
   const productPayload = {
     ...payload,
     shopName: exitUser.businessInfo?.businessName || null,
+    shopReviews: shopReviews[0]?.averageRating || 0,
     productImages: imageUrls,
   };
 
