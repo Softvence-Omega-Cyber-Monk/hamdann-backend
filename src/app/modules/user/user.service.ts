@@ -58,14 +58,14 @@ export const user_service = {
     const existingUser = await User_Model.findById(id);
     if (!existingUser) throw new Error("User not found");
 
-    // If updating email, check if it's already used by another user
-    if (updateData.email) {
-      const emailExists = await User_Model.findOne({
-        email: updateData.email,
-        _id: { $ne: id }, // exclude the current user
-      });
-      if (emailExists) throw new Error("Email already in use by another user");
-    }
+    // // If updating email, check if it's already used by another user
+    // if (updateData.email) {
+    //   const emailExists = await User_Model.findOne({
+    //     email: updateData.email,
+    //     _id: { $ne: id }, // exclude the current user
+    //   });
+    //   if (emailExists) throw new Error("Email already in use by another user");
+    // }
 
      // Handle image upload if file exists
     if (updateData.file) {
@@ -98,6 +98,7 @@ export const user_service = {
     });
 
     if (!updatedUser) throw new Error("Failed to update user");
+    console.log("Update user data", updatedUser);
 
     return updatedUser;
   },
