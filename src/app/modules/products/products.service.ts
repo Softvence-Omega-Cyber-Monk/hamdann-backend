@@ -137,13 +137,11 @@ const getProductByCategoryService = async (
 
   const totalCategoryProduct = await Product.countDocuments(filter);
 
-
   return {
     products,
     totalCategoryProduct,
     page,
     pages: Math.ceil(totalCategoryProduct / limit),
-   
   };
 };
 
@@ -313,7 +311,7 @@ export const addProductReviewService = async (
   const totalShopReviews = shopStats[0]?.totalReviews || 0;
 
   // ✅ Update all products of that seller with the latest shop average rating
- const res = await Product.updateMany(
+  const res = await Product.updateMany(
     { userId: shopId },
     {
       $set: {
@@ -324,10 +322,19 @@ export const addProductReviewService = async (
 
   console.log("Updated products with new shop rating:", res);
 
-
-
-
   return product;
+};
+
+const getInventoryStatusService = async (userId: string) => {
+  const userObjectId = new mongoose.Types.ObjectId(userId);
+  
+
+  const inventoryStatus = await Product.find(
+    { userId: userObjectId },
+    { name: 1, quantity: 1, _id: 0 } // Only return name and quantity fields
+  ).sort({ name: 1 }); // Sort by product name alphabetically
+  
+  return inventoryStatus;
 };
 
 export const productService = {
@@ -345,4 +352,5 @@ export const productService = {
   removeProductsWishlist,
   getProductStatsService,
   addProductReviewService,
+  getInventoryStatusService,
 };

@@ -8,13 +8,15 @@ export const createPromotionService = async (payload: IPromotion) => {
   // Optional: validate product IDs exist
   if (payload.allProducts?.length) {
     const existing = await Product.find({ _id: { $in: payload.allProducts } });
-    
+
     if (existing.length !== payload.allProducts.length) {
       throw new Error("Some products in allProducts do not exist");
     }
   }
   if (payload.specificProducts?.length) {
-    const existing = await Product.find({ _id: { $in: payload.specificProducts } });
+    const existing = await Product.find({
+      _id: { $in: payload.specificProducts },
+    });
     if (existing.length !== payload.specificProducts.length) {
       throw new Error("Some products in specificProducts do not exist");
     }
@@ -25,13 +27,16 @@ export const createPromotionService = async (payload: IPromotion) => {
 };
 
 // Get single promotion by ID
-export const getPromotionService = async (id: string): Promise<IPromotion | null> => {
-
+export const getPromotionService = async (
+  id: string
+): Promise<IPromotion | null> => {
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new Error("Invalid Promotion ID");
   }
 
-  const promotion = await PromotionModel.findById(id).populate('allProducts','specificProducts').exec()
+  const promotion = await PromotionModel.findById(id)
+    .populate("allProducts", "specificProducts")
+    .exec();
   if (!promotion) {
     throw new Error("Promotion not found");
   }
@@ -41,14 +46,14 @@ export const getPromotionService = async (id: string): Promise<IPromotion | null
 
 // Get all promotions
 export const getAllPromotionsService = async () => {
-
-    // console.log("Service hit ")
+  // console.log("Service hit ")
   // No try-catch needed; let controller handle errors
   const promotion = await PromotionModel.find()
-    .sort({ createdAt: -1 }).populate('allProducts','specificProducts')
+    .sort({ createdAt: -1 })
+    .populate("allProducts", "specificProducts")
     .exec();
 
-//   console.log("Promotion", promotion);
+  //   console.log("Promotion", promotion);
   return promotion;
 };
 
@@ -71,4 +76,22 @@ export const updatePromotionService = async (
   }
 
   return promotion;
+};
+
+// Inventory status
+export const getSellerPromotionsService = async (userId: string) => {
+  // Get all promotions that are active and return required fields
+  const promotions = await PromotionModel.find(
+    { isActive: true },
+    { 
+      promotionName: 1, 
+      endDate: 1, 
+      discountValue: 1, 
+      isActive: 1,
+      promotionType: 1,
+      _id: 0 
+    }
+  ).sort({ endDate: 1 });
+
+  return promotions;
 };

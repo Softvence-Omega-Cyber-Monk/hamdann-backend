@@ -263,6 +263,32 @@ export const addReviewToProduct = async (req: Request, res: Response) => {
   }
 };
 
+const getInventoryStatus = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    
+    if (!userId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "User ID is required" 
+      });
+    }
+
+    const inventoryStatus = await productService.getInventoryStatusService(userId);
+
+    res.status(200).json({ 
+      success: true, 
+      data: inventoryStatus 
+    });
+  } catch (error: any) {
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
+  }
+};
+
+
 export const productController = {
   createProduct,
   updateProduct,
@@ -278,4 +304,5 @@ export const productController = {
   removeProductsWishlist,
   getProductStats,
   addReviewToProduct,
+  getInventoryStatus,
 };
