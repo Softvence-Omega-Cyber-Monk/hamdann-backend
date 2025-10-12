@@ -12,6 +12,13 @@ interface ReviewInput {
   comment?: string;
 }
 
+interface ProductQueryOptions {
+  sort?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
 export const createProductService = async (
   payload: IProduct,
   imageInput: Express.Multer.File | Express.Multer.File[]
@@ -37,7 +44,6 @@ export const createProductService = async (
     productImages: imageUrls,
   };
 
-
   const product = await Product.create(productPayload);
   return product;
 };
@@ -58,13 +64,59 @@ const getSingleProductService = async (id: string) => {
   return product;
 };
 const getSingleUserProductService = async (userId: string) => {
-  const product = await Product.find({userId: userId});
+  const product = await Product.find({ userId: userId });
   return product;
 };
-const getProductByCategoryService = async (category: string) => {
-  const product = await Product.find({ category: category });
-  return product;
+
+const getProductByCategoryService = async (
+  category: string,
+  options: ProductQueryOptions = {}
+) => {
+  const { sort, search, page = 1, limit = 10 } = options;
+
+  const filter: Record<string, any> = { category };
+
+  if (search) {
+    filter.name = { $regex: search, $options: "i" };
+  }
+
+  let sortQuery: Record<string, 1 | -1> = {};
+
+  if (sort) {
+    const sortOptions = sort.split(",").map((s) => s.trim());
+
+    sortOptions.forEach((option) => {
+      if (option === "low-to-high") {
+        sortQuery.price = 1;
+      } else if (option === "high-to-low") {
+        sortQuery.price = -1;
+      } else if (option === "best-selling") {
+        sortQuery.salesCount = -1;
+      }
+    });
+  }
+
+  // Pagination
+  const skip = (page - 1) * limit;
+
+  const products = await Product.find(filter)
+    .sort(sortQuery)
+    .skip(skip)
+    .limit(limit)
+    .exec();
+
+  const totalCategoryProduct = await Product.countDocuments(filter);
+
+
+  return {
+    products,
+    totalCategoryProduct,
+    page,
+    pages: Math.ceil(totalCategoryProduct / limit),
+   
+  };
 };
+
 const getNewArrivalsProductsService = async () => {
   const newArrivals = await Product.find({
     createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, // Filter for the last 30 days
@@ -73,30 +125,29 @@ const getNewArrivalsProductsService = async () => {
   return newArrivals;
 };
 const getBestSellingProductsService = async () => {
-  const bestSellingProducts = await Product.find()
-    .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
+  const bestSellingProducts = await Product.find().sort({ salesCount: -1 }); // Sort by salesCount in descending order (highest first)
 
-
-    console.log('bestSellingProducts ', bestSellingProducts.length)
+  console.log("bestSellingProducts ", bestSellingProducts.length);
 
   return bestSellingProducts;
 };
-const getSellerBestSellingProductsService = async (userId : string) => {
-  console.log('userId in service ', userId)
-  const bestSellingProducts = await Product.find({ userId: userId })
-    .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
+const getSellerBestSellingProductsService = async (userId: string) => {
+  console.log("userId in service ", userId);
+  const bestSellingProducts = await Product.find({ userId: userId }).sort({
+    salesCount: -1,
+  }); // Sort by salesCount in descending order (highest first)
 
-
-    console.log('bestSellingProducts ', bestSellingProducts.length)
+  console.log("bestSellingProducts ", bestSellingProducts.length);
 
   return bestSellingProducts;
 };
 
-const getWishlistedProductsService = async (
-  userId: string
-) => {
-  console.log('userid ', userId)
-  const wishListedProducts = await Product.find({ isWishlisted: true , userId: userId });
+const getWishlistedProductsService = async (userId: string) => {
+  console.log("userid ", userId);
+  const wishListedProducts = await Product.find({
+    isWishlisted: true,
+    userId: userId,
+  });
   return wishListedProducts;
 };
 const updateWishlistedProductsService = async (
@@ -125,7 +176,6 @@ const removeProductsWishlist = async (productIds: string[]) => {
   return updatedProducts;
   // Product statistics
 };
-
 
 const getProductStatsService = async (userId: string) => {
   const userObjectId = new mongoose.Types.ObjectId(userId);
@@ -182,10 +232,8 @@ export const addProductReviewService = async (
   userId: string,
   review: ReviewInput
 ) => {
-
-  console.log('dkfsdlf', userId, review)
+  console.log("dkfsdlf", userId, review);
   const existingUser = await User_Model.findById({ _id: userId });
-
 
   const product = (await Product.findById(productId)) as any;
 
@@ -195,10 +243,10 @@ export const addProductReviewService = async (
 
   const reviewData = {
     ...review,
-    userId : existingUser?.name
-  }
+    userId: existingUser?.name,
+  };
 
-  console.log('reaq ', reviewData)
+  console.log("reaq ", reviewData);
   // Add the new review
   product.reviews.push(reviewData);
 
