@@ -31,4 +31,7 @@ router.get("/admin/activities-list", OrderController.getActivityList);
 // Seller Analytics
 router.get('/seller-analytics/:userId', OrderController.getUserStatistics);
 
+// Product list with delivery status base on seller ID
+router.get("/seller/:sellerId", OrderController.getProductListWithStatusBySellerId); 
+
 export const OrderRoute = router;

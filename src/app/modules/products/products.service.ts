@@ -26,6 +26,12 @@ const shopReview = async (userId: any) => {
   ]);
   return reviews;
 };
+interface ProductQueryOptions {
+  sort?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
 
 export const createProductService = async (
   payload: IProduct,
@@ -91,10 +97,56 @@ const getSingleUserProductService = async (userId: string) => {
   const product = await Product.find({ userId: userId });
   return product;
 };
-const getProductByCategoryService = async (category: string) => {
-  const product = await Product.find({ category: category });
-  return product;
+
+const getProductByCategoryService = async (
+  category: string,
+  options: ProductQueryOptions = {}
+) => {
+  const { sort, search, page = 1, limit = 10 } = options;
+
+  const filter: Record<string, any> = { category };
+
+  if (search) {
+    filter.name = { $regex: search, $options: "i" };
+  }
+
+  let sortQuery: Record<string, 1 | -1> = {};
+
+  if (sort) {
+    const sortOptions = sort.split(",").map((s) => s.trim());
+
+    sortOptions.forEach((option) => {
+      if (option === "low-to-high") {
+        sortQuery.price = 1;
+      } else if (option === "high-to-low") {
+        sortQuery.price = -1;
+      } else if (option === "best-selling") {
+        sortQuery.salesCount = -1;
+      }
+    });
+  }
+
+  // Pagination
+  const skip = (page - 1) * limit;
+
+  const products = await Product.find(filter)
+    .sort(sortQuery)
+    .skip(skip)
+    .limit(limit)
+    .exec();
+
+  const totalCategoryProduct = await Product.countDocuments(filter);
+
+
+  return {
+    products,
+    totalCategoryProduct,
+    page,
+    pages: Math.ceil(totalCategoryProduct / limit),
+   
+  };
 };
+
 const getNewArrivalsProductsService = async () => {
   const newArrivals = await Product.find({
     createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, // Filter for the last 30 days
@@ -210,7 +262,7 @@ export const addProductReviewService = async (
   userId: string,
   review: ReviewInput
 ) => {
-  // console.log("dkfsdlf", userId, review);
+  console.log("dkfsdlf", userId, review);
   const existingUser = await User_Model.findById({ _id: userId });
 
   const product = (await Product.findById(productId)) as any;

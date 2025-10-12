@@ -28,6 +28,12 @@ interface IUserStatistics {
   averageOrderValue: number;
 }
 
+interface GetOrdersOptions {
+  status?: string;
+  page?: number;
+  limit?: number;
+}
+
 // Utility function to calculate subtotal, shipping cost, and total amount
 const calculateOrderAmounts = (items: IOrderItem[]) => {
   const subtotal = items.reduce(
@@ -62,9 +68,6 @@ const createOrder = async (orderData: IOrder) => {
       tax, // Include the tax in the order
       totalAmount,
     });
-
-
-    
 
     // Save and return the created order
     return await order.save();
@@ -481,6 +484,42 @@ const getUserStatisticsService = async (
   }
 };
 
+const getProductListWithStatusBySellerIdService = async (
+  sellerId: string,
+  options: GetOrdersOptions = {}
+) => {
+  const { status, page = 1, limit = 10 } = options;
+
+  // Filter orders by seller (userId) and status if provided
+  const filter: Record<string, any> = { userId: sellerId };
+  if (status) {
+    if (status === "pending") {
+      filter.status = {
+        $in: ["placed", "payment_processed", "out_for_delivery", "pending"],
+      };
+    } else {
+      filter.status = status;
+    }
+  }
+
+  const skip = (page - 1) * limit;
+
+  const orders = await Order.find(filter)
+    .sort({ createdAt: -1 }) // latest orders first
+    .skip(skip)
+    .limit(limit)
+    .exec();
+
+  const total = await Order.countDocuments(filter);
+
+  return {
+    orders,
+    total,
+    page,
+    pages: Math.ceil(total / limit),
+  };
+};
+
 export const OrderService = {
   createOrder,
   getAllOrders,
@@ -494,4 +533,5 @@ export const OrderService = {
   getOrderStatusSummaryService,
   getActivityListService,
   getUserStatisticsService,
+  getProductListWithStatusBySellerIdService,
 };
