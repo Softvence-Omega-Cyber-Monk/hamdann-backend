@@ -19,6 +19,7 @@ export interface IProduct {
   price: number;
   productImages?: string[];
   reviews?: { rating: number; comment?: string ; userId :string }[];
+  shopReviews?: number;
   averageRating?: number;
   salesCount: number; // Tracks the number of sales       
   isNewArrival: boolean; // Flag for new arrival      

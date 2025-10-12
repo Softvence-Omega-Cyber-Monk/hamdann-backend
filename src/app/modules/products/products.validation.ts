@@ -34,6 +34,7 @@ export const ProductSchema = z.object({
     )
     .optional(),
   averageRating: z.number().min(0).max(5).optional(),
+  shopReviews: z.number().min(0).max(5).optional(),
   salesCount: z.number().min(0).default(0),
   isNewArrival: z.boolean().default(false),
   isWishlisted: z.boolean().default(false),

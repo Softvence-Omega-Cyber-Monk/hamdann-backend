@@ -12,8 +12,7 @@ interface ReviewInput {
   comment?: string;
 }
 
-const shopReview = (userId :any)=>{
-
+const shopReview = (userId: any) => {
   const reviews = Product.aggregate([
     { $match: { userId: new mongoose.Types.ObjectId(userId) } },
     { $unwind: "$reviews" },
@@ -25,8 +24,11 @@ const shopReview = (userId :any)=>{
       },
     },
   ]);
-  return reviews
-}
+  return reviews;
+};
+
+
+
 
 
 export const createProductService = async (
@@ -35,9 +37,6 @@ export const createProductService = async (
 ) => {
   const { userId } = payload;
 
-
-  const shopReviews = await shopReview(userId);
-  console.log("shopReviews ", shopReviews[0].averageRating);
   const exitUser = await User_Model.findById({ _id: userId });
   if (!exitUser) {
     throw new Error("User not found");
@@ -47,7 +46,10 @@ export const createProductService = async (
     throw new Error("Only sellers can add products");
   }
 
-  console.log("bussinage--------- ", exitUser.businessInfo);
+  const shopReviews = await shopReview(userId);
+  console.log("shopReviews ", shopReviews);
+
+
 
   let imageUrls: string[] = [];
 
@@ -68,7 +70,7 @@ export const createProductService = async (
   const productPayload = {
     ...payload,
     shopName: exitUser.businessInfo?.businessName || null,
-    shopReviews: shopReviews[0]?.averageRating || 0,
+    shopReviews: shopReviews[0]?.averageRating,
     productImages: imageUrls,
   };
 
@@ -214,7 +216,7 @@ export const addProductReviewService = async (
   userId: string,
   review: ReviewInput
 ) => {
-  console.log("dkfsdlf", userId, review);
+  // console.log("dkfsdlf", userId, review);
   const existingUser = await User_Model.findById({ _id: userId });
 
   const product = (await Product.findById(productId)) as any;
