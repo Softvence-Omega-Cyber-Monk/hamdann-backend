@@ -27,6 +27,8 @@ export const createProductService = async (
     throw new Error("Only sellers can add products");
   }
 
+  console.log("bussinage--------- ", exitUser.businessInfo);
+
   let imageUrls: string[] = [];
 
   if (Array.isArray(imageInput)) {

@@ -9,6 +9,7 @@ import { productService } from "./products.service";
 const createProduct = async (req: Request, res: Response) => {
   try {
     // console.log("Uploaded file(s):", req.file || req.files);
+    console.log('hit thit hist eindex')
 
     const singleFile = req.file as Express.Multer.File;
     const multipleFiles = req.files as Express.Multer.File[];
