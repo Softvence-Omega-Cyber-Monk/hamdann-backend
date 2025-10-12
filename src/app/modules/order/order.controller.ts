@@ -227,6 +227,28 @@ const getUserStatistics = async (req: Request, res: Response) => {
   }
 };
 
+const getProductListWithStatusBySellerId = async (req: Request, res: Response) => {
+  try {
+    const { sellerId } = req.params;
+    const { status, page, limit } = req.query;
+
+    const result = await OrderService.getProductListWithStatusBySellerIdService(sellerId, {
+      status: status as string,
+      page: Number(page) || 1,
+      limit: Number(limit) || 10,
+    });
+
+    if (!result.orders.length) {
+      return res.status(404).json({ success: false, message: "No orders found" });
+    }
+
+    res.status(200).json({ success: true, data: result });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
 export const OrderController = {
   createOrder,
   getAllOrders,
@@ -240,4 +262,5 @@ export const OrderController = {
   getOrderStatusSummary,
   getActivityList,
   getUserStatistics,
+  getProductListWithStatusBySellerId,
 };
