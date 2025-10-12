@@ -77,24 +77,50 @@ const createOrder = async (orderData: IOrder) => {
 };
 
 // Get all orders with optional filters
-const getAllOrders = async (filters: IOrderFilters = {}): Promise<IOrder[]> => {
-  const query: Record<string, any> = {};
+// const getAllOrders = async (filters: IOrderFilters = {}): Promise<IOrder[]> => {
+//   const query: Record<string, any> = {};
 
-  // Apply filters
-  if (filters.userId) query.userId = filters.userId;
-  if (filters.status) query.status = filters.status;
+//   // Apply filters
+//   if (filters.userId) query.userId = filters.userId;
+//   if (filters.status) query.status = filters.status;
 
+//   try {
+//     const orders = await Order.find(query)
+//       .populate({
+//         path: "userId",
+//         select: "name email", // only return these fields
+//       })
+//       .populate({
+//         path: "items.productId",
+//         select: "name price stock image", // you can add more fields as needed
+//       })
+//       .sort({ createdAt: -1 }); // newest first
+
+//     return orders;
+//   } catch (error: any) {
+//     throw new Error(`Failed to fetch orders: ${error.message}`);
+//   }
+// };
+
+const getAllOrders = async (filters: any = {}): Promise<IOrder[]> => {
   try {
+    const query: Record<string, any> = {};
+
+    // Apply the filter from controller
+    if (filters.status) {
+      query.status = filters.status;
+    }
+
     const orders = await Order.find(query)
       .populate({
         path: "userId",
-        select: "name email", // only return these fields
+        select: "name email",
       })
       .populate({
         path: "items.productId",
-        select: "name price stock image", // you can add more fields as needed
+        select: "name price stock image",
       })
-      .sort({ createdAt: -1 }); // newest first
+      .sort({ createdAt: -1 });
 
     return orders;
   } catch (error: any) {

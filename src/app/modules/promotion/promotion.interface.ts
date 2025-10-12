@@ -11,6 +11,10 @@ export interface IPromotion {
   endDate: Date;
   termsAndConditions?: string;
   isActive?: boolean;
+  totalView?: number;
+  totalClick?: number;
+  redemptionRate?: string;
+  conversionRate?: string;
 }
 
 

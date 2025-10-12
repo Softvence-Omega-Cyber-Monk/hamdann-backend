@@ -1,5 +1,6 @@
 import { Schema, model, Types } from "mongoose";
 import { IPromotion } from "./promotion.interface";
+import { number, string } from "zod";
 
 const PromotionSchema = new Schema<IPromotion>(
   {
@@ -19,6 +20,10 @@ const PromotionSchema = new Schema<IPromotion>(
     endDate: { type: Date, required: true },
     termsAndConditions: { type: String },
     isActive: { type: Boolean, default: true },
+    totalView: {type: Number},
+    totalClick: {type: Number},
+    redemptionRate: {type: String},
+    conversionRate: {type: String},
   },
   { timestamps: true }
 );
