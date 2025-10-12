@@ -8,6 +8,7 @@ import {
   getPromotionService,
   getAllPromotionsService,
   updatePromotionService,
+  getSellerPromotionsService,
 } from "./promotion.service";
 import { PromotionModel } from "./promotion.model";
 import { IPromotion } from "./promotion.interface";
@@ -159,6 +160,39 @@ export const pausePromotion = async (req: Request, res: Response) => {
     res.status(400).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+export const getSellerPromotions = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+    
+    if (!userId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "User ID is required" 
+      });
+    }
+
+    const promotions = await getSellerPromotionsService(userId);
+
+    if (!promotions || promotions.length === 0) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "No promotions found for this seller" 
+      });
+    }
+
+    res.status(200).json({ 
+      success: true, 
+      data: promotions 
+    });
+  } catch (error: any) {
+    console.error("Error fetching promotions:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
     });
   }
 };

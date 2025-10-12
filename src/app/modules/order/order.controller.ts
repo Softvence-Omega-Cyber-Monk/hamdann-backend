@@ -19,12 +19,43 @@ const createOrder = async (req: Request, res: Response) => {
 };
 
 // Get All Orders
+// const getAllOrders = async (req: Request, res: Response) => {
+//   try {
+//     const orders = await OrderService.getAllOrders();
+//     res.status(200).json({ success: true, data: orders });
+//   } catch (error: any) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
 const getAllOrders = async (req: Request, res: Response) => {
   try {
-    const orders = await OrderService.getAllOrders();
-    res.status(200).json({ success: true, data: orders });
+    const { status } = req.query;
+
+    const filter: any = {};
+
+    if (status) {
+      if (status === "pending") {
+        filter.status = {
+          $in: ["placed", "payment_processed", "out_for_delivery", "pending"],
+        };
+      } else {
+        filter.status = status;
+      }
+    }
+
+    const orders = await OrderService.getAllOrders(filter);
+
+    res.status(200).json({
+      success: true,
+      data: orders,
+      count: orders.length,
+    });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 
@@ -227,19 +258,27 @@ const getUserStatistics = async (req: Request, res: Response) => {
   }
 };
 
-const getProductListWithStatusBySellerId = async (req: Request, res: Response) => {
+const getProductListWithStatusBySellerId = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const { sellerId } = req.params;
     const { status, page, limit } = req.query;
 
-    const result = await OrderService.getProductListWithStatusBySellerIdService(sellerId, {
-      status: status as string,
-      page: Number(page) || 1,
-      limit: Number(limit) || 10,
-    });
+    const result = await OrderService.getProductListWithStatusBySellerIdService(
+      sellerId,
+      {
+        status: status as string,
+        page: Number(page) || 1,
+        limit: Number(limit) || 10,
+      }
+    );
 
     if (!result.orders.length) {
-      return res.status(404).json({ success: false, message: "No orders found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "No orders found" });
     }
 
     res.status(200).json({ success: true, data: result });
@@ -247,7 +286,6 @@ const getProductListWithStatusBySellerId = async (req: Request, res: Response) =
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 
 export const OrderController = {
   createOrder,
