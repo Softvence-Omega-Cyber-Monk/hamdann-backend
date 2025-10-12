@@ -54,7 +54,16 @@ const myProfile = catchAsync(async (req, res) => {
 
 const update_single_user = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const result = await user_service.updateUser(id, req.body);
+  const file = req.file;
+
+
+  console.log("REQ BODY:", req.body);
+  console.log("REQ FILE:", req.file);
+
+  const result = await user_service.updateUser(id, {
+    ...req.body,
+    file,
+  });
   manageResponse(res, {
     success: true,
     statusCode: httpStatus.OK,

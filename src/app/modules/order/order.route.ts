@@ -28,4 +28,7 @@ router.get("/status-summary", OrderController.getOrderStatusSummary);
 // Activity list route
 router.get("/admin/activities-list", OrderController.getActivityList);
 
+// Seller Analytics
+router.get('/seller-analytics/:userId', OrderController.getUserStatistics);
+
 export const OrderRoute = router;

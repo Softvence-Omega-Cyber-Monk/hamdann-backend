@@ -38,4 +38,5 @@ export type TUser = {
   businessInfo?: TBusinessInfo;
   createdAt?: Date;
   updatedAt?: Date;
+  profileImage?: string;
 };
