@@ -47,6 +47,7 @@ export const createProductService = async (
 
   const productPayload = {
     ...payload,
+    shopName: exitUser.businessInfo?.businessName || null,
     productImages: imageUrls,
   };
 

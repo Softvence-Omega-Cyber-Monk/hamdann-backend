@@ -17,7 +17,7 @@ const ProductSchema = new Schema<IProduct>(
       enum: ["Fashion", "Food", "Beauty", "Perfume"], // restrict categories
     },
     brand: { type: String, trim: true },
-    shopName: { type: String, required: true, trim: true },
+    shopName: { type: String , trim: true , default: null},
     weight: { type: Number },
     gender: {
       type: String,

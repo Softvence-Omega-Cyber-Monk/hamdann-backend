@@ -8,7 +8,7 @@ export interface IProduct {
   sku: string;
   category: "Fashion" | "Food" | "Beauty" | "Perfume";
   brand?: string;
-  shopName: string;
+  shopName?: string | null;
   weight?: number;
   gender?: "male" | "female" | string;
   availableSizes?: string[]; // ["S", "M", "L", "XL"]

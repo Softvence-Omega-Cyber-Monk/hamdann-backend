@@ -12,7 +12,7 @@ export const ProductSchema = z.object({
   sku: z.string().min(1, "SKU is required"),
   category: z.enum(["Fashion", "Food", "Beauty", "Perfume"]),
   brand: z.string().optional(),
-  shopName: z.string().min(1, "Shop name is required"),
+  shopName: z.string().optional().nullable(),
   weight: z.number().optional(),
   gender: z.enum(["male", "female"]).default("male"),
   availableSizes: z.array(z.string()).optional(),
