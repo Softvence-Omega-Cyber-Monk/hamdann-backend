@@ -17,6 +17,7 @@ const ProductSchema = new Schema<IProduct>(
       enum: ["Fashion", "Food", "Beauty", "Perfume"], // restrict categories
     },
     brand: { type: String, trim: true },
+    shopName: { type: String , trim: true , default: null},
     weight: { type: Number },
     gender: {
       type: String,
@@ -38,6 +39,7 @@ const ProductSchema = new Schema<IProduct>(
     ],
 
     averageRating: { type: Number, default: 0 },
+      shopReviews: { type: Number, default: 0 },
     productImages: [{ type: String, required: true }],
     salesCount: { type: Number, default: 0 }, // Flag for best-selling
     isNewArrival: { type: Boolean, default: false }, // Flag for new arrival

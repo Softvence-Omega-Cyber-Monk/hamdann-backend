@@ -19,7 +19,7 @@ router.get("/statistics/:userId", OrderController.getUserOrderStatistics);
 // Admin statistics route - returns only 4 metrics
 router.get("/admin/statistics", OrderController.getAdminStatistics);
 
-// Order status counts route
+//admin Order status counts route
 router.get("/order-status-counts",OrderController.getOrderStatusCounts);
 
 // Order status summary route

@@ -12,6 +12,20 @@ interface ReviewInput {
   comment?: string;
 }
 
+const shopReview = async (userId: any) => {
+  const reviews = await Product.aggregate([
+    { $match: { userId: new mongoose.Types.ObjectId(userId) } },
+    { $unwind: "$reviews" },
+    {
+      $group: {
+        _id: "$userId",
+        averageRating: { $avg: "$reviews.rating" },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+  return reviews;
+};
 interface ProductQueryOptions {
   sort?: string;
   search?: string;
@@ -23,6 +37,20 @@ export const createProductService = async (
   payload: IProduct,
   imageInput: Express.Multer.File | Express.Multer.File[]
 ) => {
+  const { userId } = payload;
+
+  const exitUser = await User_Model.findById({ _id: userId });
+  if (!exitUser) {
+    throw new Error("User not found");
+  }
+
+  if (exitUser.role !== "Seller") {
+    throw new Error("Only sellers can add products");
+  }
+
+  const shopReviews = await shopReview(userId);
+  console.log("shopReviews ", shopReviews);
+
   let imageUrls: string[] = [];
 
   if (Array.isArray(imageInput)) {
@@ -41,6 +69,8 @@ export const createProductService = async (
 
   const productPayload = {
     ...payload,
+    shopName: exitUser.businessInfo?.businessName || null,
+    shopReviews: shopReviews[0]?.averageRating,
     productImages: imageUrls,
   };
 
@@ -259,6 +289,43 @@ export const addProductReviewService = async (
   product.averageRating = totalRating / totalReviews;
 
   await product.save();
+
+  // ✅ Recalculate shop’s (seller’s) overall rating across all products
+  const shopId = product.userId; // seller's ID
+  const shopStats = await Product.aggregate([
+    {
+      $match: {
+        userId: new mongoose.Types.ObjectId(shopId),
+        "reviews.rating": { $exists: true, $ne: null },
+      },
+    },
+    { $unwind: "$reviews" },
+    {
+      $group: {
+        _id: "$userId",
+        averageRating: { $avg: "$reviews.rating" },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const shopAverageRating = shopStats[0]?.averageRating || 0;
+  const totalShopReviews = shopStats[0]?.totalReviews || 0;
+
+  // ✅ Update all products of that seller with the latest shop average rating
+ const res = await Product.updateMany(
+    { userId: shopId },
+    {
+      $set: {
+        shopReviews: shopAverageRating,
+      },
+    }
+  );
+
+  console.log("Updated products with new shop rating:", res);
+
+
+
 
   return product;
 };
