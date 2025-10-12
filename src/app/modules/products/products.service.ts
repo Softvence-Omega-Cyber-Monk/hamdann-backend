@@ -16,6 +16,17 @@ export const createProductService = async (
   payload: IProduct,
   imageInput: Express.Multer.File | Express.Multer.File[]
 ) => {
+  const { userId } = payload;
+
+  const exitUser = await User_Model.findById({ _id: userId });
+  if (!exitUser) {
+    throw new Error("User not found");
+  }
+
+  if (exitUser.role !== "Seller") {
+    throw new Error("Only sellers can add products");
+  }
+
   let imageUrls: string[] = [];
 
   if (Array.isArray(imageInput)) {
@@ -37,7 +48,6 @@ export const createProductService = async (
     productImages: imageUrls,
   };
 
-
   const product = await Product.create(productPayload);
   return product;
 };
@@ -58,7 +68,7 @@ const getSingleProductService = async (id: string) => {
   return product;
 };
 const getSingleUserProductService = async (userId: string) => {
-  const product = await Product.find({userId: userId});
+  const product = await Product.find({ userId: userId });
   return product;
 };
 const getProductByCategoryService = async (category: string) => {
@@ -73,30 +83,29 @@ const getNewArrivalsProductsService = async () => {
   return newArrivals;
 };
 const getBestSellingProductsService = async () => {
-  const bestSellingProducts = await Product.find()
-    .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
+  const bestSellingProducts = await Product.find().sort({ salesCount: -1 }); // Sort by salesCount in descending order (highest first)
 
-
-    console.log('bestSellingProducts ', bestSellingProducts.length)
+  console.log("bestSellingProducts ", bestSellingProducts.length);
 
   return bestSellingProducts;
 };
-const getSellerBestSellingProductsService = async (userId : string) => {
-  console.log('userId in service ', userId)
-  const bestSellingProducts = await Product.find({ userId: userId })
-    .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
+const getSellerBestSellingProductsService = async (userId: string) => {
+  console.log("userId in service ", userId);
+  const bestSellingProducts = await Product.find({ userId: userId }).sort({
+    salesCount: -1,
+  }); // Sort by salesCount in descending order (highest first)
 
-
-    console.log('bestSellingProducts ', bestSellingProducts.length)
+  console.log("bestSellingProducts ", bestSellingProducts.length);
 
   return bestSellingProducts;
 };
 
-const getWishlistedProductsService = async (
-  userId: string
-) => {
-  console.log('userid ', userId)
-  const wishListedProducts = await Product.find({ isWishlisted: true , userId: userId });
+const getWishlistedProductsService = async (userId: string) => {
+  console.log("userid ", userId);
+  const wishListedProducts = await Product.find({
+    isWishlisted: true,
+    userId: userId,
+  });
   return wishListedProducts;
 };
 const updateWishlistedProductsService = async (
@@ -125,7 +134,6 @@ const removeProductsWishlist = async (productIds: string[]) => {
   return updatedProducts;
   // Product statistics
 };
-
 
 const getProductStatsService = async (userId: string) => {
   const userObjectId = new mongoose.Types.ObjectId(userId);
@@ -182,10 +190,8 @@ export const addProductReviewService = async (
   userId: string,
   review: ReviewInput
 ) => {
-
-  console.log('dkfsdlf', userId, review)
+  console.log("dkfsdlf", userId, review);
   const existingUser = await User_Model.findById({ _id: userId });
-
 
   const product = (await Product.findById(productId)) as any;
 
@@ -195,10 +201,10 @@ export const addProductReviewService = async (
 
   const reviewData = {
     ...review,
-    userId : existingUser?.name
-  }
+    userId: existingUser?.name,
+  };
 
-  console.log('reaq ', reviewData)
+  console.log("reaq ", reviewData);
   // Add the new review
   product.reviews.push(reviewData);
 
