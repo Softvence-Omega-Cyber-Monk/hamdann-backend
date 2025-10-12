@@ -83,28 +83,6 @@ const getSingleUserProductService = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-// const getProductByCategoryService = async (req: Request, res: Response) => {
-//   try {
-//     const { category } = req.params;
-//     const { sort, search } = req.query;
-//     const product = await productService.getProductByCategoryService(
-//       category,
-//       sort as string,
-//       search as string,
-//     );
-
-//     if (!product) {
-//       return res
-//         .status(404)
-//         .json({ success: false, message: "Products not found" });
-//     }
-
-//     res.status(200).json({ success: true, data: product });
-//   } catch (error: any) {
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// };
-
 
 const getProductByCategoryService = async (req: Request, res: Response) => {
   try {
