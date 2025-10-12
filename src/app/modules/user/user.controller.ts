@@ -56,10 +56,6 @@ const update_single_user = catchAsync(async (req, res) => {
   const { id } = req.params;
   const file = req.file;
 
-
-  console.log("REQ BODY:", req.body);
-  console.log("REQ FILE:", req.file);
-
   const result = await user_service.updateUser(id, {
     ...req.body,
     file,

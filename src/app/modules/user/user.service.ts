@@ -90,7 +90,7 @@ export const user_service = {
 
     
 
-    console.log("updateData:", updateData);
+    // console.log("updateData:", updateData);
     // Update user and return updated document
     const updatedUser = await User_Model.findByIdAndUpdate(id, updateData, {
       new: true,

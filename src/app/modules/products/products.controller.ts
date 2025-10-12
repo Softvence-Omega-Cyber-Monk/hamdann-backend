@@ -18,7 +18,6 @@ const createProduct = async (req: Request, res: Response) => {
       singleFile || multipleFiles // Pass whichever exists
     );
 
-
     res.status(201).json({ success: true, data: product });
   } catch (error: any) {
     console.error("Error creating product:", error);
@@ -84,22 +83,51 @@ const getSingleUserProductService = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+// const getProductByCategoryService = async (req: Request, res: Response) => {
+//   try {
+//     const { category } = req.params;
+//     const { sort, search } = req.query;
+//     const product = await productService.getProductByCategoryService(
+//       category,
+//       sort as string,
+//       search as string,
+//     );
+
+//     if (!product) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "Products not found" });
+//     }
+
+//     res.status(200).json({ success: true, data: product });
+//   } catch (error: any) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
+
+
 const getProductByCategoryService = async (req: Request, res: Response) => {
   try {
     const { category } = req.params;
-    const product = await productService.getProductByCategoryService(category);
+    const { sort, search, page, limit } = req.query;
 
-    if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Products not found" });
+    const result = await productService.getProductByCategoryService(category, {
+      sort: sort as string,
+      search: search as string,
+      page: Number(page) || 1,
+      limit: Number(limit) || 10,
+    });
+
+    if (!result.products.length) {
+      return res.status(404).json({ success: false, message: "No products found" });
     }
 
-    res.status(200).json({ success: true, data: product });
+    res.status(200).json({ success: true, data: result });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 const getNewArrivalsProductsService = async (req: Request, res: Response) => {
   try {
     const product = await productService.getNewArrivalsProductsService();
@@ -130,11 +158,15 @@ const getBestSellingProductsService = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-const getSellerBestSellingProductsService = async (req: Request, res: Response) => {
-
+const getSellerBestSellingProductsService = async (
+  req: Request,
+  res: Response
+) => {
   const { userId } = req.params;
   try {
-    const product = await productService.getSellerBestSellingProductsService(userId);
+    const product = await productService.getSellerBestSellingProductsService(
+      userId
+    );
 
     if (!product) {
       return res
@@ -150,7 +182,7 @@ const getSellerBestSellingProductsService = async (req: Request, res: Response) 
 const getWishlistedProductsService = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    const product = await productService.getWishlistedProductsService( userId);
+    const product = await productService.getWishlistedProductsService(userId);
 
     if (!product) {
       return res
@@ -204,7 +236,7 @@ const removeProductsWishlist = async (req: Request, res: Response) => {
 const getProductStats = async (req: Request, res: Response) => {
   try {
     // Assuming auth middleware sets req.user._id
-    const {userId} = req.params;
+    const { userId } = req.params;
     if (!userId) {
       return res.status(401).json({ success: false, message: "Unauthorized" });
     }
@@ -223,8 +255,6 @@ const getProductStats = async (req: Request, res: Response) => {
   }
 };
 
-
-
 export const addReviewToProduct = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
@@ -233,10 +263,16 @@ export const addReviewToProduct = async (req: Request, res: Response) => {
 
     // Basic validation
     if (!rating || rating < 1 || rating > 5) {
-      return res.status(400).json({ success: false, message: "Rating must be between 1 and 5" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Rating must be between 1 and 5" });
     }
 
-    const updatedProduct = await productService.addProductReviewService(productId,userId, { rating, comment  });
+    const updatedProduct = await productService.addProductReviewService(
+      productId,
+      userId,
+      { rating, comment }
+    );
 
     res.status(200).json({
       success: true,
@@ -262,5 +298,5 @@ export const productController = {
   updateWishlistedProductsService,
   removeProductsWishlist,
   getProductStats,
-  addReviewToProduct
+  addReviewToProduct,
 };
