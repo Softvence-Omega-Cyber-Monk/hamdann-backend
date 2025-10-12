@@ -93,8 +93,8 @@ const getProductByCategoryService = async (req: Request, res: Response) => {
     const result = await productService.getProductByCategoryService(category, {
       sort: sort as string,
       search: search as string,
-      page: Number(page) || 1,
-      limit: Number(limit) || 10,
+      page: Number(page),
+      limit: Number(limit),
     });
 
     if (!result.products.length) {
