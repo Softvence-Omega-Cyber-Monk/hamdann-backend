@@ -39,7 +39,7 @@ const ProductSchema = new Schema<IProduct>(
     ],
 
     averageRating: { type: Number, default: 0 },
-      shopReviews: { type: Number, default: 0 },
+      shopReviews: { type: Number, default: null },
     productImages: [{ type: String, required: true }],
     salesCount: { type: Number, default: 0 }, // Flag for best-selling
     isNewArrival: { type: Boolean, default: false }, // Flag for new arrival
