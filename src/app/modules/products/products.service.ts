@@ -78,13 +78,13 @@ export const createProductService = async (
   const product = await Product.create(productPayload);
 
   // Notify all customers
-  // const customers = await User_Model.find({ role: "Buyer" });
+  const customers = await User_Model.find({ _id: "68e33c1ce47be4a31ebab06c" });
   // for (const user of customers) {
-  //   await sendNotification(
-  //     user._id.toString(),
-  //     "🛒 New Product Added!",
-  //     `${product.name} is now available!`
-  //   );
+  await sendNotification(
+    customers[0]._id.toString(),
+    "🛒 New Product Added!",
+    `${product.name} is now available!`
+  );
   // }
 
   return product;

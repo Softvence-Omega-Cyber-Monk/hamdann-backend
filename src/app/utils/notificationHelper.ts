@@ -1,14 +1,16 @@
 import { messaging } from "../configs/firebaseAdmin";
 import { User_Model } from "../modules/user/user.schema";
 
-
 export const sendNotification = async (
   userId: string,
   title: string,
   body: string
 ): Promise<void> => {
   try {
+    console.log("user is ", userId,);
+
     const user = await User_Model.findById(userId);
+
     if (!user || !user.fcmToken) {
       console.log(`❌ No FCM token for user ${userId}`);
       return;
