@@ -6,6 +6,7 @@ import {
 } from "../../utils/cloudinary";
 import { User_Model } from "../user/user.schema";
 import mongoose from "mongoose";
+import { sendNotification } from "../../utils/notificationHelper";
 
 interface ReviewInput {
   rating: number;
@@ -75,6 +76,17 @@ export const createProductService = async (
   };
 
   const product = await Product.create(productPayload);
+
+  // Notify all customers
+  const customers = await User_Model.find({ role: "Buyer" });
+  for (const user of customers) {
+    await sendNotification(
+      user._id.toString(),
+      "🛒 New Product Added!",
+      `${product.name} is now available!`
+    );
+  }
+
   return product;
 };
 
@@ -177,9 +189,7 @@ const getWishlistedProductsService = async (userId: string) => {
     userId: userId,
   });
 
-
   console.log("wishListedProducts ", wishListedProducts.length);
-
 
   return wishListedProducts;
 };
@@ -332,13 +342,12 @@ export const addProductReviewService = async (
 
 const getInventoryStatusService = async (userId: string) => {
   const userObjectId = new mongoose.Types.ObjectId(userId);
-  
 
   const inventoryStatus = await Product.find(
     { userId: userObjectId },
     { name: 1, quantity: 1, _id: 0 } // Only return name and quantity fields
   ).sort({ name: 1 }); // Sort by product name alphabetically
-  
+
   return inventoryStatus;
 };
 
