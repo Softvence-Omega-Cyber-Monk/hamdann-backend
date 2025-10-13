@@ -40,4 +40,5 @@ export type TUser = {
   createdAt?: Date;
   updatedAt?: Date;
   profileImage?: string;
+  isPaidPlan?: boolean;
 };

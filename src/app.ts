@@ -7,6 +7,11 @@ import appRouter from "./routes";
 import { User_Model } from "./app/modules/user/user.schema";
 import bcrypt from "bcrypt";
 import { configs } from "./app/configs";
+import { paymentRoutes } from "./app/modules/payment/payment.route";
+import { stripe } from "./app/configs/stripe.config";
+import { Payment } from "./app/modules/payment/payment.model";
+import { Order } from "./app/modules/order/order.model";
+import status from "http-status";
 
 // define app
 const app = express();
@@ -30,6 +35,59 @@ app.get("/", (req: Request, res: Response) => {
     message: "Server is running successful !!",
     data: null,
   });
+});
+
+// ✅ Success payment route
+app.get("/payment-success", async (req: Request, res: Response) => {
+  try {
+    const { session_id } = req.query;
+
+    if (!session_id) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Session ID required" });
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(
+      session_id as string
+    );
+
+    if (session.payment_status === "paid") {
+      const payment = await Payment.findOneAndUpdate(
+        { paymentIntentId: session.id },
+        { paymentStatus: "succeeded" },
+        { new: true }
+      );
+
+      const orderId = session.metadata?.orderId;
+      // 2️⃣ Update Order status + statusDates
+      const order = await Order.findByIdAndUpdate(
+        orderId,
+        {
+          status: "payment_processed",
+          "statusDates.paymentProcessedAt": new Date(), // ✅ update nested field
+        },
+        { new: true }
+      ).populate({
+        path: "items.productId",
+        select: "name price image", // populate product info
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Payment successful",
+        session,
+        payment,
+        order,
+      });
+    }
+
+    res
+      .status(200)
+      .json({ success: false, message: "Payment not completed", session });
+  } catch (error) {
+    res.status(500).json({ success: false, message: (error as Error).message });
+  }
 });
 
 // Create Default SuperAdmin if not exists
