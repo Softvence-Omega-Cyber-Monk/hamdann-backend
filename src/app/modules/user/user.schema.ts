@@ -48,6 +48,7 @@ const UserSchema = new Schema<TUser>(
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     confirmPassword: { type: String, required: true },
+    fcmToken: { type: String, default: null },
 
     isDeleted: { type: Boolean, default: false },
 

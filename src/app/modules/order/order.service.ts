@@ -279,21 +279,36 @@ const getAdminStatisticsService = async (): Promise<IAdminStatistics> => {
   }
 };
 
-const getOrderStatusCountsService = async (): Promise<IOrderStatusCounts> => {
+const getOrderStatusCountsService = async (
+  userId: string
+): Promise<IOrderStatusCounts> => {
+
+  const isexitUser = await User_Model.findById(userId);
+  if(!isexitUser){
+    throw new Error("User not found");
+  }
+
+  if(isexitUser.role !== "Seller"){
+    throw new Error("Only seller can access this data");
+  }
+  
   try {
     const [newOrdersCount, processingCount, completedCount] = await Promise.all(
       [
         Order.countDocuments({
+          userId,
           status: "placed",
         }),
 
         Order.countDocuments({
+          userId,
           status: {
             $in: ["payment_processed", "shipped", "out_for_delivery"],
           },
         }),
 
         Order.countDocuments({
+          userId,
           status: "delivered",
         }),
       ]

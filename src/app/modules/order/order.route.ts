@@ -20,7 +20,7 @@ router.get("/statistics/:userId", OrderController.getUserOrderStatistics);
 router.get("/admin/statistics", OrderController.getAdminStatistics);
 
 //admin Order status counts route
-router.get("/order-status-counts",OrderController.getOrderStatusCounts);
+router.get("/order-status-counts/:userId",OrderController.getOrderStatusCounts);
 
 // Order status summary route
 router.get("/status-summary", OrderController.getOrderStatusSummary);

@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updatePromotionService = exports.getAllPromotionsService = exports.getPromotionService = exports.createPromotionService = void 0;
+exports.getSellerPromotionsService = exports.updatePromotionService = exports.getAllPromotionsService = exports.getPromotionService = exports.createPromotionService = void 0;
 const promotion_model_1 = require("./promotion.model");
 const products_model_1 = require("../products/products.model"); // Import your Product model
 const mongoose_1 = __importDefault(require("mongoose"));
@@ -27,7 +27,9 @@ const createPromotionService = (payload) => __awaiter(void 0, void 0, void 0, fu
         }
     }
     if ((_b = payload.specificProducts) === null || _b === void 0 ? void 0 : _b.length) {
-        const existing = yield products_model_1.Product.find({ _id: { $in: payload.specificProducts } });
+        const existing = yield products_model_1.Product.find({
+            _id: { $in: payload.specificProducts },
+        });
         if (existing.length !== payload.specificProducts.length) {
             throw new Error("Some products in specificProducts do not exist");
         }
@@ -41,7 +43,9 @@ const getPromotionService = (id) => __awaiter(void 0, void 0, void 0, function* 
     if (!mongoose_1.default.Types.ObjectId.isValid(id)) {
         throw new Error("Invalid Promotion ID");
     }
-    const promotion = yield promotion_model_1.PromotionModel.findById(id).populate('allProducts', 'specificProducts').exec();
+    const promotion = yield promotion_model_1.PromotionModel.findById(id)
+        .populate("allProducts", "specificProducts")
+        .exec();
     if (!promotion) {
         throw new Error("Promotion not found");
     }
@@ -53,7 +57,8 @@ const getAllPromotionsService = () => __awaiter(void 0, void 0, void 0, function
     // console.log("Service hit ")
     // No try-catch needed; let controller handle errors
     const promotion = yield promotion_model_1.PromotionModel.find()
-        .sort({ createdAt: -1 }).populate('allProducts', 'specificProducts')
+        .sort({ createdAt: -1 })
+        .populate("allProducts", "specificProducts")
         .exec();
     //   console.log("Promotion", promotion);
     return promotion;
@@ -74,3 +79,17 @@ const updatePromotionService = (id, payload) => __awaiter(void 0, void 0, void 0
     return promotion;
 });
 exports.updatePromotionService = updatePromotionService;
+// Inventory status
+const getSellerPromotionsService = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    // Get all promotions that are active and return required fields
+    const promotions = yield promotion_model_1.PromotionModel.find({ isActive: true }, {
+        promotionName: 1,
+        endDate: 1,
+        discountValue: 1,
+        isActive: 1,
+        promotionType: 1,
+        _id: 0
+    }).sort({ endDate: 1 });
+    return promotions;
+});
+exports.getSellerPromotionsService = getSellerPromotionsService;

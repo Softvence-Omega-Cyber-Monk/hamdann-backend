@@ -15,4 +15,6 @@ router.get("/:id", promotion_controller_1.getPromotion);
 router.put("/update/:id", promotion_multer_1.promotionUpload.single("promotionImage"), promotion_controller_1.updatePromotion);
 // Pause a promotion by ID
 router.patch("/pause/:id", promotion_controller_1.pausePromotion);
+// In your routes file
+router.get('/marketing-promotions/:userId', promotion_controller_1.getSellerPromotions);
 exports.PromotionRoute = router;

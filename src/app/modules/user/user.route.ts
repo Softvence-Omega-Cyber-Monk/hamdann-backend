@@ -45,6 +45,13 @@ userRoute.put(
 // Soft delete user
 userRoute.put("/delete/:id", user_controllers.delete_user);
 
+// FCM TOKEN UPDATE
+userRoute.put(
+  "/save-fcm-token",
+  auth("Admin", "Buyer", "Seller"),
+  user_controllers.fcmTokenUpdate
+);
+
 // PAYMENT METHODS ROUTES
 
 // Add payment method

@@ -10,6 +10,7 @@ const products_route_1 = require("./app/modules/products/products.route");
 const order_route_1 = require("./app/modules/order/order.route");
 const cart_route_1 = require("./app/modules/cart/cart.route");
 const promotion_route_1 = require("./app/modules/promotion/promotion.route");
+const support_route_1 = require("./app/modules/supports/support.route");
 const appRouter = (0, express_1.Router)();
 const moduleRoutes = [
     { path: '/auth', route: auth_route_1.default },
@@ -17,7 +18,8 @@ const moduleRoutes = [
     { path: "/product", route: products_route_1.productRoutes },
     { path: "/cart", route: cart_route_1.CartRoute },
     { path: "/order", route: order_route_1.OrderRoute },
-    { path: "/promotion", route: promotion_route_1.PromotionRoute }
+    { path: "/promotion", route: promotion_route_1.PromotionRoute },
+    { path: "/support", route: support_route_1.supportRoutes }
 ];
 moduleRoutes.forEach(route => appRouter.use(route.path, route.route));
 exports.default = appRouter;

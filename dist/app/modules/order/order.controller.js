@@ -15,24 +15,54 @@ const order_service_1 = require("./order.service");
 const createOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const order = yield order_service_1.OrderService.createOrder(req.body);
-        res.status(201).json({ success: true, data: {
+        res.status(201).json({
+            success: true,
+            data: {
                 orderId: order._id,
                 status: order.status,
                 items: order.items,
-            } });
+            },
+        });
     }
     catch (error) {
         res.status(400).json({ success: false, message: error.message });
     }
 });
 // Get All Orders
+// const getAllOrders = async (req: Request, res: Response) => {
+//   try {
+//     const orders = await OrderService.getAllOrders();
+//     res.status(200).json({ success: true, data: orders });
+//   } catch (error: any) {
+//     res.status(500).json({ success: false, message: error.message });
+//   }
+// };
 const getAllOrders = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const orders = yield order_service_1.OrderService.getAllOrders();
-        res.status(200).json({ success: true, data: orders });
+        const { status } = req.query;
+        const filter = {};
+        if (status) {
+            if (status === "pending") {
+                filter.status = {
+                    $in: ["placed", "payment_processed", "out_for_delivery", "pending"],
+                };
+            }
+            else {
+                filter.status = status;
+            }
+        }
+        const orders = yield order_service_1.OrderService.getAllOrders(filter);
+        res.status(200).json({
+            success: true,
+            data: orders,
+            count: orders.length,
+        });
     }
     catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
     }
 });
 // Get Single Order
@@ -40,7 +70,9 @@ const getOrderById = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     try {
         const order = yield order_service_1.OrderService.getOrderById(req.params.id);
         if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found" });
+            return res
+                .status(404)
+                .json({ success: false, message: "Order not found" });
         }
         res.status(200).json({ success: true, data: order });
     }
@@ -53,7 +85,9 @@ const updateOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
     try {
         const order = yield order_service_1.OrderService.updateOrder(req.params.id, req.body);
         if (!order) {
-            return res.status(404).json({ success: false, message: "Order not found" });
+            return res
+                .status(404)
+                .json({ success: false, message: "Order not found" });
         }
         res.status(200).json({ success: true, data: order });
     }
@@ -96,6 +130,146 @@ const getPreviousOrders = (req, res) => __awaiter(void 0, void 0, void 0, functi
         });
     }
 });
+// Add this to your existing order.controller.ts
+const getUserOrderStatistics = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId } = req.params;
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: "User ID is required",
+            });
+        }
+        const statistics = yield order_service_1.OrderService.getUserOrderStatistics(userId);
+        res.status(200).json({
+            success: true,
+            message: "Order statistics fetched successfully",
+            data: statistics,
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to fetch order statistics",
+        });
+    }
+});
+const getAdminStatistics = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const statistics = yield order_service_1.OrderService.getAdminStatisticsService();
+        res.status(200).json({
+            success: true,
+            message: "Admin statistics retrieved successfully",
+            data: statistics,
+        });
+    }
+    catch (error) {
+        console.error("Error in getAdminStatistics controller:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error instanceof Error ? error.message : "Unknown error",
+        });
+    }
+});
+const getOrderStatusCounts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = req.params.userId;
+    try {
+        const statusCounts = yield order_service_1.OrderService.getOrderStatusCountsService(userId);
+        res.status(200).json({
+            success: true,
+            message: "Order status counts retrieved successfully",
+            data: statusCounts,
+        });
+    }
+    catch (error) {
+        console.error("Error in getOrderStatusCounts controller:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error instanceof Error ? error.message : "Unknown error",
+        });
+    }
+});
+const getOrderStatusSummary = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const statusSummary = yield order_service_1.OrderService.getOrderStatusSummaryService();
+        res.status(200).json({
+            success: true,
+            message: "Order status summary retrieved successfully",
+            data: statusSummary,
+        });
+    }
+    catch (error) {
+        console.error("Error in getOrderStatusSummary controller:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error instanceof Error ? error.message : "Unknown error",
+        });
+    }
+});
+const getActivityList = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const activities = yield order_service_1.OrderService.getActivityListService();
+        res.status(200).json({
+            success: true,
+            message: "Activity list retrieved successfully",
+            data: activities,
+        });
+    }
+    catch (error) {
+        console.error("Error in getActivityList controller:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: error instanceof Error ? error.message : "Unknown error",
+        });
+    }
+});
+const getUserStatistics = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId } = req.params;
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: "User ID is required",
+            });
+        }
+        const statistics = yield order_service_1.OrderService.getUserStatisticsService(userId);
+        res.status(200).json({
+            success: true,
+            message: "Seller statistics fetched successfully",
+            data: statistics,
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to fetch Seller statistics",
+        });
+    }
+});
+const getProductListWithStatusBySellerId = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { sellerId } = req.params;
+        const { status, page, limit } = req.query;
+        const result = yield order_service_1.OrderService.getProductListWithStatusBySellerIdService(sellerId, {
+            status: status,
+            page: Number(page) || 1,
+            limit: Number(limit) || 10,
+        });
+        if (!result.orders.length) {
+            return res
+                .status(404)
+                .json({ success: false, message: "No orders found" });
+        }
+        res.status(200).json({ success: true, data: result });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
 exports.OrderController = {
     createOrder,
     getAllOrders,
@@ -103,4 +277,11 @@ exports.OrderController = {
     updateOrder,
     getCurrentOrders,
     getPreviousOrders,
+    getUserOrderStatistics,
+    getAdminStatistics,
+    getOrderStatusCounts,
+    getOrderStatusSummary,
+    getActivityList,
+    getUserStatistics,
+    getProductListWithStatusBySellerId,
 };

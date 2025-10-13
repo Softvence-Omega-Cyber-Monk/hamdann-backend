@@ -31,6 +31,7 @@ export type TUser = {
   email: string;
   password: string;
   confirmPassword: string;
+  fcmToken?: string | null;
   isDeleted?: boolean;
   address?: TAddress;
   paymentMethods?: TPaymentMethod[]; // 👈 plural & consistent with model

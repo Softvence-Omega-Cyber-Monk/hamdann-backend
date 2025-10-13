@@ -173,8 +173,9 @@ const getAdminStatistics = async (req: Request, res: Response) => {
 };
 
 const getOrderStatusCounts = async (req: Request, res: Response) => {
+  const userId = req.params.userId;
   try {
-    const statusCounts = await OrderService.getOrderStatusCountsService();
+    const statusCounts = await OrderService.getOrderStatusCountsService(userId);
 
     res.status(200).json({
       success: true,

@@ -16,8 +16,10 @@ exports.user_services = exports.user_service = void 0;
 const user_schema_1 = require("./user.schema");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const mongoose_1 = require("mongoose");
+const cloudinary_1 = require("../../utils/cloudinary");
 exports.user_service = {
     createUser: (userData) => __awaiter(void 0, void 0, void 0, function* () {
+        console.log('user data ', userData);
         // Check if email already exists
         const existingUser = yield user_schema_1.User_Model.findOne({ email: userData.email });
         if (existingUser) {
@@ -40,6 +42,9 @@ exports.user_service = {
     getAllUsers: () => __awaiter(void 0, void 0, void 0, function* () {
         return yield user_schema_1.User_Model.find().sort({ createdAt: -1 }); // newest first
     }),
+    myProfile: (userId) => __awaiter(void 0, void 0, void 0, function* () {
+        return yield user_schema_1.User_Model.findOne({ _id: userId });
+    }),
     // Update user (only name, email, address, paymentMethod)
     updateUser: (id, updateData) => __awaiter(void 0, void 0, void 0, function* () {
         if (!mongoose_1.Types.ObjectId.isValid(id))
@@ -48,16 +53,29 @@ exports.user_service = {
         const existingUser = yield user_schema_1.User_Model.findById(id);
         if (!existingUser)
             throw new Error("User not found");
-        // If updating email, check if it's already used by another user
-        if (updateData.email) {
-            const emailExists = yield user_schema_1.User_Model.findOne({
-                email: updateData.email,
-                _id: { $ne: id }, // exclude the current user
-            });
-            if (emailExists)
-                throw new Error("Email already in use by another user");
+        // // If updating email, check if it's already used by another user
+        // if (updateData.email) {
+        //   const emailExists = await User_Model.findOne({
+        //     email: updateData.email,
+        //     _id: { $ne: id }, // exclude the current user
+        //   });
+        //   if (emailExists) throw new Error("Email already in use by another user");
+        // }
+        // Handle image upload if file exists
+        if (updateData.file) {
+            try {
+                // Upload image to Cloudinary
+                const uploadResult = yield (0, cloudinary_1.uploadImgToCloudinary)(`user-${id}-${Date.now()}`, updateData.file.path, "user-profiles");
+                // Add the Cloudinary URL to updateData
+                updateData.profileImage = uploadResult.secure_url;
+                // Remove the file property as we don't want to save it in the database
+                delete updateData.file;
+            }
+            catch (error) {
+                throw new Error("Failed to upload profile image");
+            }
         }
-        console.log("updateData:", updateData);
+        // console.log("updateData:", updateData);
         // Update user and return updated document
         const updatedUser = yield user_schema_1.User_Model.findByIdAndUpdate(id, updateData, {
             new: true,
@@ -65,6 +83,7 @@ exports.user_service = {
         });
         if (!updatedUser)
             throw new Error("Failed to update user");
+        console.log("Update user data", updatedUser);
         return updatedUser;
     }),
     delete_user: (id) => __awaiter(void 0, void 0, void 0, function* () {
@@ -76,6 +95,12 @@ exports.user_service = {
         if (!user)
             throw new Error("User not found");
         return user;
+    }),
+    updateFcmToken: (userId, fcmToken) => __awaiter(void 0, void 0, void 0, function* () {
+        const updatedUser = yield user_schema_1.User_Model.findByIdAndUpdate(userId, { fcmToken }, { new: true });
+        if (!updatedUser)
+            throw new Error("User not found");
+        return updatedUser;
     }),
 };
 // 🟢 Add new payment method

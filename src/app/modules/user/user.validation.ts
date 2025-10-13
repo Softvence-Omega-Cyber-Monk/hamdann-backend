@@ -8,6 +8,7 @@ export const create_user = z
     email: z.string().email("Invalid email"),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(6),
+    fcmToken: z.string().optional(),
     address: z
       .object({
         state: z.string().optional(),
