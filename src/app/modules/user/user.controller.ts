@@ -80,6 +80,20 @@ const delete_user = catchAsync(async (req, res) => {
   });
 });
 
+const fcmTokenUpdate = catchAsync(async (req, res) => {
+  const userId = req.user?.userId;
+  const { fcmToken } = req.body;
+
+  const result = await user_service.updateFcmToken(userId, fcmToken);
+
+  manageResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "FCM token updated successfully.",
+    data: result,
+  });
+});
+
 const addPaymentMethod = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
@@ -160,6 +174,7 @@ export const user_controllers = {
   myProfile,
   update_single_user,
   delete_user,
+  fcmTokenUpdate,
   addPaymentMethod,
   updatePaymentMethod,
   setDefaultPaymentMethod,

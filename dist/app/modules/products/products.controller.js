@@ -9,11 +9,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productController = exports.addReviewToProduct = exports.createProduct = void 0;
+exports.productController = exports.addReviewToProduct = void 0;
 const products_service_1 = require("./products.service");
 const createProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // console.log("Uploaded file(s):", req.file || req.files);
+        console.log('hit thit hist eindex');
         const singleFile = req.file;
         const multipleFiles = req.files;
         const product = yield products_service_1.productService.createProductService(req.body, singleFile || multipleFiles // Pass whichever exists
@@ -25,7 +26,6 @@ const createProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         res.status(400).json({ success: false, message: error.message });
     }
 });
-exports.createProduct = createProduct;
 const updateProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -65,16 +65,35 @@ const getSingleProduct = (req, res) => __awaiter(void 0, void 0, void 0, functio
         res.status(500).json({ success: false, message: error.message });
     }
 });
-const getProductByCategoryService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getSingleUserProductService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { category } = req.params;
-        const product = yield products_service_1.productService.getProductByCategoryService(category);
+        const { userId } = req.params;
+        const product = yield products_service_1.productService.getSingleUserProductService(userId);
         if (!product) {
             return res
                 .status(404)
-                .json({ success: false, message: "Products not found" });
+                .json({ success: false, message: "Product not found" });
         }
         res.status(200).json({ success: true, data: product });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+const getProductByCategoryService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { category } = req.params;
+        const { sort, search, page, limit } = req.query;
+        const result = yield products_service_1.productService.getProductByCategoryService(category, {
+            sort: sort,
+            search: search,
+            page: Number(page),
+            limit: Number(limit),
+        });
+        if (!result.products.length) {
+            return res.status(404).json({ success: false, message: "No products found" });
+        }
+        res.status(200).json({ success: true, data: result });
     }
     catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -108,11 +127,41 @@ const getBestSellingProductsService = (req, res) => __awaiter(void 0, void 0, vo
         res.status(500).json({ success: false, message: error.message });
     }
 });
+const getSellerBestSellingProductsService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId } = req.params;
+    try {
+        const product = yield products_service_1.productService.getSellerBestSellingProductsService(userId);
+        if (!product) {
+            return res
+                .status(404)
+                .json({ success: false, message: "Products not found" });
+        }
+        res.status(200).json({ success: true, data: product });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
 const getWishlistedProductsService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId } = req.params;
+        const product = yield products_service_1.productService.getWishlistedProductsService(userId);
+        if (!product) {
+            return res
+                .status(404)
+                .json({ success: false, message: "Products not found" });
+        }
+        res.status(200).json({ success: true, data: product });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+const updateWishlistedProductsService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { productId } = req.params;
         const { isWishlisted } = req.body;
-        const product = yield products_service_1.productService.getWishlistedProductsService(productId, isWishlisted);
+        const product = yield products_service_1.productService.updateWishlistedProductsService(productId, isWishlisted);
         if (!product) {
             return res
                 .status(404)
@@ -142,7 +191,12 @@ const removeProductsWishlist = (req, res) => __awaiter(void 0, void 0, void 0, f
 });
 const getProductStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const stats = yield products_service_1.productService.getProductStatsService();
+        // Assuming auth middleware sets req.user._id
+        const { userId } = req.params;
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Unauthorized" });
+        }
+        const stats = yield products_service_1.productService.getProductStatsService(userId);
         res.status(200).json({
             success: true,
             data: stats,
@@ -151,7 +205,7 @@ const getProductStats = (req, res) => __awaiter(void 0, void 0, void 0, function
     catch (error) {
         res.status(500).json({
             success: false,
-            message: error.message,
+            message: error.message || "Server Error",
         });
     }
 });
@@ -159,11 +213,14 @@ const addReviewToProduct = (req, res) => __awaiter(void 0, void 0, void 0, funct
     try {
         const { productId } = req.params;
         const { rating, comment } = req.body;
+        const userId = req.body.userId; // Assuming userId is sent in the request body
         // Basic validation
         if (!rating || rating < 1 || rating > 5) {
-            return res.status(400).json({ success: false, message: "Rating must be between 1 and 5" });
+            return res
+                .status(400)
+                .json({ success: false, message: "Rating must be between 1 and 5" });
         }
-        const updatedProduct = yield products_service_1.productService.addProductReviewService(productId, { rating, comment });
+        const updatedProduct = yield products_service_1.productService.addProductReviewService(productId, userId, { rating, comment });
         res.status(200).json({
             success: true,
             message: "Review added successfully",
@@ -175,16 +232,42 @@ const addReviewToProduct = (req, res) => __awaiter(void 0, void 0, void 0, funct
     }
 });
 exports.addReviewToProduct = addReviewToProduct;
+const getInventoryStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId } = req.params;
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: "User ID is required"
+            });
+        }
+        const inventoryStatus = yield products_service_1.productService.getInventoryStatusService(userId);
+        res.status(200).json({
+            success: true,
+            data: inventoryStatus
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
 exports.productController = {
-    createProduct: exports.createProduct,
+    createProduct,
     updateProduct,
     getAllProducts,
     getSingleProduct,
+    getSingleUserProductService,
     getProductByCategoryService,
     getNewArrivalsProductsService,
     getBestSellingProductsService,
+    getSellerBestSellingProductsService,
     getWishlistedProductsService,
+    updateWishlistedProductsService,
     removeProductsWishlist,
     getProductStats,
-    addReviewToProduct: exports.addReviewToProduct
+    addReviewToProduct: exports.addReviewToProduct,
+    getInventoryStatus,
 };

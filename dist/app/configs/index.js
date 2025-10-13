@@ -14,14 +14,15 @@ exports.configs = {
         resetToken_expires: process.env.RESET_PASSWORD_EXPIRES,
         front_end_url: process.env.FRONTEND_URL || "http://localhost:5000",
     },
+    bcrypt_salt_rounds: process.env.BCRYPT_SALT_ROUNDS || 10,
     db_url: process.env.DB_URL,
     email: {
         app_email: process.env.APP_USER_EMAIL,
-        app_password: process.env.APP_PASSWORD
+        app_password: process.env.APP_PASSWORD,
     },
     cloudinary: {
         cloud_name: process.env.CLOUD_NAME,
         cloud_api_key: process.env.CLOUD_API_KEY,
-        cloud_api_secret: process.env.CLOUD_API_SECRET
-    }
+        cloud_api_secret: process.env.CLOUD_API_SECRET,
+    },
 };

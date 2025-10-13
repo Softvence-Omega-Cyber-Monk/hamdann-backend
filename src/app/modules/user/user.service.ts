@@ -117,6 +117,18 @@ export const user_service = {
 
     return user;
   },
+  updateFcmToken: async (userId: string, fcmToken: string) => {
+  
+    const updatedUser = await User_Model.findByIdAndUpdate(
+      userId,
+      { fcmToken },
+      { new: true }
+    );
+
+    if (!updatedUser) throw new Error("User not found");
+
+    return updatedUser;
+  },
 };
 
 // 🟢 Add new payment method

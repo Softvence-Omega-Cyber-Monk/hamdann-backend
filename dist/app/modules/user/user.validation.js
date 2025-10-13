@@ -5,11 +5,12 @@ const zod_1 = require("zod");
 // Create user schema
 exports.create_user = zod_1.z
     .object({
-    role: zod_1.z.enum(["Admin", "Buyer", "Saler"]),
+    role: zod_1.z.enum(["Admin", "Buyer", "Seller"]),
     name: zod_1.z.string().min(2, "Name is required"),
     email: zod_1.z.string().email("Invalid email"),
     password: zod_1.z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: zod_1.z.string().min(6),
+    fcmToken: zod_1.z.string().optional(),
     address: zod_1.z
         .object({
         state: zod_1.z.string().optional(),
@@ -28,7 +29,7 @@ exports.create_user = zod_1.z
         isDefault: zod_1.z.boolean().optional(),
     }))
         .optional(),
-    Preferences: zod_1.z.enum(["Fashion", "Food", "Beauty", "Perfume"]).optional(),
+    preferences: zod_1.z.enum(["Fashion", "Food", "Beauty", "Perfume"]).optional(),
     businessInfo: zod_1.z
         .object({
         businessName: zod_1.z.string().optional(),
@@ -56,7 +57,7 @@ exports.update_user = zod_1.z.object({
         streetAddress: zod_1.z.string().optional(),
     })
         .optional(),
-    Preferences: zod_1.z.enum(["Fashion", "Food", "Beauty", "Perfume"]).optional(),
+    preferences: zod_1.z.enum(["Fashion", "Food", "Beauty", "Perfume"]).optional(),
     businessInfo: zod_1.z
         .object({
         businessName: zod_1.z.string().optional(),
@@ -77,4 +78,5 @@ exports.update_user = zod_1.z.object({
         isDefault: zod_1.z.boolean().optional(),
     }))
         .optional(),
+    profileImage: zod_1.z.string().optional(),
 });

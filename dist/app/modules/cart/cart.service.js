@@ -9,18 +9,45 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CartService = void 0;
+exports.CartService = exports.createCart = void 0;
 const cart_model_1 = require("./cart.model");
-// Create Cart Service
 const createCart = (userId, items) => __awaiter(void 0, void 0, void 0, function* () {
-    // Create a new cart
-    const cart = new cart_model_1.Cart({
-        userId,
-        items,
-    });
-    // Save the cart and return the saved cart
-    return yield cart.save();
+    console.log(items, "items from service");
+    // Step 1: Check if user already has a cart
+    let existingCart = yield cart_model_1.Cart.findOne({ userId });
+    // Step 2: If no cart exists, create a new one
+    if (!existingCart) {
+        const newCart = new cart_model_1.Cart({
+            userId,
+            items,
+        });
+        yield newCart.save();
+        return {
+            success: true,
+            message: "Cart created successfully.",
+            cart: newCart,
+        };
+    }
+    // Step 3: Check for duplicate items (based on productId)
+    const existingProductIds = existingCart.items.map((item) => item.productId.toString());
+    const duplicateItem = items.find((newItem) => existingProductIds.includes(newItem.productId.toString()));
+    if (duplicateItem) {
+        return {
+            success: false,
+            message: "This item already exists in cart.",
+            productId: duplicateItem.productId,
+        };
+    }
+    // Step 4: Add new items and save
+    existingCart.items.push(...items);
+    yield existingCart.save();
+    return {
+        success: true,
+        message: "Item added to cart successfully.",
+        cart: existingCart,
+    };
 });
+exports.createCart = createCart;
 const getSingleCart = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         console.log("user id form service", userId);
@@ -35,6 +62,6 @@ const getSingleCart = (userId) => __awaiter(void 0, void 0, void 0, function* ()
     }
 });
 exports.CartService = {
-    createCart,
+    createCart: exports.createCart,
     getSingleCart,
 };

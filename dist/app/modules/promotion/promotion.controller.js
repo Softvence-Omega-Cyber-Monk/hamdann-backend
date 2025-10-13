@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.pausePromotion = exports.updatePromotion = exports.getAllPromotions = exports.getPromotion = exports.createPromotion = void 0;
+exports.getSellerPromotions = exports.pausePromotion = exports.updatePromotion = exports.getAllPromotions = exports.getPromotion = exports.createPromotion = void 0;
 const promotion_validation_1 = require("./promotion.validation");
 const promotion_service_1 = require("./promotion.service");
 const cloudinary_1 = require("cloudinary");
@@ -141,3 +141,33 @@ const pausePromotion = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
 });
 exports.pausePromotion = pausePromotion;
+const getSellerPromotions = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId } = req.params;
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: "User ID is required"
+            });
+        }
+        const promotions = yield (0, promotion_service_1.getSellerPromotionsService)(userId);
+        if (!promotions || promotions.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "No promotions found for this seller"
+            });
+        }
+        res.status(200).json({
+            success: true,
+            data: promotions
+        });
+    }
+    catch (error) {
+        console.error("Error fetching promotions:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+exports.getSellerPromotions = getSellerPromotions;

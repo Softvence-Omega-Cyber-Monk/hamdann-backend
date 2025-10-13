@@ -13,6 +13,7 @@ exports.ProductSchema = zod_1.z.object({
     sku: zod_1.z.string().min(1, "SKU is required"),
     category: zod_1.z.enum(["Fashion", "Food", "Beauty", "Perfume"]),
     brand: zod_1.z.string().optional(),
+    shopName: zod_1.z.string().optional().nullable(),
     weight: zod_1.z.number().optional(),
     gender: zod_1.z.enum(["male", "female"]).default("male"),
     availableSizes: zod_1.z.array(zod_1.z.string()).optional(),
@@ -26,11 +27,13 @@ exports.ProductSchema = zod_1.z.object({
         .min(1, "At least one image is required"),
     reviews: zod_1.z
         .array(zod_1.z.object({
+        userId: zod_1.z.string(),
         rating: zod_1.z.number().min(1).max(5),
         comment: zod_1.z.string().optional(),
     }))
         .optional(),
     averageRating: zod_1.z.number().min(0).max(5).optional(),
+    shopReviews: zod_1.z.number().min(0).max(5).optional(),
     salesCount: zod_1.z.number().min(0).default(0),
     isNewArrival: zod_1.z.boolean().default(false),
     isWishlisted: zod_1.z.boolean().default(false),
