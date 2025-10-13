@@ -21,6 +21,7 @@ const http_status_1 = __importDefault(require("http-status"));
 const login_user = (0, catch_async_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     console.log(' req body form controller ', req.body);
     const result = yield auth_service_1.auth_services.login_user_from_db(req.body);
+    console.log(' login result from controller ', result);
     res.cookie('refreshToken', result.refreshToken, {
         secure: configs_1.configs.env == 'production',
         httpOnly: true,
@@ -32,7 +33,8 @@ const login_user = (0, catch_async_1.default)((req, res) => __awaiter(void 0, vo
         data: {
             accessToken: result.accessToken,
             refresh_token: result.refreshToken,
-            role: result === null || result === void 0 ? void 0 : result.role
+            role: result === null || result === void 0 ? void 0 : result.role,
+            userId: result === null || result === void 0 ? void 0 : result.userId
         },
     });
 }));

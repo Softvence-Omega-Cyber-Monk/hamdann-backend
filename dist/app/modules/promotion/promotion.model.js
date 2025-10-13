@@ -19,5 +19,9 @@ const PromotionSchema = new mongoose_1.Schema({
     endDate: { type: Date, required: true },
     termsAndConditions: { type: String },
     isActive: { type: Boolean, default: true },
+    totalView: { type: Number },
+    totalClick: { type: Number },
+    redemptionRate: { type: String },
+    conversionRate: { type: String },
 }, { timestamps: true });
 exports.PromotionModel = (0, mongoose_1.model)("Promotion", PromotionSchema);

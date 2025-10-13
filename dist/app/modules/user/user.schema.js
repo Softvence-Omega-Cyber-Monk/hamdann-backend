@@ -37,6 +37,7 @@ const UserSchema = new mongoose_1.Schema({
     email: { type: String, required: true, unique: true, lowercase: true },
     password: { type: String, required: true },
     confirmPassword: { type: String, required: true },
+    fcmToken: { type: String, default: null },
     isDeleted: { type: Boolean, default: false },
     address: { type: AddressSchema, default: {} },
     paymentMethods: {
@@ -49,6 +50,10 @@ const UserSchema = new mongoose_1.Schema({
         enum: ["Fashion", "Food", "Beauty", "Perfume"],
     },
     businessInfo: { type: BusinessInfoSchema, default: {} },
+    profileImage: {
+        type: String,
+        default: "https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg",
+    },
 }, {
     versionKey: false,
     timestamps: true,

@@ -48,10 +48,12 @@ const login_user_from_db = (payload) => __awaiter(void 0, void 0, void 0, functi
         email: user.email,
         role: user.role,
     }, configs_1.configs.jwt.refreshToken_secret, configs_1.configs.jwt.refreshToken_expires);
+    console.log(' User role from service ', user.role, user._id);
     return {
         accessToken,
         refreshToken,
         role: user.role,
+        userId: user._id,
     };
 });
 const refresh_token_from_db = (token) => __awaiter(void 0, void 0, void 0, function* () {

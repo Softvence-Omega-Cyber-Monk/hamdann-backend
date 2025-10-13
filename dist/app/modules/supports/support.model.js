@@ -33,48 +33,56 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Product = void 0;
+exports.Support = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
-const ProductSchema = new mongoose_1.Schema({
-    name: { type: String, required: true, trim: true },
+const generateTicketId = () => {
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(1000 + Math.random() * 9000);
+    return `TICKET-${timestamp}-${random}`;
+};
+const SupportReplySchema = new mongoose_1.Schema({
     userId: {
-        type: mongoose_1.default.Schema.Types.ObjectId,
+        type: mongoose_1.Schema.Types.ObjectId,
         ref: "User",
-        required: true,
+        required: true
     },
-    sku: { type: String, required: true, unique: true, trim: true },
-    category: {
+    message: {
         type: String,
         required: true,
-        trim: true,
-        enum: ["Fashion", "Food", "Beauty", "Perfume"], // restrict categories
+        trim: true
+    }
+}, {
+    timestamps: true
+});
+const SupportSchema = new mongoose_1.Schema({
+    userId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
     },
-    brand: { type: String, trim: true },
-    shopName: { type: String, trim: true, default: null },
-    weight: { type: Number },
-    gender: {
+    ticketId: {
         type: String,
-        enum: ["male", "female"],
-        default: "male",
+        required: true,
+        unique: true,
+        default: generateTicketId
     },
-    availableSizes: [{ type: String }],
-    availableColors: [{ type: String }],
-    variations: [{ type: String }], // e.g., ["Red - M", "Blue - L"]
-    description: { type: String, required: true },
-    quantity: { type: Number, required: true, default: 0 },
-    price: { type: Number, required: true },
-    reviews: [
-        {
-            userId: { type: String, required: true },
-            rating: { type: Number, required: true, min: 1, max: 5 },
-            comment: { type: String },
-        },
-    ],
-    averageRating: { type: Number, default: 0 },
-    shopReviews: { type: Number, default: null },
-    productImages: [{ type: String, required: true }],
-    salesCount: { type: Number, default: 0 }, // Flag for best-selling
-    isNewArrival: { type: Boolean, default: false }, // Flag for new arrival
-    isWishlisted: { type: Boolean, default: false }, // Flag for wishlist
-}, { timestamps: true });
-exports.Product = mongoose_1.default.model("Product", ProductSchema);
+    supportSubject: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    supportMessage: {
+        type: String,
+        required: true,
+        trim: true
+    },
+    status: {
+        type: String,
+        enum: ['Pending', 'Resolved'],
+        default: 'Pending'
+    },
+    replies: [SupportReplySchema],
+}, {
+    timestamps: true
+});
+exports.Support = mongoose_1.default.model("Support", SupportSchema);

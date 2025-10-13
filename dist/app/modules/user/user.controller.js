@@ -45,9 +45,22 @@ const get_all_users = (0, catch_async_1.default)((req, res) => __awaiter(void 0,
         data: result,
     });
 }));
+const myProfile = (0, catch_async_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    console.log("Request User:", req.user); // Debugging line to check req.user
+    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId; // Assuming auth middleware sets req.user
+    const result = yield user_service_1.user_service.myProfile(userId);
+    (0, manage_response_1.default)(res, {
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "All users fetched successfully.",
+        data: result,
+    });
+}));
 const update_single_user = (0, catch_async_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const result = yield user_service_1.user_service.updateUser(id, req.body);
+    const file = req.file;
+    const result = yield user_service_1.user_service.updateUser(id, Object.assign(Object.assign({}, req.body), { file }));
     (0, manage_response_1.default)(res, {
         success: true,
         statusCode: http_status_1.default.OK,
@@ -62,6 +75,18 @@ const delete_user = (0, catch_async_1.default)((req, res) => __awaiter(void 0, v
         success: true,
         statusCode: http_status_1.default.OK,
         message: "User deleted successfully (soft delete).",
+        data: result,
+    });
+}));
+const fcmTokenUpdate = (0, catch_async_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a.userId;
+    const { fcmToken } = req.body;
+    const result = yield user_service_1.user_service.updateFcmToken(userId, fcmToken);
+    (0, manage_response_1.default)(res, {
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "FCM token updated successfully.",
         data: result,
     });
 }));
@@ -85,7 +110,11 @@ const updatePaymentMethod = (req, res) => __awaiter(void 0, void 0, void 0, func
     try {
         const { userId, paymentId } = req.params;
         const result = yield user_service_1.user_services.updatePaymentMethodService(userId, paymentId, req.body);
-        res.json({ success: true, message: "Payment method updated", data: result });
+        res.json({
+            success: true,
+            message: "Payment method updated",
+            data: result,
+        });
     }
     catch (error) {
         res.status(400).json({ success: false, message: error.message });
@@ -96,7 +125,11 @@ const setDefaultPaymentMethod = (req, res) => __awaiter(void 0, void 0, void 0, 
     try {
         const { userId, paymentId } = req.params;
         const result = yield user_service_1.user_services.setDefaultPaymentMethodService(userId, paymentId);
-        res.json({ success: true, message: "Default payment method set", data: result });
+        res.json({
+            success: true,
+            message: "Default payment method set",
+            data: result,
+        });
     }
     catch (error) {
         res.status(400).json({ success: false, message: error.message });
@@ -107,7 +140,11 @@ const deletePaymentMethod = (req, res) => __awaiter(void 0, void 0, void 0, func
     try {
         const { userId, paymentId } = req.params;
         const result = yield user_service_1.user_services.deletePaymentMethodService(userId, paymentId);
-        res.json({ success: true, message: "Payment method deleted", data: result });
+        res.json({
+            success: true,
+            message: "Payment method deleted",
+            data: result,
+        });
     }
     catch (error) {
         res.status(400).json({ success: false, message: error.message });
@@ -117,10 +154,12 @@ exports.user_controllers = {
     create_user,
     get_single_user,
     get_all_users,
+    myProfile,
     update_single_user,
     delete_user,
+    fcmTokenUpdate,
     addPaymentMethod,
     updatePaymentMethod,
     setDefaultPaymentMethod,
-    deletePaymentMethod
+    deletePaymentMethod,
 };

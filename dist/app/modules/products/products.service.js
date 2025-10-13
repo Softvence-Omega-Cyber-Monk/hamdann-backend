@@ -8,11 +8,42 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.productService = exports.addProductReviewService = exports.createProductService = void 0;
 const products_model_1 = require("./products.model");
 const cloudinary_1 = require("../../utils/cloudinary");
+const user_schema_1 = require("../user/user.schema");
+const mongoose_1 = __importDefault(require("mongoose"));
+const notificationHelper_1 = require("../../utils/notificationHelper");
+const shopReview = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const reviews = yield products_model_1.Product.aggregate([
+        { $match: { userId: new mongoose_1.default.Types.ObjectId(userId) } },
+        { $unwind: "$reviews" },
+        {
+            $group: {
+                _id: "$userId",
+                averageRating: { $avg: "$reviews.rating" },
+                totalReviews: { $sum: 1 },
+            },
+        },
+    ]);
+    return reviews;
+});
 const createProductService = (payload, imageInput) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    const { userId } = payload;
+    const exitUser = yield user_schema_1.User_Model.findById({ _id: userId });
+    if (!exitUser) {
+        throw new Error("User not found");
+    }
+    if (exitUser.role !== "Seller") {
+        throw new Error("Only sellers can add products");
+    }
+    const shopReviews = yield shopReview(userId);
+    console.log("shopReviews ", shopReviews);
     let imageUrls = [];
     if (Array.isArray(imageInput)) {
         // Multiple images
@@ -24,8 +55,13 @@ const createProductService = (payload, imageInput) => __awaiter(void 0, void 0, 
         const result = yield (0, cloudinary_1.uploadImgToCloudinary)(imageInput.filename, imageInput.path, "Products");
         imageUrls = [result.secure_url];
     }
-    const productPayload = Object.assign(Object.assign({}, payload), { productImages: imageUrls });
+    const productPayload = Object.assign(Object.assign({}, payload), { shopName: ((_a = exitUser.businessInfo) === null || _a === void 0 ? void 0 : _a.businessName) || null, shopReviews: (_b = shopReviews[0]) === null || _b === void 0 ? void 0 : _b.averageRating, productImages: imageUrls });
     const product = yield products_model_1.Product.create(productPayload);
+    // Notify all customers
+    const customers = yield user_schema_1.User_Model.find({ role: "Buyer" });
+    for (const user of customers) {
+        yield (0, notificationHelper_1.sendNotification)(user._id.toString(), "🛒 New Product Added!", `${product.name} is now available!`);
+    }
     return product;
 });
 exports.createProductService = createProductService;
@@ -42,23 +78,75 @@ const getSingleProductService = (id) => __awaiter(void 0, void 0, void 0, functi
     const product = yield products_model_1.Product.findById(id);
     return product;
 });
-const getProductByCategoryService = (category) => __awaiter(void 0, void 0, void 0, function* () {
-    const product = yield products_model_1.Product.find({ category: category });
+const getSingleUserProductService = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const product = yield products_model_1.Product.find({ userId: userId });
     return product;
+});
+const getProductByCategoryService = (category_1, ...args_1) => __awaiter(void 0, [category_1, ...args_1], void 0, function* (category, options = {}) {
+    const { sort, search, page = 1, limit = 10 } = options;
+    const filter = { category };
+    if (search) {
+        filter.name = { $regex: search, $options: "i" };
+    }
+    let sortQuery = {};
+    if (sort) {
+        const sortOptions = sort.split(",").map((s) => s.trim());
+        sortOptions.forEach((option) => {
+            if (option === "low-to-high") {
+                sortQuery.price = 1;
+            }
+            else if (option === "high-to-low") {
+                sortQuery.price = -1;
+            }
+            else if (option === "best-selling") {
+                sortQuery.salesCount = -1;
+            }
+        });
+    }
+    // Pagination
+    const skip = (page - 1) * limit;
+    const products = yield products_model_1.Product.find(filter)
+        .sort(sortQuery)
+        .skip(skip)
+        .limit(limit)
+        .exec();
+    const totalCategoryProduct = yield products_model_1.Product.countDocuments(filter);
+    return {
+        products,
+        totalCategoryProduct,
+        page,
+        pages: Math.ceil(totalCategoryProduct / limit),
+    };
 });
 const getNewArrivalsProductsService = () => __awaiter(void 0, void 0, void 0, function* () {
     const newArrivals = yield products_model_1.Product.find({
         createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }, // Filter for the last 30 days
-    }).sort({ createdAt: -1 }); // Sort by creation date in descending order (most recent first)
+    }).sort({ createdAt: -1 });
     return newArrivals;
 });
 const getBestSellingProductsService = () => __awaiter(void 0, void 0, void 0, function* () {
-    const bestSellingProducts = yield products_model_1.Product.find()
-        .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
-        .limit(10); // Limit the result to top 10 best sellers (you can adjust the number as needed)
+    const bestSellingProducts = yield products_model_1.Product.find().sort({ salesCount: -1 }); // Sort by salesCount in descending order (highest first)
+    console.log("bestSellingProducts ", bestSellingProducts.length);
     return bestSellingProducts;
 });
-const getWishlistedProductsService = (productId, isWishlisted) => __awaiter(void 0, void 0, void 0, function* () {
+const getSellerBestSellingProductsService = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("userId in service ", userId);
+    const bestSellingProducts = yield products_model_1.Product.find({ userId: userId }).sort({
+        salesCount: -1,
+    }); // Sort by salesCount in descending order (highest first)
+    console.log("bestSellingProducts ", bestSellingProducts.length);
+    return bestSellingProducts;
+});
+const getWishlistedProductsService = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("userid -------------0000 ", userId);
+    const wishListedProducts = yield products_model_1.Product.find({
+        isWishlisted: true,
+        userId: userId,
+    });
+    console.log("wishListedProducts ", wishListedProducts.length);
+    return wishListedProducts;
+});
+const updateWishlistedProductsService = (productId, isWishlisted) => __awaiter(void 0, void 0, void 0, function* () {
     const wishListedProducts = yield products_model_1.Product.findOneAndUpdate({ _id: productId }, { isWishlisted: isWishlisted }, { new: true }); // Return the updated document
     return wishListedProducts;
 });
@@ -72,12 +160,12 @@ const removeProductsWishlist = (productIds) => __awaiter(void 0, void 0, void 0,
     return updatedProducts;
     // Product statistics
 });
-const getProductStatsService = () => __awaiter(void 0, void 0, void 0, function* () {
+const getProductStatsService = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
-    // Total Products count
-    const totalProducts = yield products_model_1.Product.countDocuments();
-    // Total Variations - sum of variations array lengths across all products
+    const userObjectId = new mongoose_1.default.Types.ObjectId(userId);
+    const totalProducts = yield products_model_1.Product.countDocuments({ userId: userObjectId });
     const variationsResult = yield products_model_1.Product.aggregate([
+        { $match: { userId: userObjectId } },
         {
             $project: {
                 variationsCount: { $size: { $ifNull: ["$variations", []] } },
@@ -91,8 +179,8 @@ const getProductStatsService = () => __awaiter(void 0, void 0, void 0, function*
         },
     ]);
     const totalVariations = ((_a = variationsResult[0]) === null || _a === void 0 ? void 0 : _a.totalVariations) || 0;
-    // Total Units - sum of quantity across all products
     const unitsResult = yield products_model_1.Product.aggregate([
+        { $match: { userId: userObjectId } },
         {
             $group: {
                 _id: null,
@@ -101,10 +189,14 @@ const getProductStatsService = () => __awaiter(void 0, void 0, void 0, function*
         },
     ]);
     const totalUnits = ((_b = unitsResult[0]) === null || _b === void 0 ? void 0 : _b.totalUnits) || 0;
-    // Active Products (quantity > 0)
-    const activeProducts = yield products_model_1.Product.countDocuments({ quantity: { $gt: 0 } });
-    // Out of Stock Products (quantity = 0)
-    const outOfStock = yield products_model_1.Product.countDocuments({ quantity: 0 });
+    const activeProducts = yield products_model_1.Product.countDocuments({
+        userId: userObjectId,
+        quantity: { $gt: 0 },
+    });
+    const outOfStock = yield products_model_1.Product.countDocuments({
+        userId: userObjectId,
+        quantity: 0,
+    });
     return {
         totalProducts,
         totalVariations,
@@ -113,31 +205,73 @@ const getProductStatsService = () => __awaiter(void 0, void 0, void 0, function*
         outOfStock,
     };
 });
-const addProductReviewService = (productId, review) => __awaiter(void 0, void 0, void 0, function* () {
+const addProductReviewService = (productId, userId, review) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    console.log("dkfsdlf", userId, review);
+    const existingUser = yield user_schema_1.User_Model.findById({ _id: userId });
     const product = (yield products_model_1.Product.findById(productId));
     if (!product) {
         throw new Error("Product not found");
     }
+    const reviewData = Object.assign(Object.assign({}, review), { userId: existingUser === null || existingUser === void 0 ? void 0 : existingUser.name });
+    console.log("reaq ", reviewData);
     // Add the new review
-    product.reviews.push(review);
+    product.reviews.push(reviewData);
     // Update average rating
     const totalReviews = product.reviews.length;
     const totalRating = product.reviews.reduce((sum, r) => sum + (r.rating || 0), 0);
     product.averageRating = totalRating / totalReviews;
     yield product.save();
+    // ✅ Recalculate shop’s (seller’s) overall rating across all products
+    const shopId = product.userId; // seller's ID
+    const shopStats = yield products_model_1.Product.aggregate([
+        {
+            $match: {
+                userId: new mongoose_1.default.Types.ObjectId(shopId),
+                "reviews.rating": { $exists: true, $ne: null },
+            },
+        },
+        { $unwind: "$reviews" },
+        {
+            $group: {
+                _id: "$userId",
+                averageRating: { $avg: "$reviews.rating" },
+                totalReviews: { $sum: 1 },
+            },
+        },
+    ]);
+    const shopAverageRating = ((_a = shopStats[0]) === null || _a === void 0 ? void 0 : _a.averageRating) || 0;
+    const totalShopReviews = ((_b = shopStats[0]) === null || _b === void 0 ? void 0 : _b.totalReviews) || 0;
+    // ✅ Update all products of that seller with the latest shop average rating
+    const res = yield products_model_1.Product.updateMany({ userId: shopId }, {
+        $set: {
+            shopReviews: shopAverageRating,
+        },
+    });
+    console.log("Updated products with new shop rating:", res);
     return product;
 });
 exports.addProductReviewService = addProductReviewService;
+const getInventoryStatusService = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    const userObjectId = new mongoose_1.default.Types.ObjectId(userId);
+    const inventoryStatus = yield products_model_1.Product.find({ userId: userObjectId }, { name: 1, quantity: 1, _id: 0 } // Only return name and quantity fields
+    ).sort({ name: 1 }); // Sort by product name alphabetically
+    return inventoryStatus;
+});
 exports.productService = {
     createProductService: exports.createProductService,
     updateProductService,
     getAllProductsService,
     getSingleProductService,
+    getSingleUserProductService,
     getProductByCategoryService,
     getNewArrivalsProductsService,
     getBestSellingProductsService,
+    getSellerBestSellingProductsService,
     getWishlistedProductsService,
+    updateWishlistedProductsService,
     removeProductsWishlist,
     getProductStatsService,
     addProductReviewService: exports.addProductReviewService,
+    getInventoryStatusService,
 };
