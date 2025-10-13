@@ -6,7 +6,7 @@ import {
 } from "../../utils/cloudinary";
 import { User_Model } from "../user/user.schema";
 import mongoose from "mongoose";
-// import { sendNotification } from "../../utils/notificationHelper";
+import { sendNotification } from "../../utils/notificationHelper";
 
 interface ReviewInput {
   rating: number;
