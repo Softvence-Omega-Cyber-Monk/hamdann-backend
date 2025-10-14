@@ -42,11 +42,42 @@ const updateProduct = async (req: Request, res: Response) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
-
-const getAllProducts = async (req: Request, res: Response) => {
+const getAllProducts = async (req: Request, res: Response): Promise<void> => {
   try {
-    const products = await productService.getAllProductsService();
-    res.status(200).json({ success: true, data: products });
+    // Get query parameters with default values
+    const page = parseInt(req.query.page as string);
+    const limit = parseInt(req.query.limit as string);
+    const search = (req.query.search as string) || "";
+
+    // Validate pagination parameters
+    if (page < 1) {
+      res.status(400).json({
+        success: false,
+        message: "Page must be a positive number",
+      });
+      return;
+    }
+
+    if (limit < 1 || limit > 100) {
+      res.status(400).json({
+        success: false,
+        message: "Limit must be between 1 and 100",
+      });
+      return;
+    }
+
+    const result = await productService.getAllProductsService(
+      page,
+      limit,
+      search
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Products fetched successfully",
+      data: result.products,
+      pagination: result.pagination,
+    });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
   }
