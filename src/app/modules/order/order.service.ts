@@ -68,15 +68,15 @@ const createOrder = async (orderData: IOrder) => {
     // Notify all customers
     const productIds = order.items.map((item) => item.productId);
     console.log("product ids ", productIds);
-    
-    const products = await Product.find({ userId: { $in: productIds } });
+
+    const products = await Product.find({ _id: { $in: productIds } });
     console.log("products---- ", products);
 
     for (const product of products) {
-      // Notify customers about the new order for this product
-      // You can customize the notification message as needed
-      const customers = await User_Model.find({ role: "Buyer" });
+      const customers = await Product.find({ userId: product.userId });
+
       for (const buyer of customers) {
+        console.log("notifying ", buyer);
         await sendNotification(
           buyer._id.toString(),
           "🛒 New Order Placed!",
