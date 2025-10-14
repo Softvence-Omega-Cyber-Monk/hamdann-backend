@@ -3,7 +3,7 @@ import { user_controllers } from "./user.controller";
 import { create_user, update_user } from "./user.validation";
 import { z } from "zod";
 import auth from "../../middlewares/auth";
-import { upload, uploadSingle } from "../../utils/cloudinary";
+import { upload, uploadSingle, uploadSingleforBusinessLogo } from "../../utils/cloudinary";
 
 const userRoute = Router();
 
@@ -20,7 +20,14 @@ const validate =
   };
 
 // Create user
-userRoute.post("/create", validate(create_user), user_controllers.create_user);
+// userRoute.post("/create", validate(create_user), user_controllers.create_user);
+userRoute.post(
+  "/create",
+  upload.fields([
+    { name: 'businessLogo', maxCount: 1 }
+  ]),
+  user_controllers.create_user
+);
 
 // Get single user by ID
 userRoute.get("/get-single/:id", user_controllers.get_single_user);
@@ -36,9 +43,10 @@ userRoute.get(
 // Update user
 userRoute.put(
   "/update/:id",
-  uploadSingle,
-
-  // validate(update_user),
+  upload.fields([
+    { name: 'profileImage', maxCount: 1 },
+    { name: 'businessLogo', maxCount: 1 }
+  ]),
   user_controllers.update_single_user
 );
 
