@@ -1,13 +1,12 @@
 import admin from "firebase-admin";
-import path from "path";
-import fs from "fs";
 
-// If using CommonJS (tsc default module), __dirname exists
-const serviceAccountPath = path.join(__dirname, "serviceAccountKey.json");
+// Ensure the environment variable exists
+if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+  throw new Error("🔥 FIREBASE_SERVICE_ACCOUNT env variable is missing");
+}
 
-const serviceAccount = JSON.parse(
-  fs.readFileSync(serviceAccountPath, "utf8")
-) as admin.ServiceAccount;
+// Parse the JSON from environment variable
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT!);
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -15,6 +14,7 @@ if (!admin.apps.length) {
   });
 }
 
+// Export messaging and Firestore instances
 export const messaging = admin.messaging();
 export const db = admin.firestore();
 export default admin;
