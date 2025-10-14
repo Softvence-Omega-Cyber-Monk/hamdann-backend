@@ -328,8 +328,10 @@ const getWishlistedProductsService = async (userId: string) => {
 
   return wishListedProducts;
 };
+
 const updateWishlistedProductsService = async (
   productId: string,
+  userId: string,
   isWishlisted: boolean
 ) => {
   const wishListedProducts = await Product.findOneAndUpdate(

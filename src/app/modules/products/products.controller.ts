@@ -235,8 +235,10 @@ const updateWishlistedProductsService = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
     const { isWishlisted } = req.body;
+    const userId = req.user?._id; // Assuming userId is set in req.user by auth middleware
     const product = await productService.updateWishlistedProductsService(
       productId,
+      userId as string,
       isWishlisted
     );
 

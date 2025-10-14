@@ -1,6 +1,7 @@
 import express from "express";
 import { productController } from "./products.controller";
 import { upload, uploadMultiple, uploadSingle } from "../../utils/cloudinary";
+import auth from "../../middlewares/auth";
 
 const router = express.Router();
 
@@ -32,6 +33,7 @@ router.get("/getSellerBestSelling/:userId", productController.getSellerBestSelli
 router.get("/getWishlist-product/:userId", productController.getWishlistedProductsService);
 router.put(
   "/update/wishList/:productId",
+  auth('Admin','Seller','Buyer'),
   productController.updateWishlistedProductsService
 );
 router.put("/remove/wishList", productController.removeProductsWishlist);
