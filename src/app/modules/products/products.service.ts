@@ -407,6 +407,40 @@ const getInventoryStatusForSingleProduct = async (
   };
 };
 
+// Update product quantity
+const updateProductQuantity = async (
+  productId: string, 
+  newQuantity: number
+): Promise<{ success: boolean; quantity: number }> => {
+  const product = await Product.findById(productId);
+  
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  if (newQuantity < 0) {
+    throw new Error("Quantity cannot be negative");
+  }
+
+  const updatedProduct = await Product.findByIdAndUpdate(
+    productId,
+    { 
+      quantity: newQuantity,
+      $inc: { salesCount: newQuantity < product.quantity ? product.quantity - newQuantity : 0 }
+    },
+    { new: true }
+  );
+
+  if (!updatedProduct) {
+    throw new Error("Failed to update product quantity");
+  }
+
+  return {
+    success: true,
+    quantity: updatedProduct.quantity
+  };
+};
+
 export const productService = {
   createProductService,
   updateProductService,
@@ -424,4 +458,5 @@ export const productService = {
   addProductReviewService,
   getInventoryStatusService,
   getInventoryStatusForSingleProduct,
+  updateProductQuantity,
 };

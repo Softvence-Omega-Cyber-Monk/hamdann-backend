@@ -35,5 +35,6 @@ router.get("/inventory-status/:userId", productController.getInventoryStatus);
 
 // Single product inventory status route
 router.get("/inventory/:productId", productController.handleGetInventoryStatus);
+router.patch("/updateQuantity/:productId", productController.handleUpdateQuantity);
 
 export const productRoutes = router;
