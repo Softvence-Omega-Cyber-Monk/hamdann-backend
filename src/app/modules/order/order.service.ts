@@ -78,13 +78,14 @@ const createOrder = async (orderData: IOrder) => {
       for (const buyer of customers) {
         console.log("notifying ", buyer);
         await sendNotification(
-          buyer._id.toString(),
+          buyer.userId.toString(),
           "🛒 New Order Placed!",
           `An order has been placed for ${product.name}. Check it out!`
         );
       }
     }
 
+    
     // const customers = await User_Model.find({ role: "Buyer" });
     // for (const buyer of customers) {
     //   await sendNotification(
