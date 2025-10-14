@@ -6,7 +6,7 @@ import {
 } from "../../utils/cloudinary";
 import { User_Model } from "../user/user.schema";
 import mongoose from "mongoose";
-import { sendNotification } from "../../utils/notificationHelper";
+// import { sendNotification } from "../../utils/notificationHelper";
 
 interface ReviewInput {
   rating: number;
@@ -78,14 +78,14 @@ export const createProductService = async (
   const product = await Product.create(productPayload);
 
   // Notify all customers
-  const customers = await User_Model.find({ role: "Seller" });
-  for (const user of customers) {
-    await sendNotification(
-      user._id.toString(),
-      "🛒 New Product Added!",
-      `${product.name} is now available!`
-    );
-  }
+  // const customers = await User_Model.find({ role: "Seller" });
+  // for (const user of customers) {
+  //   await sendNotification(
+  //     user._id.toString(),
+  //     "🛒 New Product Added!",
+  //     `${product.name} is now available!`
+  //   );
+  // }
 
   return product;
 };

@@ -17,7 +17,6 @@ const products_model_1 = require("./products.model");
 const cloudinary_1 = require("../../utils/cloudinary");
 const user_schema_1 = require("../user/user.schema");
 const mongoose_1 = __importDefault(require("mongoose"));
-const notificationHelper_1 = require("../../utils/notificationHelper");
 const shopReview = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     const reviews = yield products_model_1.Product.aggregate([
         { $match: { userId: new mongoose_1.default.Types.ObjectId(userId) } },
@@ -58,10 +57,14 @@ const createProductService = (payload, imageInput) => __awaiter(void 0, void 0, 
     const productPayload = Object.assign(Object.assign({}, payload), { shopName: ((_a = exitUser.businessInfo) === null || _a === void 0 ? void 0 : _a.businessName) || null, shopReviews: (_b = shopReviews[0]) === null || _b === void 0 ? void 0 : _b.averageRating, productImages: imageUrls });
     const product = yield products_model_1.Product.create(productPayload);
     // Notify all customers
-    const customers = yield user_schema_1.User_Model.find({ role: "Seller" });
-    for (const user of customers) {
-        yield (0, notificationHelper_1.sendNotification)(user._id.toString(), "🛒 New Product Added!", `${product.name} is now available!`);
-    }
+    // const customers = await User_Model.find({ role: "Seller" });
+    // for (const user of customers) {
+    //   await sendNotification(
+    //     user._id.toString(),
+    //     "🛒 New Product Added!",
+    //     `${product.name} is now available!`
+    //   );
+    // }
     return product;
 });
 exports.createProductService = createProductService;
