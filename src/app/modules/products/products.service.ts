@@ -1,5 +1,6 @@
 import { Product } from "./products.model";
 import { IProduct } from "./products.interface";
+import { Order } from "../order/order.model";
 import {
   uploadImgToCloudinary,
   uploadMultipleImages,
@@ -441,6 +442,57 @@ const updateProductQuantity = async (
   };
 };
 
+// Get single product statistic
+interface ProductStats {
+  totalSales: number;
+  revenue: number;
+  totalOrders: number;
+  deliveredOrders: number;
+  conversionRate: number;
+}
+const getSingleProductStats = async (productId: string): Promise<ProductStats> => {
+  const product = await Product.findById(productId);
+  
+  if (!product) {
+    throw new Error("Product not found");
+  }
+  const orders = await Order.find({
+    "items.productId": productId
+  });
+
+ 
+  const totalOrders = orders.length;
+  const deliveredOrders = orders.filter(order => order.status === "delivered").length;
+ 
+  const conversionRate = totalOrders > 0 ? (deliveredOrders / totalOrders) * 100 : 0;
+
+  let totalSales = 0;
+  let revenue = 0;
+
+  orders.forEach(order => {
+    if (order.status === "delivered") {
+      const productItem = order.items.find(item => 
+        item.productId.toString() === productId.toString()
+      );
+      if (productItem) {
+        totalSales += productItem.quantity;
+        revenue += productItem.quantity * productItem.price;
+      }
+    }
+  });
+  const growthPercentage = 12;
+
+  return {
+    totalSales,
+    revenue,
+    totalOrders,
+    deliveredOrders,
+    conversionRate: Number(conversionRate.toFixed(2)),
+  };
+};
+
+
+
 export const productService = {
   createProductService,
   updateProductService,
@@ -459,4 +511,5 @@ export const productService = {
   getInventoryStatusService,
   getInventoryStatusForSingleProduct,
   updateProductQuantity,
+  getSingleProductStats,
 };

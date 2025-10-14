@@ -3,7 +3,6 @@ import {
   IOrder,
   IOrderItem,
   IAdminStatistics,
-  IOrderStatusCounts,
   IOrderStatusSummary,
 } from "./order.interface";
 import { Types } from "mongoose";
@@ -15,10 +14,6 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { populate } from "dotenv";
 dayjs.extend(relativeTime);
 
-interface IOrderFilters {
-  userId?: string;
-  status?: string;
-}
 
 interface IUserStatistics {
   totalRevenue: number;
@@ -75,32 +70,6 @@ const createOrder = async (orderData: IOrder) => {
     throw new Error(`Failed to create order: ${error.message}`);
   }
 };
-
-// Get all orders with optional filters
-// const getAllOrders = async (filters: IOrderFilters = {}): Promise<IOrder[]> => {
-//   const query: Record<string, any> = {};
-
-//   // Apply filters
-//   if (filters.userId) query.userId = filters.userId;
-//   if (filters.status) query.status = filters.status;
-
-//   try {
-//     const orders = await Order.find(query)
-//       .populate({
-//         path: "userId",
-//         select: "name email", // only return these fields
-//       })
-//       .populate({
-//         path: "items.productId",
-//         select: "name price stock image", // you can add more fields as needed
-//       })
-//       .sort({ createdAt: -1 }); // newest first
-
-//     return orders;
-//   } catch (error: any) {
-//     throw new Error(`Failed to fetch orders: ${error.message}`);
-//   }
-// };
 
 const getAllOrders = async (filters: any = {}): Promise<IOrder[]> => {
   try {
@@ -279,55 +248,90 @@ const getAdminStatisticsService = async (): Promise<IAdminStatistics> => {
   }
 };
 
+export interface IOrderStatusCounts {
+  newOrders: number;
+  processing: number;
+  completed: number;
+}
+
+export interface IOrderStatusData {
+  counts: IOrderStatusCounts;
+  newOrders: any[];
+  processingOrders: any[];
+  completedOrders: any[];
+}
+
 const getOrderStatusCountsService = async (
   userId: string
-): Promise<IOrderStatusCounts> => {
-
-  const isexitUser = await User_Model.findById(userId);
-  if(!isexitUser){
+): Promise<IOrderStatusData> => {
+  // Check if user exists and is a seller
+  const existingUser = await User_Model.findById(userId);
+  if (!existingUser) {
     throw new Error("User not found");
   }
 
-  if(isexitUser.role !== "Seller"){
+  if (existingUser.role !== "Seller") {
     throw new Error("Only seller can access this data");
   }
-  
+
   try {
-    const [newOrdersCount, processingCount, completedCount] = await Promise.all(
-      [
-        Order.countDocuments({
-          userId,
-          status: "placed",
-        }),
-
-        Order.countDocuments({
-          userId,
-          status: {
-            $in: ["payment_processed", "shipped", "out_for_delivery"],
-          },
-        }),
-
-        Order.countDocuments({
-          userId,
-          status: "delivered",
-        }),
-      ]
-    );
+    // Get counts and order lists in parallel
+    const [newOrdersCount, processingCount, completedCount, newOrdersList, processingOrdersList, completedOrdersList] = await Promise.all([
+      // Counts
+      Order.countDocuments({
+        userId,
+        status: "placed",
+      }),
+      Order.countDocuments({
+        userId,
+        status: {
+          $in: ["payment_processed", "shipped", "out_for_delivery"],
+        },
+      }),
+      Order.countDocuments({
+        userId,
+        status: "delivered",
+      }),
+      
+      // Order Lists
+      Order.find({
+        userId,
+        status: "placed",
+      }).populate("items.productId", "name price productImages").sort({ createdAt: -1 }),
+      
+      Order.find({
+        userId,
+        status: {
+          $in: ["payment_processed", "shipped", "out_for_delivery"],
+        },
+      }).populate("items.productId", "name price productImages").sort({ createdAt: -1 }),
+      
+      Order.find({
+        userId,
+        status: "delivered",
+      }).populate("items.productId", "name price productImages").sort({ createdAt: -1 })
+    ]);
 
     return {
-      newOrders: newOrdersCount,
-      processing: processingCount,
-      completed: completedCount,
+      counts: {
+        newOrders: newOrdersCount,
+        processing: processingCount,
+        completed: completedCount,
+      },
+      newOrders: newOrdersList,
+      processingOrders: processingOrdersList,
+      completedOrders: completedOrdersList
     };
   } catch (error) {
     console.error("Error in getOrderStatusCountsService:", error);
     throw new Error(
       error instanceof Error
         ? error.message
-        : "Failed to fetch order status counts"
+        : "Failed to fetch order status counts and lists"
     );
   }
 };
+
 
 const getOrderStatusSummaryService = async (): Promise<
   IOrderStatusSummary[]
