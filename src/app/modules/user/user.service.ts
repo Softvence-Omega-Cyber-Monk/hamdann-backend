@@ -3,17 +3,45 @@ import { TUser } from "./user.interface";
 import bcrypt from "bcrypt";
 import { Types } from "mongoose";
 import { cleanRegex } from "zod/v4/core/util.cjs";
-import {
-  uploadImgToCloudinary,
-} from "../../utils/cloudinary";
+import { uploadImgToCloudinary } from "../../utils/cloudinary";
 
 export const user_service = {
-  createUser: async (userData: TUser) => {
-    console.log('user data ', userData)
+
+  createUser: async (
+    userData: TUser & { businessLogoFile?: Express.Multer.File }
+  ) => {
+    console.log("user data ", userData);
+
     // Check if email already exists
     const existingUser = await User_Model.findOne({ email: userData.email });
     if (existingUser) {
       throw new Error("Email already exists. Please use a different email.");
+    }
+
+    // Handle business logo upload if file exists
+    if (userData.businessLogoFile) {
+      try {
+        // Generate unique filename
+        const filename = `business-logo-${Date.now()}-${Math.round(
+          Math.random() * 1e9
+        )}`;
+
+        // Upload business logo to Cloudinary
+        const uploadResult = await uploadImgToCloudinary(
+          filename,
+          userData.businessLogoFile.path,
+          "business-logos"
+        );
+
+        // Add the Cloudinary URL to userData
+        userData.businessLogo = uploadResult.secure_url;
+
+        // Remove the file property as we don't want to save it in the database
+        delete userData.businessLogoFile;
+      } catch (error) {
+        console.error("Error uploading business logo:", error);
+        throw new Error("Failed to upload business logo");
+      }
     }
 
     // Hash password
@@ -22,7 +50,7 @@ export const user_service = {
     const user = new User_Model({
       ...userData,
       password: hashedPassword,
-      confirmPassword: hashedPassword, // store same for now
+      confirmPassword: hashedPassword, 
     });
 
     return await user.save();
@@ -45,12 +73,23 @@ export const user_service = {
     return await User_Model.findOne({ _id: userId });
   },
 
-  // Update user (only name, email, address, paymentMethod)
+  // Update user
   updateUser: async (
     id: string,
     updateData: Partial<
-      Pick<TUser, "name" | "email" | "address" | "paymentMethods" | "profileImage">
-    > & { file?: Express.Multer.File }
+      Pick<
+        TUser,
+        | "name"
+        | "email"
+        | "address"
+        | "paymentMethods"
+        | "profileImage"
+        | "businessLogo"
+      >
+    > & {
+      profileImageFile?: Express.Multer.File;
+      businessLogoFile?: Express.Multer.File;
+    }
   ) => {
     if (!Types.ObjectId.isValid(id)) throw new Error("Invalid user ID");
 
@@ -58,47 +97,53 @@ export const user_service = {
     const existingUser = await User_Model.findById(id);
     if (!existingUser) throw new Error("User not found");
 
-    // // If updating email, check if it's already used by another user
-    // if (updateData.email) {
-    //   const emailExists = await User_Model.findOne({
-    //     email: updateData.email,
-    //     _id: { $ne: id }, // exclude the current user
-    //   });
-    //   if (emailExists) throw new Error("Email already in use by another user");
-    // }
-
-     // Handle image upload if file exists
-    if (updateData.file) {
+    // Handle image upload if file exists
+    if (updateData.profileImageFile) {
       try {
         // Upload image to Cloudinary
         const uploadResult = await uploadImgToCloudinary(
           `user-${id}-${Date.now()}`,
-          updateData.file.path,
+          updateData.profileImageFile.path,
           "user-profiles"
         );
-        
+
         // Add the Cloudinary URL to updateData
         updateData.profileImage = uploadResult.secure_url;
-        
+
         // Remove the file property as we don't want to save it in the database
-        delete updateData.file;
-        
+        delete updateData.profileImageFile;
       } catch (error) {
         throw new Error("Failed to upload profile image");
       }
     }
+    // Handle business logo upload if file exists
+    if (updateData.businessLogoFile) {
+      try {
+        // Upload business logo to Cloudinary
+        const uploadResult = await uploadImgToCloudinary(
+          `business-logo-${id}-${Date.now()}`,
+          updateData.businessLogoFile.path,
+          "business-logos"
+        );
 
-    
+        // Add the Cloudinary URL to updateData
+        updateData.businessLogo = uploadResult.secure_url;
 
-    // console.log("updateData:", updateData);
-    // Update user and return updated document
-    const updatedUser = await User_Model.findByIdAndUpdate(id, updateData, {
-      new: true,
-      runValidators: true,
-    });
+        // Remove the file property as we don't want to save it in the database
+        delete updateData.businessLogoFile;
+      } catch (error) {
+        throw new Error("Failed to upload business logo");
+      }
+    }
+
+    // Update user in database
+    const updatedUser = await User_Model.findByIdAndUpdate(
+      id,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select("-password"); // Exclude password from response
 
     if (!updatedUser) throw new Error("Failed to update user");
-    console.log("Update user data", updatedUser);
 
     return updatedUser;
   },
@@ -118,7 +163,6 @@ export const user_service = {
     return user;
   },
   updateFcmToken: async (userId: string, fcmToken: string) => {
-  
     const updatedUser = await User_Model.findByIdAndUpdate(
       userId,
       { fcmToken },

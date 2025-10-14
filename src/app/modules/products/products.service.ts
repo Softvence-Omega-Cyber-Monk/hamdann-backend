@@ -91,16 +91,80 @@ export const createProductService = async (
   return product;
 };
 
-const updateProductService = async (id: string, payload: Partial<IProduct>) => {
-  // console.log('update payload in service ', payload);
-  const product = await Product.findByIdAndUpdate(id, payload, { new: true });
+// const updateProductService = async (id: string, payload: Partial<IProduct>) => {
+//   // console.log('update payload in service ', payload);
+//   const product = await Product.findByIdAndUpdate(id, payload, { new: true });
+//   return product;
+// };
+
+const updateProductService = async (
+  id: string, 
+  payload: Partial<IProduct> & { 
+    productImagesFiles?: Express.Multer.File[];
+    mainImageFile?: Express.Multer.File;
+  }
+) => {
+  // Handle multiple product images upload
+  if (payload.productImagesFiles && payload.productImagesFiles.length > 0) {
+    const imageUploadPromises = payload.productImagesFiles.map(file =>
+      uploadImgToCloudinary(
+        `product-${id}-${Date.now()}-${Math.random()}`,
+        file.path,
+        "product-images"
+      )
+    );
+
+    try {
+      const uploadResults = await Promise.all(imageUploadPromises);
+      const imageUrls = uploadResults.map(result => result.secure_url);
+      
+      // Append new images to existing ones
+      if (payload.productImages && Array.isArray(payload.productImages)) {
+        payload.productImages = [...payload.productImages, ...imageUrls];
+      } else {
+        payload.productImages = imageUrls;
+      }
+      
+      delete payload.productImagesFiles;
+    } catch (error) {
+      throw new Error("Failed to upload product images");
+    }
+  }
+
+  // Handle main image upload
+  if (payload.mainImageFile) {
+    try {
+      const uploadResult = await uploadImgToCloudinary(
+        `product-${id}-main-${Date.now()}`,
+        payload.mainImageFile.path,
+        "product-images"
+      );
+      
+      payload.productImages = payload.productImages || [];
+      if (payload.productImages.length > 0) {
+        payload.productImages[0] = uploadResult.secure_url;
+      } else {
+        payload.productImages.push(uploadResult.secure_url);
+      }
+      
+      delete payload.mainImageFile;
+    } catch (error) {
+      throw new Error("Failed to upload main image");
+    }
+  }
+
+  const product = await Product.findByIdAndUpdate(id, payload, { 
+    new: true,
+    runValidators: true 
+  });
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
   return product;
 };
 
-// const getAllProductsService = async () => {
-//   const products = await Product.find();
-//   return products;
-// };
 export interface PaginationOptions {
   page: number;
   limit: number;

@@ -105,6 +105,8 @@ export const upload = multer({ storage }); // Single file or fields
 
 // Single image upload (req.file)
 export const uploadSingle = upload.single("image");
+// Single image for BusinessLogo upload (req.file)
+export const uploadSingleforBusinessLogo = upload.single("businessLogo");
 
 // Multiple image upload (req.files)
 export const uploadMultiple = upload.array("images", 30);
