@@ -351,6 +351,62 @@ const getInventoryStatusService = async (userId: string) => {
   return inventoryStatus;
 };
 
+interface InventoryStatus {
+  availableStock: number;
+  stockStatus: "In Stock" | "Out of Stock" | "Low Stock";
+  lowStockThreshold: number;
+  lastRestock?: string;
+  // needsRestock: boolean;
+}
+
+// Get inventory status for a specific product
+const getInventoryStatusForSingleProduct = async (
+  productId: string
+): Promise<InventoryStatus> => {
+  const product = await Product.findById(productId);
+
+  if (!product) {
+    throw new Error("Product not found");
+  }
+
+  // Calculate stock status based on quantity and threshold
+  const calculateStockStatus = (
+    quantity: number,
+    lowStockThreshold: number
+  ): "In Stock" | "Out of Stock" | "Low Stock" => {
+    if (quantity === 0) {
+      return "Out of Stock";
+    } else if (quantity <= lowStockThreshold) {
+      return "Low Stock";
+    } else {
+      return "In Stock";
+    }
+  };
+
+  const lowStockThreshold = 50;
+  const stockStatus = calculateStockStatus(product.quantity, lowStockThreshold);
+
+  const formatDate = (date: Date): string => {
+    const options: Intl.DateTimeFormatOptions = {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    };
+    return new Intl.DateTimeFormat("en-US", options).format(date);
+  };
+  const lastRestock = product.updatedAt
+    ? formatDate(product.updatedAt)
+    : undefined;
+
+  return {
+    availableStock: product.quantity,
+    stockStatus,
+    lowStockThreshold,
+    lastRestock,
+    // needsRestock: product.quantity <= lowStockThreshold,
+  };
+};
+
 export const productService = {
   createProductService,
   updateProductService,
@@ -367,4 +423,5 @@ export const productService = {
   getProductStatsService,
   addProductReviewService,
   getInventoryStatusService,
+  getInventoryStatusForSingleProduct,
 };
