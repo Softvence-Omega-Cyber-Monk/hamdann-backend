@@ -9,7 +9,7 @@ import { productService } from "./products.service";
 const createProduct = async (req: Request, res: Response) => {
   try {
     // console.log("Uploaded file(s):", req.file || req.files);
-    console.log('hit thit hist eindex')
+    console.log("hit thit hist eindex");
 
     const singleFile = req.file as Express.Multer.File;
     const multipleFiles = req.files as Express.Multer.File[];
@@ -98,7 +98,9 @@ const getProductByCategoryService = async (req: Request, res: Response) => {
     });
 
     if (!result.products.length) {
-      return res.status(404).json({ success: false, message: "No products found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "No products found" });
     }
 
     res.status(200).json({ success: true, data: result });
@@ -266,28 +268,113 @@ export const addReviewToProduct = async (req: Request, res: Response) => {
 const getInventoryStatus = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    
+
     if (!userId) {
-      return res.status(400).json({ 
-        success: false, 
-        message: "User ID is required" 
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required",
       });
     }
 
-    const inventoryStatus = await productService.getInventoryStatusService(userId);
+    const inventoryStatus = await productService.getInventoryStatusService(
+      userId
+    );
 
-    res.status(200).json({ 
-      success: true, 
-      data: inventoryStatus 
+    res.status(200).json({
+      success: true,
+      data: inventoryStatus,
     });
   } catch (error: any) {
-    res.status(500).json({ 
-      success: false, 
-      message: error.message 
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };
 
+// Get inventory status for a specific product
+const handleGetInventoryStatus = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { productId } = req.params;
+
+    if (!productId) {
+      res.status(400).json({
+        success: false,
+        message: "Product ID is required",
+      });
+      return;
+    }
+
+    const inventoryStatus =
+      await productService.getInventoryStatusForSingleProduct(productId);
+
+    res.status(200).json({
+      success: true,
+      data: inventoryStatus,
+    });
+  } catch (error: any) {
+    if (error.message === "Product not found") {
+      res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Failed to get inventory status",
+      });
+    }
+  }
+};
+
+// Update product quantity
+const handleUpdateQuantity = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { productId } = req.params;
+    const { quantity } = req.body;
+
+    if (!productId) {
+      res.status(400).json({
+        success: false,
+        message: "Product ID is required",
+      });
+      return;
+    }
+    const result = await productService.updateProductQuantity(
+      productId,
+      quantity
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Quantity updated successfully",
+      data: result,
+    });
+  } catch (error: any) {
+    if (error.message === "Product not found") {
+      res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    } else if (error.message.includes("Quantity cannot be negative")) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Failed to update quantity",
+      });
+    }
+  }
+};
 
 export const productController = {
   createProduct,
@@ -305,4 +392,6 @@ export const productController = {
   getProductStats,
   addReviewToProduct,
   getInventoryStatus,
+  handleGetInventoryStatus,
+  handleUpdateQuantity,
 };
