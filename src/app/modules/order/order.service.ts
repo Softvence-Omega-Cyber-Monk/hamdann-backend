@@ -68,6 +68,7 @@ const createOrder = async (orderData: IOrder) => {
     // Notify all customers
     const productIds = order.items.map((item) => item.productId);
     console.log("product ids ", productIds);
+    
     const products = await Product.find({ userId: { $in: productIds } });
     console.log("products---- ", products);
 
