@@ -91,22 +91,16 @@ export const createProductService = async (
   return product;
 };
 
-// const updateProductService = async (id: string, payload: Partial<IProduct>) => {
-//   // console.log('update payload in service ', payload);
-//   const product = await Product.findByIdAndUpdate(id, payload, { new: true });
-//   return product;
-// };
-
 const updateProductService = async (
-  id: string, 
-  payload: Partial<IProduct> & { 
+  id: string,
+  payload: Partial<IProduct> & {
     productImagesFiles?: Express.Multer.File[];
     mainImageFile?: Express.Multer.File;
   }
 ) => {
   // Handle multiple product images upload
   if (payload.productImagesFiles && payload.productImagesFiles.length > 0) {
-    const imageUploadPromises = payload.productImagesFiles.map(file =>
+    const imageUploadPromises = payload.productImagesFiles.map((file) =>
       uploadImgToCloudinary(
         `product-${id}-${Date.now()}-${Math.random()}`,
         file.path,
@@ -116,15 +110,15 @@ const updateProductService = async (
 
     try {
       const uploadResults = await Promise.all(imageUploadPromises);
-      const imageUrls = uploadResults.map(result => result.secure_url);
-      
+      const imageUrls = uploadResults.map((result) => result.secure_url);
+
       // Append new images to existing ones
       if (payload.productImages && Array.isArray(payload.productImages)) {
         payload.productImages = [...payload.productImages, ...imageUrls];
       } else {
         payload.productImages = imageUrls;
       }
-      
+
       delete payload.productImagesFiles;
     } catch (error) {
       throw new Error("Failed to upload product images");
@@ -139,23 +133,23 @@ const updateProductService = async (
         payload.mainImageFile.path,
         "product-images"
       );
-      
+
       payload.productImages = payload.productImages || [];
       if (payload.productImages.length > 0) {
         payload.productImages[0] = uploadResult.secure_url;
       } else {
         payload.productImages.push(uploadResult.secure_url);
       }
-      
+
       delete payload.mainImageFile;
     } catch (error) {
       throw new Error("Failed to upload main image");
     }
   }
 
-  const product = await Product.findByIdAndUpdate(id, payload, { 
+  const product = await Product.findByIdAndUpdate(id, payload, {
     new: true,
-    runValidators: true 
+    runValidators: true,
   });
 
   if (!product) {
@@ -209,7 +203,7 @@ const getAllProductsService = async (
         .skip(skip)
         .limit(limit)
         .lean(),
-      Product.countDocuments(query)
+      Product.countDocuments(query),
     ]);
 
     // Calculate pagination metadata
@@ -226,8 +220,8 @@ const getAllProductsService = async (
         hasNextPage,
         hasPrevPage,
         nextPage: hasNextPage ? page + 1 : null,
-        prevPage: hasPrevPage ? page - 1 : null
-      }
+        prevPage: hasPrevPage ? page - 1 : null,
+      },
     };
   } catch (error) {
     console.error("Error in getAllProductsService:", error);
@@ -235,14 +229,43 @@ const getAllProductsService = async (
   }
 };
 
-
 const getSingleProductService = async (id: string) => {
   const product = await Product.findById(id);
   return product;
 };
-const getSingleUserProductService = async (userId: string) => {
-  const product = await Product.find({ userId: userId });
-  return product;
+// const getSingleUserProductService = async (userId: string) => {
+//   const product = await Product.find({ userId: userId });
+//   return product;
+// };
+
+const getSingleUserProductService = async (
+  userId: string,
+  page: number,
+  limit: number,
+  search: string = ""
+) => {
+  const skip = (page - 1) * limit;
+
+  // Build search query
+  const query: any = { userId };
+  if (search) {
+    query.name = { $regex: search, $options: "i" };
+  }
+
+  const [products, total] = await Promise.all([
+    Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Product.countDocuments(query),
+  ]);
+
+  return {
+    products,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 };
 
 const getProductByCategoryService = async (
@@ -544,11 +567,11 @@ const getInventoryStatusForSingleProduct = async (
 
 // Update product quantity
 const updateProductQuantity = async (
-  productId: string, 
+  productId: string,
   newQuantity: number
 ): Promise<{ success: boolean; quantity: number }> => {
   const product = await Product.findById(productId);
-  
+
   if (!product) {
     throw new Error("Product not found");
   }
@@ -559,9 +582,12 @@ const updateProductQuantity = async (
 
   const updatedProduct = await Product.findByIdAndUpdate(
     productId,
-    { 
+    {
       quantity: newQuantity,
-      $inc: { salesCount: newQuantity < product.quantity ? product.quantity - newQuantity : 0 }
+      $inc: {
+        salesCount:
+          newQuantity < product.quantity ? product.quantity - newQuantity : 0,
+      },
     },
     { new: true }
   );
@@ -572,7 +598,7 @@ const updateProductQuantity = async (
 
   return {
     success: true,
-    quantity: updatedProduct.quantity
+    quantity: updatedProduct.quantity,
   };
 };
 
@@ -584,29 +610,33 @@ interface ProductStats {
   deliveredOrders: number;
   conversionRate: number;
 }
-const getSingleProductStats = async (productId: string): Promise<ProductStats> => {
+const getSingleProductStats = async (
+  productId: string
+): Promise<ProductStats> => {
   const product = await Product.findById(productId);
-  
+
   if (!product) {
     throw new Error("Product not found");
   }
   const orders = await Order.find({
-    "items.productId": productId
+    "items.productId": productId,
   });
 
- 
   const totalOrders = orders.length;
-  const deliveredOrders = orders.filter(order => order.status === "delivered").length;
- 
-  const conversionRate = totalOrders > 0 ? (deliveredOrders / totalOrders) * 100 : 0;
+  const deliveredOrders = orders.filter(
+    (order) => order.status === "delivered"
+  ).length;
+
+  const conversionRate =
+    totalOrders > 0 ? (deliveredOrders / totalOrders) * 100 : 0;
 
   let totalSales = 0;
   let revenue = 0;
 
-  orders.forEach(order => {
+  orders.forEach((order) => {
     if (order.status === "delivered") {
-      const productItem = order.items.find(item => 
-        item.productId.toString() === productId.toString()
+      const productItem = order.items.find(
+        (item) => item.productId.toString() === productId.toString()
       );
       if (productItem) {
         totalSales += productItem.quantity;
@@ -624,8 +654,6 @@ const getSingleProductStats = async (productId: string): Promise<ProductStats> =
     conversionRate: Number(conversionRate.toFixed(2)),
   };
 };
-
-
 
 export const productService = {
   createProductService,
