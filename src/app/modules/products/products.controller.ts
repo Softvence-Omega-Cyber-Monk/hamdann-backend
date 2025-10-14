@@ -330,6 +330,52 @@ const handleGetInventoryStatus = async (
   }
 };
 
+// Update product quantity
+const handleUpdateQuantity = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { productId } = req.params;
+    const { quantity } = req.body;
+
+    if (!productId) {
+      res.status(400).json({
+        success: false,
+        message: "Product ID is required",
+      });
+      return;
+    }
+    const result = await productService.updateProductQuantity(
+      productId,
+      quantity
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Quantity updated successfully",
+      data: result,
+    });
+  } catch (error: any) {
+    if (error.message === "Product not found") {
+      res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    } else if (error.message.includes("Quantity cannot be negative")) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Failed to update quantity",
+      });
+    }
+  }
+};
+
 export const productController = {
   createProduct,
   updateProduct,
@@ -347,4 +393,5 @@ export const productController = {
   addReviewToProduct,
   getInventoryStatus,
   handleGetInventoryStatus,
+  handleUpdateQuantity,
 };
