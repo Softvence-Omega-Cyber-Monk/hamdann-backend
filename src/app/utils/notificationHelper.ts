@@ -1,4 +1,4 @@
-import { messaging } from "../configs/firebaseAdmin";
+import { db, messaging } from "../configs/firebaseAdmin";
 import { User_Model } from "../modules/user/user.schema";
 
 export const sendNotification = async (
@@ -7,7 +7,7 @@ export const sendNotification = async (
   body: string
 ): Promise<void> => {
   try {
-    console.log("user is ", userId,);
+    console.log("user is ", userId);
 
     const user = await User_Model.findById(userId);
 
@@ -22,7 +22,15 @@ export const sendNotification = async (
     };
 
     const response = await messaging.send(message);
+
     console.log("✅ Notification sent:", response);
+    await db.collection("notifications").add({
+      userId,
+      title,
+      body,
+      timestamp: new Date(),
+    });
+    
   } catch (err) {
     console.error("⚠️ Error sending notification:", err);
   }
