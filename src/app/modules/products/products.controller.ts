@@ -47,17 +47,19 @@ const updateProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-    
+
     const updateData = {
       ...req.body,
       ...(files?.productImages && { productImagesFiles: files.productImages }),
-      ...(files?.mainImage?.[0] && { mainImageFile: files.mainImage[0] })
+      ...(files?.mainImage?.[0] && { mainImageFile: files.mainImage[0] }),
     };
 
     const product = await productService.updateProductService(id, updateData);
-    
+
     if (!product) {
-      return res.status(404).json({ success: false, message: "Product not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Product not found" });
     }
 
     res.status(200).json({ success: true, data: product });
@@ -123,20 +125,27 @@ const getSingleProduct = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-const getSingleUserProductService = async (req: Request, res: Response) => {
+const getSingleUserProduct = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    const product = await productService.getSingleUserProductService(userId);
+    const page = parseInt(req.query.page as string);
+    const limit = parseInt(req.query.limit as string);
+    const search = (req.query.search as string) || "";
 
-    if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
-    }
+    const result = await productService.getSingleUserProductService(
+      userId,
+      page,
+      limit,
+      search
+    );
 
-    res.status(200).json({ success: true, data: product });
+    res.status(200).json({
+      success: true,
+      data: result.products,
+      pagination: result.pagination,
+    });
   } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: error.message });
   }
 };
 
@@ -475,7 +484,7 @@ export const productController = {
   updateProduct,
   getAllProducts,
   getSingleProduct,
-  getSingleUserProductService,
+  getSingleUserProduct,
   getProductByCategoryService,
   getNewArrivalsProductsService,
   getBestSellingProductsService,
