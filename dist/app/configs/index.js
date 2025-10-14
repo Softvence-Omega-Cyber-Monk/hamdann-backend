@@ -25,4 +25,7 @@ exports.configs = {
         cloud_api_key: process.env.CLOUD_API_KEY,
         cloud_api_secret: process.env.CLOUD_API_SECRET,
     },
+    stripe: {
+        secret_key: process.env.STRIPE_SECRET_KEY,
+    }
 };

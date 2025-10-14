@@ -8,4 +8,4 @@ router.post("/create", createNotification); // create new notification
 router.get("/getAll/:userId", getUserNotifications); // get all notifications by user
 router.patch("/markAsRead/:id/read", markAsRead); // mark notification as read
 
-export default router;
+ export const notificationRoutes = router;

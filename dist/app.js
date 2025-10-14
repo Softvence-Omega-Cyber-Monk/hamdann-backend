@@ -22,6 +22,9 @@ const routes_1 = __importDefault(require("./routes"));
 const user_schema_1 = require("./app/modules/user/user.schema");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const configs_1 = require("./app/configs");
+const stripe_config_1 = require("./app/configs/stripe.config");
+const payment_model_1 = require("./app/modules/payment/payment.model");
+const order_model_1 = require("./app/modules/order/order.model");
 // define app
 const app = (0, express_1.default)();
 // middleware
@@ -41,6 +44,44 @@ app.get("/", (req, res) => {
         data: null,
     });
 });
+// ✅ Success payment route
+app.get("/payment-success", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        const { session_id } = req.query;
+        if (!session_id) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Session ID required" });
+        }
+        const session = yield stripe_config_1.stripe.checkout.sessions.retrieve(session_id);
+        if (session.payment_status === "paid") {
+            const payment = yield payment_model_1.Payment.findOneAndUpdate({ paymentIntentId: session.id }, { paymentStatus: "succeeded" }, { new: true });
+            const orderId = (_a = session.metadata) === null || _a === void 0 ? void 0 : _a.orderId;
+            // 2️⃣ Update Order status + statusDates
+            const order = yield order_model_1.Order.findByIdAndUpdate(orderId, {
+                status: "payment_processed",
+                "statusDates.paymentProcessedAt": new Date(), // ✅ update nested field
+            }, { new: true }).populate({
+                path: "items.productId",
+                select: "name price image", // populate product info
+            });
+            return res.status(200).json({
+                success: true,
+                message: "Payment successful",
+                session,
+                payment,
+                order,
+            });
+        }
+        res
+            .status(200)
+            .json({ success: false, message: "Payment not completed", session });
+    }
+    catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+}));
 // Create Default SuperAdmin if not exists
 const createDefaultSuperAdmin = () => __awaiter(void 0, void 0, void 0, function* () {
     try {

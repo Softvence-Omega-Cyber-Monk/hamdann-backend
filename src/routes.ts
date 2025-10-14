@@ -7,6 +7,7 @@ import { CartRoute } from './app/modules/cart/cart.route';
 import { PromotionRoute } from './app/modules/promotion/promotion.route';
 import { supportRoutes } from './app/modules/supports/support.route';
 import { paymentRoutes } from './app/modules/payment/payment.route'
+import { notificationRoutes } from './app/modules/notifications/notification.route';
 
 
 const appRouter = Router();
@@ -19,7 +20,8 @@ const moduleRoutes = [
     { path: "/order", route: OrderRoute },
     { path: "/promotion", route: PromotionRoute },
     { path: "/support", route: supportRoutes},
-    { path: "/payment", route: paymentRoutes }
+    { path: "/payment", route: paymentRoutes },
+    { path: "/notification", route: notificationRoutes },
 
 
 ];

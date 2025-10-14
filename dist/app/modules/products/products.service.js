@@ -58,7 +58,7 @@ const createProductService = (payload, imageInput) => __awaiter(void 0, void 0, 
     const productPayload = Object.assign(Object.assign({}, payload), { shopName: ((_a = exitUser.businessInfo) === null || _a === void 0 ? void 0 : _a.businessName) || null, shopReviews: (_b = shopReviews[0]) === null || _b === void 0 ? void 0 : _b.averageRating, productImages: imageUrls });
     const product = yield products_model_1.Product.create(productPayload);
     // Notify all customers
-    const customers = yield user_schema_1.User_Model.find({ role: "Buyer" });
+    const customers = yield user_schema_1.User_Model.find({ role: "Seller" });
     for (const user of customers) {
         yield (0, notificationHelper_1.sendNotification)(user._id.toString(), "🛒 New Product Added!", `${product.name} is now available!`);
     }
@@ -258,6 +258,66 @@ const getInventoryStatusService = (userId) => __awaiter(void 0, void 0, void 0, 
     ).sort({ name: 1 }); // Sort by product name alphabetically
     return inventoryStatus;
 });
+// Get inventory status for a specific product
+const getInventoryStatusForSingleProduct = (productId) => __awaiter(void 0, void 0, void 0, function* () {
+    const product = yield products_model_1.Product.findById(productId);
+    if (!product) {
+        throw new Error("Product not found");
+    }
+    // Calculate stock status based on quantity and threshold
+    const calculateStockStatus = (quantity, lowStockThreshold) => {
+        if (quantity === 0) {
+            return "Out of Stock";
+        }
+        else if (quantity <= lowStockThreshold) {
+            return "Low Stock";
+        }
+        else {
+            return "In Stock";
+        }
+    };
+    const lowStockThreshold = 50;
+    const stockStatus = calculateStockStatus(product.quantity, lowStockThreshold);
+    const formatDate = (date) => {
+        const options = {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+        };
+        return new Intl.DateTimeFormat("en-US", options).format(date);
+    };
+    const lastRestock = product.updatedAt
+        ? formatDate(product.updatedAt)
+        : undefined;
+    return {
+        availableStock: product.quantity,
+        stockStatus,
+        lowStockThreshold,
+        lastRestock,
+        // needsRestock: product.quantity <= lowStockThreshold,
+    };
+});
+// Update product quantity
+const updateProductQuantity = (productId, newQuantity) => __awaiter(void 0, void 0, void 0, function* () {
+    const product = yield products_model_1.Product.findById(productId);
+    if (!product) {
+        throw new Error("Product not found");
+    }
+    if (newQuantity < 0) {
+        throw new Error("Quantity cannot be negative");
+    }
+    const updatedProduct = yield products_model_1.Product.findByIdAndUpdate(productId, {
+        quantity: newQuantity,
+        $inc: { salesCount: newQuantity < product.quantity ? product.quantity - newQuantity : 0 }
+    }, { new: true });
+    if (!updatedProduct) {
+        throw new Error("Failed to update product quantity");
+    }
+    return {
+        success: true,
+        quantity: updatedProduct.quantity
+    };
+});
 exports.productService = {
     createProductService: exports.createProductService,
     updateProductService,
@@ -274,4 +334,6 @@ exports.productService = {
     getProductStatsService,
     addProductReviewService: exports.addProductReviewService,
     getInventoryStatusService,
+    getInventoryStatusForSingleProduct,
+    updateProductQuantity,
 };
