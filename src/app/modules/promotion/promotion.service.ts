@@ -2,6 +2,7 @@ import { IPromotion } from "./promotion.interface";
 import { PromotionModel } from "./promotion.model";
 import { Product } from "../products/products.model"; // Import your Product model
 import mongoose from "mongoose";
+import { sendNotification } from "../../utils/notificationHelper";
 
 // Create a promotion
 export const createPromotionService = async (payload: IPromotion) => {
@@ -23,6 +24,19 @@ export const createPromotionService = async (payload: IPromotion) => {
   }
 
   const promotion = await PromotionModel.create(payload);
+
+
+    // const customers = await User_Model.find({ role: "Buyer" });
+    // for (const buyer of customers) {
+    //   await sendNotification(
+    //     buyer._id.toString(),
+    //     "🛒 New Order Added!",
+    //     ` is now available!`
+    //   );
+    // }
+
+
+
   return promotion;
 };
 
