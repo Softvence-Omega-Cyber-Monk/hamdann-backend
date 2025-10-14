@@ -12,8 +12,8 @@ import { User_Model } from "../user/user.schema";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { populate } from "dotenv";
+import { sendNotification } from "../../utils/notificationHelper";
 dayjs.extend(relativeTime);
-
 
 interface IUserStatistics {
   totalRevenue: number;
@@ -51,12 +51,13 @@ const calculateOrderAmounts = (items: IOrderItem[]) => {
 // Create Order
 const createOrder = async (orderData: IOrder) => {
   // Calculate order amounts
+
   const { subtotal, shippingCost, tax, totalAmount } = calculateOrderAmounts(
     orderData.items
   );
 
   try {
-    const order = new Order({
+    const order = await Order.create({
       ...orderData,
       subtotal,
       shippingCost,
@@ -64,8 +65,36 @@ const createOrder = async (orderData: IOrder) => {
       totalAmount,
     });
 
+    // Notify all customers
+    const productIds = order.items.map((item) => item.productId);
+    console.log("product ids ", productIds);
+    const products = await Product.find({ userId: { $in: productIds } });
+    console.log("products---- ", products);
+
+    for (const product of products) {
+      // Notify customers about the new order for this product
+      // You can customize the notification message as needed
+      const customers = await User_Model.find({ role: "Buyer" });
+      for (const buyer of customers) {
+        await sendNotification(
+          buyer._id.toString(),
+          "🛒 New Order Placed!",
+          `An order has been placed for ${product.name}. Check it out!`
+        );
+      }
+    }
+
+    // const customers = await User_Model.find({ role: "Buyer" });
+    // for (const buyer of customers) {
+    //   await sendNotification(
+    //     buyer._id.toString(),
+    //     "🛒 New Order Added!",
+    //     ` is now available!`
+    //   );
+    // }
+
     // Save and return the created order
-    return await order.save();
+    return order;
   } catch (error: any) {
     throw new Error(`Failed to create order: ${error.message}`);
   }
@@ -276,7 +305,14 @@ const getOrderStatusCountsService = async (
 
   try {
     // Get counts and order lists in parallel
-    const [newOrdersCount, processingCount, completedCount, newOrdersList, processingOrdersList, completedOrdersList] = await Promise.all([
+    const [
+      newOrdersCount,
+      processingCount,
+      completedCount,
+      newOrdersList,
+      processingOrdersList,
+      completedOrdersList,
+    ] = await Promise.all([
       // Counts
       Order.countDocuments({
         userId,
@@ -292,24 +328,30 @@ const getOrderStatusCountsService = async (
         userId,
         status: "delivered",
       }),
-      
+
       // Order Lists
       Order.find({
         userId,
         status: "placed",
-      }).populate("items.productId", "name price productImages").sort({ createdAt: -1 }),
-      
+      })
+        .populate("items.productId", "name price productImages")
+        .sort({ createdAt: -1 }),
+
       Order.find({
         userId,
         status: {
           $in: ["payment_processed", "shipped", "out_for_delivery"],
         },
-      }).populate("items.productId", "name price productImages").sort({ createdAt: -1 }),
-      
+      })
+        .populate("items.productId", "name price productImages")
+        .sort({ createdAt: -1 }),
+
       Order.find({
         userId,
         status: "delivered",
-      }).populate("items.productId", "name price productImages").sort({ createdAt: -1 })
+      })
+        .populate("items.productId", "name price productImages")
+        .sort({ createdAt: -1 }),
     ]);
 
     return {
@@ -320,7 +362,7 @@ const getOrderStatusCountsService = async (
       },
       newOrders: newOrdersList,
       processingOrders: processingOrdersList,
-      completedOrders: completedOrdersList
+      completedOrders: completedOrdersList,
     };
   } catch (error) {
     console.error("Error in getOrderStatusCountsService:", error);
@@ -331,7 +373,6 @@ const getOrderStatusCountsService = async (
     );
   }
 };
-
 
 const getOrderStatusSummaryService = async (): Promise<
   IOrderStatusSummary[]
