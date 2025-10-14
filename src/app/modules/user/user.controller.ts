@@ -4,9 +4,50 @@ import manageResponse from "../../utils/manage_response";
 import { user_service, user_services } from "./user.service";
 import httpStatus from "http-status";
 
-const create_user = catchAsync(async (req, res) => {
-  const result = await user_service.createUser(req.body);
+// const create_user = catchAsync(async (req, res) => {
+//   const result = await user_service.createUser(req.body);
 
+//   manageResponse(res, {
+//     success: true,
+//     statusCode: httpStatus.CREATED,
+//     message: "User created successfully.",
+//     data: result,
+//   });
+// });
+const create_user = catchAsync(async (req, res) => {
+  const file = req.file; 
+  const files = req.files as { [fieldname: string]: Express.Multer.File[] }; 
+
+  // Prepare user data from form data
+  const userData: any = { ...req.body };
+
+  // Handle business logo file (priority to multiple files, then single file)
+  if (files?.['businessLogo']?.[0]) {
+    userData.businessLogoFile = files['businessLogo'][0];
+  } else if (file) {
+    userData.businessLogoFile = file;
+  }
+
+  // Parse any JSON fields if needed (like address, paymentMethods, etc.)
+  if (userData.address && typeof userData.address === 'string') {
+    try {
+      userData.address = JSON.parse(userData.address);
+    } catch (error) {
+      // If parsing fails, keep as string or handle error
+      console.warn('Failed to parse address field');
+    }
+  }
+
+  if (userData.paymentMethods && typeof userData.paymentMethods === 'string') {
+    try {
+      userData.paymentMethods = JSON.parse(userData.paymentMethods);
+    } catch (error) {
+      console.warn('Failed to parse paymentMethods field');
+    }
+  }
+
+  const result = await user_service.createUser(userData);
+  
   manageResponse(res, {
     success: true,
     statusCode: httpStatus.CREATED,
@@ -54,12 +95,31 @@ const myProfile = catchAsync(async (req, res) => {
 
 const update_single_user = catchAsync(async (req, res) => {
   const { id } = req.params;
-  const file = req.file;
 
-  const result = await user_service.updateUser(id, {
-    ...req.body,
-    file,
-  });
+  // Handle multiple file uploads
+  const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+  const profileImageFile = files?.["profileImage"]?.[0];
+  const businessLogoFile = files?.["businessLogo"]?.[0];
+
+  // Prepare update data
+  const updateData: any = { ...req.body };
+
+  // Add files to update data if they exist
+  if (profileImageFile) {
+    updateData.profileImageFile = profileImageFile;
+  }
+
+  if (businessLogoFile) {
+    updateData.businessLogoFile = businessLogoFile;
+  }
+
+  // Backward compatibility: if single file upload (from previous implementation)
+  if (req.file && !profileImageFile && !businessLogoFile) {
+    updateData.profileImageFile = req.file;
+  }
+
+  const result = await user_service.updateUser(id, updateData);
+
   manageResponse(res, {
     success: true,
     statusCode: httpStatus.OK,

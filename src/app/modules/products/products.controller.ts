@@ -26,15 +26,38 @@ const createProduct = async (req: Request, res: Response) => {
   }
 };
 
+// const updateProduct = async (req: Request, res: Response) => {
+//   try {
+//     const { id } = req.params;
+//     const product = await productService.updateProductService(id, req.body);
+
+//     if (!product) {
+//       return res
+//         .status(404)
+//         .json({ success: false, message: "Product not found" });
+//     }
+
+//     res.status(200).json({ success: true, data: product });
+//   } catch (error: any) {
+//     res.status(400).json({ success: false, message: error.message });
+//   }
+// };
+
 const updateProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const product = await productService.updateProductService(id, req.body);
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    
+    const updateData = {
+      ...req.body,
+      ...(files?.productImages && { productImagesFiles: files.productImages }),
+      ...(files?.mainImage?.[0] && { mainImageFile: files.mainImage[0] })
+    };
 
+    const product = await productService.updateProductService(id, updateData);
+    
     if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Product not found" });
+      return res.status(404).json({ success: false, message: "Product not found" });
     }
 
     res.status(200).json({ success: true, data: product });
@@ -42,6 +65,7 @@ const updateProduct = async (req: Request, res: Response) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
+
 const getAllProducts = async (req: Request, res: Response): Promise<void> => {
   try {
     // Get query parameters with default values

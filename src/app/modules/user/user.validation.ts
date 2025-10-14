@@ -83,4 +83,5 @@ export const update_user = z.object({
     )
     .optional(),
   profileImage: z.string().optional(),
+  businessLogo: z.string().optional(),
 });

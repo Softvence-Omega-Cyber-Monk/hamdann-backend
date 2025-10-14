@@ -5,7 +5,17 @@ import { upload, uploadMultiple, uploadSingle } from "../../utils/cloudinary";
 const router = express.Router();
 
 router.post("/create", upload.any(), productController.createProduct); // ✅ Create product
-router.put("/update/:id", productController.updateProduct); // ✅ Update product
+// router.put("/update/:id", productController.updateProduct); // ✅ Update product
+router.put(
+  "/update/:id",
+  upload.fields([
+    { name: 'productImages', maxCount: 10 },
+    { name: 'mainImage', maxCount: 1 }
+  ]),
+  productController.updateProduct
+);
+
+
 // ✅ Get all products
 router.get("/getSingle/:id", productController.getSingleProduct); // ✅ Get single product
 router.get("/getUserProduct/:userId", productController.getSingleUserProductService); // ✅ Get single product
