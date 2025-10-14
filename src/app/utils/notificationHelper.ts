@@ -1,10 +1,11 @@
 import { db, messaging } from "../configs/firebaseAdmin";
+import { NotificationModel } from "../modules/notifications/notifications.model";
 import { User_Model } from "../modules/user/user.schema";
 
 export const sendNotification = async (
   userId: string,
   title: string,
-  body: string
+  body: string,
 ): Promise<void> => {
   try {
     console.log("user is ", userId);
@@ -26,11 +27,12 @@ export const sendNotification = async (
     const response = await messaging.send(message);
 
     console.log("✅ Notification sent:", response);
-    await db.collection("notifications").add({
+ 
+    await NotificationModel.create({
       userId,
       title,
       body,
-      userProfile: user.profileImage,
+      userProfile: user.profileImage || "",
       timestamp: new Date(),
     });
 
