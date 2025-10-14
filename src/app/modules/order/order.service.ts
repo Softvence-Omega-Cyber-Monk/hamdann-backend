@@ -85,7 +85,6 @@ const createOrder = async (orderData: IOrder) => {
       }
     }
 
-    
     // const customers = await User_Model.find({ role: "Buyer" });
     // for (const buyer of customers) {
     //   await sendNotification(
