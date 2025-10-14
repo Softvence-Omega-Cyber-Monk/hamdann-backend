@@ -75,12 +75,14 @@ const createOrder = async (orderData: IOrder) => {
     for (const product of products) {
       const customers = await Product.find({ userId: product.userId });
 
+      console.log("customers ", customers);
+
       for (const buyer of customers) {
         console.log("notifying ", buyer);
         await sendNotification(
           buyer.userId.toString(),
           "🛒 New Order Placed!",
-          `An order has been placed for ${product.name}. Check it out!`
+          `An order has been placed for this ${product.name}. Check it out!`
         );
       }
     }
