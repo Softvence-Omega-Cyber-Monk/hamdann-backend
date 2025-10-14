@@ -79,14 +79,14 @@ export const createProductService = async (
   const product = await Product.create(productPayload);
 
   // Notify all customers
-  // const customers = await User_Model.find({ role: "Buyer" });
-  // for (const user of customers) {
-  //   await sendNotification(
-  //     user._id.toString(),
-  //     "🛒 New Product Added!",
-  //     `${product.name} is now available!`
-  //   );
-  // }
+  const customers = await User_Model.find({ role: "Buyer" });
+  for (const buyer of customers) {
+    await sendNotification(
+      buyer._id.toString(),
+      "🛒 New Product Added!",
+      `${product.name} is now available!`
+    );
+  }
 
   return product;
 };

@@ -26,4 +26,7 @@ router.put("/addReview/:productId", products_controller_1.productController.addR
 router.get("/stats/:userId", products_controller_1.productController.getProductStats);
 // Inventory status
 router.get("/inventory-status/:userId", products_controller_1.productController.getInventoryStatus);
+// Single product inventory status route
+router.get("/inventory/:productId", products_controller_1.productController.handleGetInventoryStatus);
+router.patch("/updateQuantity/:productId", products_controller_1.productController.handleUpdateQuantity);
 exports.productRoutes = router;

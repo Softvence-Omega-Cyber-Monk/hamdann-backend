@@ -14,7 +14,7 @@ const products_service_1 = require("./products.service");
 const createProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         // console.log("Uploaded file(s):", req.file || req.files);
-        console.log('hit thit hist eindex');
+        console.log("hit thit hist eindex");
         const singleFile = req.file;
         const multipleFiles = req.files;
         const product = yield products_service_1.productService.createProductService(req.body, singleFile || multipleFiles // Pass whichever exists
@@ -91,7 +91,9 @@ const getProductByCategoryService = (req, res) => __awaiter(void 0, void 0, void
             limit: Number(limit),
         });
         if (!result.products.length) {
-            return res.status(404).json({ success: false, message: "No products found" });
+            return res
+                .status(404)
+                .json({ success: false, message: "No products found" });
         }
         res.status(200).json({ success: true, data: result });
     }
@@ -238,20 +240,92 @@ const getInventoryStatus = (req, res) => __awaiter(void 0, void 0, void 0, funct
         if (!userId) {
             return res.status(400).json({
                 success: false,
-                message: "User ID is required"
+                message: "User ID is required",
             });
         }
         const inventoryStatus = yield products_service_1.productService.getInventoryStatusService(userId);
         res.status(200).json({
             success: true,
-            data: inventoryStatus
+            data: inventoryStatus,
         });
     }
     catch (error) {
         res.status(500).json({
             success: false,
-            message: error.message
+            message: error.message,
         });
+    }
+});
+// Get inventory status for a specific product
+const handleGetInventoryStatus = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { productId } = req.params;
+        if (!productId) {
+            res.status(400).json({
+                success: false,
+                message: "Product ID is required",
+            });
+            return;
+        }
+        const inventoryStatus = yield products_service_1.productService.getInventoryStatusForSingleProduct(productId);
+        res.status(200).json({
+            success: true,
+            data: inventoryStatus,
+        });
+    }
+    catch (error) {
+        if (error.message === "Product not found") {
+            res.status(404).json({
+                success: false,
+                message: "Product not found",
+            });
+        }
+        else {
+            res.status(500).json({
+                success: false,
+                message: "Failed to get inventory status",
+            });
+        }
+    }
+});
+// Update product quantity
+const handleUpdateQuantity = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { productId } = req.params;
+        const { quantity } = req.body;
+        if (!productId) {
+            res.status(400).json({
+                success: false,
+                message: "Product ID is required",
+            });
+            return;
+        }
+        const result = yield products_service_1.productService.updateProductQuantity(productId, quantity);
+        res.status(200).json({
+            success: true,
+            message: "Quantity updated successfully",
+            data: result,
+        });
+    }
+    catch (error) {
+        if (error.message === "Product not found") {
+            res.status(404).json({
+                success: false,
+                message: "Product not found",
+            });
+        }
+        else if (error.message.includes("Quantity cannot be negative")) {
+            res.status(400).json({
+                success: false,
+                message: error.message,
+            });
+        }
+        else {
+            res.status(500).json({
+                success: false,
+                message: "Failed to update quantity",
+            });
+        }
     }
 });
 exports.productController = {
@@ -270,4 +344,6 @@ exports.productController = {
     getProductStats,
     addReviewToProduct: exports.addReviewToProduct,
     getInventoryStatus,
+    handleGetInventoryStatus,
+    handleUpdateQuantity,
 };
