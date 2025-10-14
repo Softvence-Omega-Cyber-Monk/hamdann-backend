@@ -376,6 +376,43 @@ const handleUpdateQuantity = async (
   }
 };
 
+// Get single product statistics
+const handleGetSingleProductStats = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { productId } = req.params;
+    const { startDate, endDate } = req.query;
+
+    if (!productId) {
+      res.status(400).json({
+        success: false,
+        message: "Product ID is required",
+      });
+      return;
+    }
+    const stats = await productService.getSingleProductStats(productId);
+
+    res.status(200).json({
+      success: true,
+      data: stats,
+    });
+  } catch (error: any) {
+    if (error.message === "Product not found") {
+      res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Failed to get product statistics",
+      });
+    }
+  }
+};
+
 export const productController = {
   createProduct,
   updateProduct,
@@ -394,4 +431,5 @@ export const productController = {
   getInventoryStatus,
   handleGetInventoryStatus,
   handleUpdateQuantity,
+  handleGetSingleProductStats,
 };
