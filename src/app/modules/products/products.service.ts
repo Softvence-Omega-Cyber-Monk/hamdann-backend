@@ -97,10 +97,80 @@ const updateProductService = async (id: string, payload: Partial<IProduct>) => {
   return product;
 };
 
-const getAllProductsService = async () => {
-  const products = await Product.find();
-  return products;
+// const getAllProductsService = async () => {
+//   const products = await Product.find();
+//   return products;
+// };
+export interface PaginationOptions {
+  page: number;
+  limit: number;
+}
+
+interface ProductQuery {
+  name?: { $regex: string; $options: string };
+}
+
+interface PaginatedProducts {
+  products: any[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalProducts: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+    nextPage: number | null;
+    prevPage: number | null;
+  };
+}
+const getAllProductsService = async (
+  page: number = 1,
+  limit: number = 10,
+  search: string = ""
+): Promise<PaginatedProducts> => {
+  try {
+    // Calculate skip value for pagination
+    const skip = (page - 1) * limit;
+
+    // Build search query
+    const query: ProductQuery = {};
+    if (search) {
+      query.name = { $regex: search, $options: "i" }; // Case-insensitive search
+    }
+
+    // Execute queries in parallel for better performance
+    const [products, totalProducts] = await Promise.all([
+      Product.find(query)
+        .select("-reviews") // Exclude reviews if not needed
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Product.countDocuments(query)
+    ]);
+
+    // Calculate pagination metadata
+    const totalPages = Math.ceil(totalProducts / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+    return {
+      products,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalProducts,
+        hasNextPage,
+        hasPrevPage,
+        nextPage: hasNextPage ? page + 1 : null,
+        prevPage: hasPrevPage ? page - 1 : null
+      }
+    };
+  } catch (error) {
+    console.error("Error in getAllProductsService:", error);
+    throw new Error("Failed to fetch products");
+  }
 };
+
 
 const getSingleProductService = async (id: string) => {
   const product = await Product.findById(id);

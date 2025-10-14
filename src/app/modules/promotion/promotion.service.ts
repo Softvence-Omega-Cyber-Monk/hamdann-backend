@@ -89,7 +89,7 @@ export const getSellerPromotionsService = async (userId: string) => {
       discountValue: 1, 
       isActive: 1,
       promotionType: 1,
-      _id: 0 
+      _id: 1
     }
   ).sort({ endDate: 1 });
 
