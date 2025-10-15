@@ -79,3 +79,29 @@ export const removeWishlistItems = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+
+
+export const checkProductWishlistStatus = async (req: Request, res: Response) => {
+  try {
+    const { userId, productId } = req.body;
+
+    if (!userId || !productId) {
+      return res.status(400).json({ success: false, message: "User ID and Product ID are required" });
+    }
+
+    const isWishlisted = await wishlistService.isProductWishlisted(userId, productId);
+
+    res.status(200).json({
+      success: true,
+      data: { isWishlisted },
+    });
+  } catch (error: any) {
+    console.error("Error checking wishlist:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to check wishlist status",
+      error: error.message,
+    });
+  }
+};

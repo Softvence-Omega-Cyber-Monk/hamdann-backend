@@ -35,6 +35,8 @@ export const getUserWishlist = async (
   return Wishlist.findOne({ userId }).populate("withlistProducts");
 };
 
+
+
 export const removeWishlistProducts = async (
   userId: string,
   productIds: string[]
@@ -78,8 +80,26 @@ export const removeWishlistProducts = async (
   }
 };
 
+
+export const isProductWishlisted = async (
+  userId: string,
+  productId: string
+): Promise<boolean> => {
+  if (!userId || !productId) {
+    throw new Error("User ID and Product ID are required");
+  }
+
+  const wishlist = await Wishlist.findOne({ userId });
+
+  if (!wishlist) return false;
+
+  return wishlist.withlistProducts.includes(productId);
+};
+
+
 export const wishlistService = {
   createOrUpdateWishlist,
   getUserWishlist,
   removeWishlistProducts,
+  isProductWishlisted
 };

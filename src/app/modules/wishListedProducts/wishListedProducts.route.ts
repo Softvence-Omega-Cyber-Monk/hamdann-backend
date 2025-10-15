@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createOrUpdateWishlist, getUserWishlist, removeWishlistItems } from "./wishListedProducts.controller";
+import { checkProductWishlistStatus, createOrUpdateWishlist, getUserWishlist, removeWishlistItems } from "./wishListedProducts.controller";
 
 const router = Router();
 
@@ -8,6 +8,7 @@ router.post("/add", createOrUpdateWishlist);
 
 // Get all promotion
 router.get("/get-single-user/:userId", getUserWishlist);
+router.get("/check/isWishlist", checkProductWishlistStatus);
 
 router.delete("/remove", removeWishlistItems);
 
