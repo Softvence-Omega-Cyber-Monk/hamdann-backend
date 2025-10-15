@@ -204,7 +204,7 @@ const updateOrder = async (
 };
 
 // Update Order Status
-const updateOrderStatus = async (
+export const updateOrderStatus = async (
   orderId: string,
   status: string
 ): Promise<IOrder | null> => {
@@ -212,41 +212,36 @@ const updateOrderStatus = async (
     throw new Error("Invalid order ID");
   }
 
-  const validStatuses = [
-    "placed",
-    "payment_processed",
-    "shipped",
-    "out_for_delivery",
-    "delivered",
-    "cancelled",
-    "returned",
-  ];
-
-  if (!validStatuses.includes(status)) {
-    throw new Error("Invalid order status");
-  }
-
   try {
-    const updatedOrder = await Order.findByIdAndUpdate(
-      orderId,
-      { status },
-      { new: true }
-    )
-      .populate("userId", "name email")
-      .populate("items.productId", "name price");
+    const order: any = await Order.findById(orderId)
 
-    if (!updatedOrder) {
+    if (!order) {
       throw new Error("Order not found");
     }
 
-    // Notify user about status update
+    // ✅ Allow cancellation only when status is "placed"
+    if (status === "cancelled") {
+      if (order.status !== "placed") {
+        throw new Error(
+          `Order cannot be cancelled because it is already "${order.status}".`
+        );
+      }
+    }
+
+    // ✅ Update order status
+    order.status = status;
+    order.statusDates = order.statusDates || {};
+
+    await order.save();
+
+    // ✅ Notify user about status update
     await sendNotification(
-      updatedOrder.userId._id.toString(),
+      order.userId._id.toString(),
       "📦 Order Status Updated",
-      `Your order #${updatedOrder.orderNumber} status has been updated to "${status}".`
+      `Your order #${order.orderNumber} status has been updated to "${status}".`
     );
 
-    return updatedOrder;
+    return order;
   } catch (error: any) {
     throw new Error(`Failed to update order status: ${error.message}`);
   }
