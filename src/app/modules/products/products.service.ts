@@ -334,7 +334,7 @@ const getBestSellingProductsService = async () => {
 //   limit: number
 // ) => {
 //   const skip = (page - 1) * limit;
-  
+
 //   const [bestSellingProducts, totalCount] = await Promise.all([
 //     Product.find()
 //       .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
@@ -358,15 +358,47 @@ const getBestSellingProductsService = async () => {
 //     }
 //   };
 // };
-const getSellerBestSellingProductsService = async (userId: string) => {
-  console.log("userId in service ", userId);
-  const bestSellingProducts = await Product.find({ userId: userId }).sort({
-    salesCount: -1,
-  }); // Sort by salesCount in descending order (highest first)
+// const getSellerBestSellingProductsService = async (userId: string) => {
+//   console.log("userId in service ", userId);
+//   const bestSellingProducts = await Product.find({ userId: userId }).sort({
+//     salesCount: -1,
+//   }); // Sort by salesCount in descending order (highest first)
+
+//   console.log("bestSellingProducts ", bestSellingProducts.length);
+
+//   return bestSellingProducts;
+// };
+const getSellerBestSellingProductsService = async (
+  userId: string,
+  options: { page?: number | null; limit?: number | null } = {}
+) => {
+  const { page, limit } = options;
+
+  const skip = ((page as number) - 1) * (limit as number);
+
+  const [bestSellingProducts, totalCount] = await Promise.all([
+    Product.find({ userId: userId })
+      .sort({ salesCount: -1 })
+      .skip(skip)
+      .limit(limit as number),
+    Product.countDocuments({ userId: userId }),
+  ]);
 
   console.log("bestSellingProducts ", bestSellingProducts.length);
 
-  return bestSellingProducts;
+  const totalPages = Math.ceil(totalCount / (limit as number));
+
+  return {
+    success: true,
+    data: bestSellingProducts,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalProducts: totalCount,
+      hasNext: (page as number) < totalPages,
+      hasPrev: (page as number) > 1,
+    },
+  };
 };
 
 

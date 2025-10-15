@@ -287,14 +287,15 @@ const getProductListWithStatusBySellerId = async (
 ) => {
   try {
     const { sellerId } = req.params;
-    const { status, page, limit } = req.query;
+    const { status, page, limit, search } = req.query;
 
     const result = await OrderService.getProductListWithStatusBySellerIdService(
       sellerId,
       {
         status: status as string,
-        page: Number(page) || 1,
-        limit: Number(limit) || 10,
+        page: Number(page),
+        limit: Number(limit),
+        search: search as string
       }
     );
 
@@ -310,38 +311,64 @@ const getProductListWithStatusBySellerId = async (
   }
 };
 
+
 // Get recent orders for seller with pagination
-const getRecentOrdersForSellerController = async (req: Request, res: Response): Promise<void> => {
+// const getRecentOrdersForSellerController = async (req: Request, res: Response): Promise<void> => {
+//   try {
+//     const { userId } = req.params;
+//     const { page, limit } = req.query;
+
+//     if (!userId) {
+//       res.status(400).json({
+//         success: false,
+//         message: "User ID is required in params"
+//       });
+//       return;
+//     }
+
+//     const result = await OrderService.getRecentOrdersForSellerService(userId);
+
+//     res.status(200).json(result);
+
+//   } catch (error: any) {
+//     console.error("Error fetching seller orders:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: error.message
+//     });
+//   }
+// };
+const getRecentOrdersForSellerController = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
     const { page, limit } = req.query;
 
     if (!userId) {
-      res.status(400).json({
+      return res.status(400).json({
         success: false,
-        message: "User ID is required in params"
+        message: "User ID is required"
       });
-      return;
     }
 
-    const result = await OrderService.getRecentOrdersForSellerService(
-      userId, 
-      page ? parseInt(page as string) : 1,
-      limit ? parseInt(limit as string) : 10
-    );
+    const pageNumber = page ? parseInt(page as string) : 1;
+    const limitNumber = limit ? parseInt(limit as string) : 10;
 
-    res.status(200).json(result);
+    const result = await OrderService.getRecentOrdersForSellerService(userId, pageNumber, limitNumber);
+
+    res.status(200).json({
+      success: true,
+      data: result.orders,
+      pagination: result.pagination
+    });
 
   } catch (error: any) {
     console.error("Error fetching seller orders:", error);
     res.status(500).json({
       success: false,
-      message: error.message
+      message: error.message || "Failed to fetch orders"
     });
   }
 };
-
-
 export const OrderController = {
   createOrder,
   getAllOrders,

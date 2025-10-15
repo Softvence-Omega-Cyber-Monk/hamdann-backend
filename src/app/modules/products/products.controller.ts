@@ -186,44 +186,35 @@ const getBestSellingProductsService = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-// const getBestSellingProductsService = async (req: Request, res: Response) => {
-//   try {
-//     const { page, limit } = req.query;
-//     const pageNumber = page ? parseInt(page as string) : 1;
-//     const limitNumber = limit ? parseInt(limit as string) : 10;
 
-//     const product = await productService.getBestSellingProductsService(pageNumber, limitNumber);
-
-//     if (!product) {
-//       return res
-//         .status(404)
-//         .json({ success: false, message: "Products not found" });
-//     }
-
-//     res.status(200).json({ success: true, data: product });
-//   } catch (error: any) {
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// };
-const getSellerBestSellingProductsService = async (
-  req: Request,
-  res: Response
-) => {
-  const { userId } = req.params;
+const getSellerBestSellingProductsController = async (req: Request, res: Response) => {
   try {
-    const product = await productService.getSellerBestSellingProductsService(
-      userId
-    );
+    const { userId } = req.params;
+    const { page, limit } = req.query;
 
-    if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Products not found" });
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required"
+      });
     }
 
-    res.status(200).json({ success: true, data: product });
+    const pageNumber = page ? parseInt(page as string) : null;
+    const limitNumber = limit ? parseInt(limit as string) : null;
+
+
+    const result = await productService.getSellerBestSellingProductsService(userId, {
+      page: pageNumber,
+      limit: limitNumber
+    });
+
+    res.status(200).json(result);
   } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error("Error fetching seller best selling products:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to fetch best selling products"
+    });
   }
 };
 
@@ -436,7 +427,9 @@ export const productController = {
   getProductByCategoryService,
   getNewArrivalsProductsService,
   getBestSellingProductsService,
-  getSellerBestSellingProductsService,
+
+  getSellerBestSellingProductsController,
+
   getProductStats,
   addReviewToProduct,
   getInventoryStatus,
