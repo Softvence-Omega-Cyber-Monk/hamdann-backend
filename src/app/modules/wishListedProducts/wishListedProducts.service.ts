@@ -36,7 +36,28 @@ export const getUserWishlist = async (
 };
 
 
+export const removeWishlistProducts = async (
+  userId: string,
+  productIds: string[]
+) : Promise<isWishlistedProducts | null> => {
+  console.log(userId, productIds);
+
+  const wishlist = await Wishlist.findOne({ userId });
+
+  console.log('Wishlist before removal:', wishlist);
+
+  if (!wishlist) return null;
+
+  wishlist.wishlistProducts = wishlist.wishlistProducts?.filter(
+    (id) => !productIds.includes(id)
+  );
+
+  await wishlist.save();
+  return wishlist;
+};
+
 export const wishlistService = {
   createOrUpdateWishlist,
   getUserWishlist,
+  removeWishlistProducts
 };

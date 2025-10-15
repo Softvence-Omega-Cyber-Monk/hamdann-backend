@@ -48,3 +48,34 @@ export const getUserWishlist = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+export const removeWishlistItems = async (req: Request, res: Response) => {
+  try {
+    const { userId, productIds } = req.body;
+
+    if (!Array.isArray(productIds)) {
+      return res.status(400).json({
+        success: false,
+        message: "productIds must be an array",
+      });
+    }
+
+    const wishlist = await wishlistService.removeWishlistProducts(userId, productIds);
+
+    if (!wishlist) {
+      return res.status(404).json({
+        success: false,
+        message: "Wishlist not found for this user",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Selected products removed from wishlist",
+      data: wishlist,
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
