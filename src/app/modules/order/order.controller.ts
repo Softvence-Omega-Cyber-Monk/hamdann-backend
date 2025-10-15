@@ -80,7 +80,7 @@ const updateOrder = async (req: Request, res: Response) => {
 };
 const updateOrderStatus = async (req: Request, res: Response) => {
   try {
-    const orderId = req.params.id;
+    const orderId = req.params.orderId;
     const { status } = req.body;
 
     if (!status) {

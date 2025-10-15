@@ -219,7 +219,6 @@ const updateOrderStatus = async (
     "out_for_delivery",
     "delivered",
     "cancelled",
-    
     "returned",
   ];
 
@@ -242,7 +241,7 @@ const updateOrderStatus = async (
 
     // Notify user about status update
     await sendNotification(
-      updatedOrder.userId.toString(),
+      updatedOrder.userId._id.toString(),
       "📦 Order Status Updated",
       `Your order #${updatedOrder.orderNumber} status has been updated to "${status}".`
     );
