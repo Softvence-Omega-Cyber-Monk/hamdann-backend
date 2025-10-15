@@ -15,6 +15,49 @@ import { populate } from "dotenv";
 import { sendNotification } from "../../utils/notificationHelper";
 dayjs.extend(relativeTime);
 
+// Get recent orders for seller by user ID from params
+interface FormattedOrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+  total: number;
+}
+
+export interface IOrderStatusCounts {
+  newOrders: number;
+  processing: number;
+  completed: number;
+}
+
+export interface IOrderStatusData {
+  counts: IOrderStatusCounts;
+  newOrders: any[];
+  processingOrders: any[];
+  completedOrders: any[];
+}
+
+interface FormattedOrder {
+  orderNumber: string;
+  status: string;
+  date: Date;
+  items: FormattedOrderItem[];
+  totalAmount: number;
+  currency: string;
+}
+
+interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalOrders: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+interface SellerOrdersResponse {
+  success: boolean;
+  data: FormattedOrder[];
+  pagination: PaginationInfo;
+}
 interface IUserStatistics {
   totalRevenue: number;
   totalOrders: number;
@@ -77,7 +120,6 @@ const createOrder = async (orderData: IOrder) => {
 
       console.log("customers ", customers);
 
-
       console.log("notifying ", customers);
       await sendNotification(
         customers[0].userId.toString(),
@@ -85,7 +127,6 @@ const createOrder = async (orderData: IOrder) => {
         `An order has been placed for this ${product.name}. Check it out!`
       );
     }
-
 
     // const customers = await User_Model.find({ role: "Buyer" });
     // for (const buyer of customers) {
@@ -159,6 +200,56 @@ const updateOrder = async (
       .populate("items.productId", "name price");
   } catch (error: any) {
     throw new Error(`Failed to update order: ${error.message}`);
+  }
+};
+
+// Update Order Status
+const updateOrderStatus = async (
+  orderId: string,
+  status: string
+): Promise<IOrder | null> => {
+  if (!Types.ObjectId.isValid(orderId)) {
+    throw new Error("Invalid order ID");
+  }
+
+  const validStatuses = [
+    "placed",
+    "payment_processed",
+    "shipped",
+    "out_for_delivery",
+    "delivered",
+    "cancelled",
+    
+    "returned",
+  ];
+
+  if (!validStatuses.includes(status)) {
+    throw new Error("Invalid order status");
+  }
+
+  try {
+    const updatedOrder = await Order.findByIdAndUpdate(
+      orderId,
+      { status },
+      { new: true }
+    )
+      .populate("userId", "name email")
+      .populate("items.productId", "name price");
+
+    if (!updatedOrder) {
+      throw new Error("Order not found");
+    }
+
+    // Notify user about status update
+    await sendNotification(
+      updatedOrder.userId.toString(),
+      "📦 Order Status Updated",
+      `Your order #${updatedOrder.orderNumber} status has been updated to "${status}".`
+    );
+
+    return updatedOrder;
+  } catch (error: any) {
+    throw new Error(`Failed to update order status: ${error.message}`);
   }
 };
 
@@ -279,19 +370,6 @@ const getAdminStatisticsService = async (): Promise<IAdminStatistics> => {
     );
   }
 };
-
-export interface IOrderStatusCounts {
-  newOrders: number;
-  processing: number;
-  completed: number;
-}
-
-export interface IOrderStatusData {
-  counts: IOrderStatusCounts;
-  newOrders: any[];
-  processingOrders: any[];
-  completedOrders: any[];
-}
 
 const getOrderStatusCountsService = async (
   userId: string
@@ -609,41 +687,10 @@ const getProductListWithStatusBySellerIdService = async (
   };
 };
 
-// Get recent orders for seller by user ID from params
-interface FormattedOrderItem {
-  name: string;
-  quantity: number;
-  price: number;
-  total: number;
-}
-
-interface FormattedOrder {
-  orderNumber: string;
-  status: string;
-  date: Date;
-  items: FormattedOrderItem[];
-  totalAmount: number;
-  currency: string;
-}
-
-interface PaginationInfo {
-  currentPage: number;
-  totalPages: number;
-  totalOrders: number;
-  hasNext: boolean;
-  hasPrev: boolean;
-}
-
-interface SellerOrdersResponse {
-  success: boolean;
-  data: FormattedOrder[];
-  pagination: PaginationInfo;
-}
-
 // Get recent orders for seller - userId IS the sellerId
 const getRecentOrdersForSellerService = async (
-  userId: string, 
-  page: number = 1, 
+  userId: string,
+  page: number = 1,
   limit: number = 10
 ): Promise<SellerOrdersResponse> => {
   if (!Types.ObjectId.isValid(userId)) {
@@ -653,23 +700,23 @@ const getRecentOrdersForSellerService = async (
   try {
     const skip = (page - 1) * limit;
 
-    const aggregationPipeline : any = [
+    const aggregationPipeline: any = [
       // Match orders where userId = sellerId
       { $match: { userId: new Types.ObjectId(userId) } },
-      
+
       // Lookup product details for items
       {
         $lookup: {
           from: "products",
           localField: "items.productId",
           foreignField: "_id",
-          as: "productDetails"
-        }
+          as: "productDetails",
+        },
       },
-      
+
       // Sort by most recent
       { $sort: { createdAt: -1 } },
-      
+
       // Facet for pagination
       {
         $facet: {
@@ -699,31 +746,36 @@ const getRecentOrdersForSellerService = async (
                                   $filter: {
                                     input: "$productDetails",
                                     as: "product",
-                                    cond: { $eq: ["$$product._id", "$$item.productId"] }
-                                  }
+                                    cond: {
+                                      $eq: [
+                                        "$$product._id",
+                                        "$$item.productId",
+                                      ],
+                                    },
+                                  },
                                 },
-                                0
-                              ]
-                            }
+                                0,
+                              ],
+                            },
                           },
-                          in: { $ifNull: ["$$matchedProduct.name", "Product"] }
-                        }
+                          in: { $ifNull: ["$$matchedProduct.name", "Product"] },
+                        },
                       },
                       quantity: "$$item.quantity",
                       price: "$$item.price",
-                      total: { $multiply: ["$$item.price", "$$item.quantity"] }
-                    }
-                  }
-                }
-              }
-            }
-          ]
-        }
-      }
+                      total: { $multiply: ["$$item.price", "$$item.quantity"] },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
     ];
 
     const result = await Order.aggregate(aggregationPipeline);
-    
+
     const orders = result[0]?.data || [];
     const totalCount = result[0]?.metadata[0]?.totalCount || 0;
     const totalPages = Math.ceil(totalCount / limit);
@@ -735,7 +787,7 @@ const getRecentOrdersForSellerService = async (
       date: order.createdAt,
       items: order.items,
       totalAmount: order.totalAmount,
-      currency: order.currency
+      currency: order.currency,
     }));
 
     return {
@@ -746,10 +798,9 @@ const getRecentOrdersForSellerService = async (
         totalPages,
         totalOrders: totalCount,
         hasNext: page < totalPages,
-        hasPrev: page > 1
-      }
+        hasPrev: page > 1,
+      },
     };
-
   } catch (error: any) {
     throw new Error(`Failed to fetch seller orders: ${error.message}`);
   }
@@ -760,6 +811,7 @@ export const OrderService = {
   getAllOrders,
   getOrderById,
   updateOrder,
+  updateOrderStatus,
   getCurrentOrdersService,
   getPreviousOrdersService,
   getUserOrderStatistics,

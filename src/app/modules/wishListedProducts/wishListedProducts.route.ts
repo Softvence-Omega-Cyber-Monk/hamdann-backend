@@ -8,7 +8,7 @@ router.post("/add", createOrUpdateWishlist);
 
 // Get all promotion
 router.get("/get-single-user/:userId", getUserWishlist);
-router.get("/check/isWishlist", checkProductWishlistStatus);
+router.post("/check/isWishlist", checkProductWishlistStatus);
 
 router.delete("/remove", removeWishlistItems);
 
