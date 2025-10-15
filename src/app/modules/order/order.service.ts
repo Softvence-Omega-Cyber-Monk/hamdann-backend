@@ -213,7 +213,7 @@ export const updateOrderStatus = async (
   }
 
   try {
-    const order: any = await Order.findById(orderId)
+    const order: any = await Order.findById(orderId);
 
     if (!order) {
       throw new Error("Order not found");
@@ -230,7 +230,7 @@ export const updateOrderStatus = async (
 
     // ✅ Update order status
     order.status = status;
-    order.statusDates = order.statusDates || {};
+    order.statusDates.cancelledAt = new Date();
 
     await order.save();
 
