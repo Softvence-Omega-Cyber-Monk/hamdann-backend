@@ -75,7 +75,7 @@ export const getAllPromotions = async (req: Request, res: Response) => {
 // ✅ UPDATE PROMOTION
 export const updatePromotion = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id  } = req.params;
     const validatedData = UpdatePromotionSchema.parse(req.body);
 
     let imageUrl: string | undefined;
@@ -111,6 +111,8 @@ export const updatePromotion = async (req: Request, res: Response) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
+
+
 
 // ✅ PAUSE PROMOTION
 export const pausePromotion = async (req: Request, res: Response) => {
