@@ -38,6 +38,7 @@ export const ProductSchema = z.object({
   salesCount: z.number().min(0).default(0),
   isNewArrival: z.boolean().default(false),
   isWishlisted: z.boolean().default(false),
+  newPrice: z.number().optional(),
 });
 
 // ✅ Schema for creating a product

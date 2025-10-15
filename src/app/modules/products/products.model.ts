@@ -44,6 +44,7 @@ const ProductSchema = new Schema<IProduct>(
     salesCount: { type: Number, default: 0 }, // Flag for best-selling
     isNewArrival: { type: Boolean, default: false }, // Flag for new arrival
     isWishlisted: { type: Boolean, default: false }, // Flag for wishlist
+    newPrice: {type: Number},
   },
   { timestamps: true }
 );
