@@ -5,17 +5,31 @@ import mongoose from "mongoose";
 
 // ✅ CREATE PROMOTION SERVICE
 export const createPromotionService = async (payload: IPromotion) => {
+  console.log("Initial Payload:", payload);
 
-console.log('Initial Payload:', payload);
+  let applicableProducts: any[] = [];
 
-  let productIds: any[] = [];
-
+  // 🔹 Case 1: Apply to all products
   if (payload.applicableType === "allProducts") {
-    productIds = await Product.find({}, "_id");
-    payload.allProducts = productIds.map((p) => p._id);
+    const all = await Product.find({}, "_id");
+    applicableProducts = all.map((p) => p._id);
+    payload.allProducts = applicableProducts;
+    payload.specificProducts = []; // ✅ clear others
+    payload.productCategories = [];
   }
 
-  if (
+  // 🔹 Case 2: Apply to specific products
+  // 🔹 Case 2: Apply to specific products
+  else if (
+    payload.applicableType === "specificProducts" &&
+    payload.specificProducts?.length
+  ) {
+    payload.allProducts = payload.specificProducts; // ✅ unify
+    payload.productCategories = [];
+  }
+
+  // 🔹 Case 3: Apply to product categories
+  else if (
     payload.applicableType === "productCategories" &&
     payload.productCategories?.length
   ) {
@@ -23,19 +37,16 @@ console.log('Initial Payload:', payload);
       { category: { $in: payload.productCategories } },
       "_id"
     );
-    payload.allProducts = categoryProducts.map((p) => p._id);
+    applicableProducts = categoryProducts.map((p) => p._id);
+    payload.allProducts = applicableProducts;
+    payload.specificProducts = []; // ✅ clear others
   }
 
-  if (
-    payload.applicableType === "specificProducts" &&
-    payload.specificProducts?.length
-  ) {
-    payload.allProducts = payload.specificProducts;
-  }
-
-
-  // console.log('Payload to Save:', payload);
+  // ✅ Create promotion
   const promotion = await PromotionModel.create(payload);
+
+  console.log("Final Promotion Data:", promotion);
+
   return promotion;
 };
 
