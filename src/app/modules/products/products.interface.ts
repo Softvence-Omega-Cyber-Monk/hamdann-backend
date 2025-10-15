@@ -26,4 +26,5 @@ export interface IProduct {
   isWishlisted?: boolean; // Flag for wishlist
   createdAt?: Date;
   updatedAt?: Date;
+  newPrice?: number;
 }
