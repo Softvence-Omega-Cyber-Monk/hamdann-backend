@@ -401,7 +401,6 @@ const getSellerBestSellingProductsService = async (
   };
 };
 
-
 const getProductStatsService = async (userId: string) => {
   const userObjectId = new mongoose.Types.ObjectId(userId);
 
@@ -607,7 +606,7 @@ const updateProductQuantity = async (
   const updatedProduct = await Product.findByIdAndUpdate(
     productId,
     {
-      quantity: newQuantity,
+      quantity: product.quantity + newQuantity,
       $inc: {
         salesCount:
           newQuantity < product.quantity ? product.quantity - newQuantity : 0,
