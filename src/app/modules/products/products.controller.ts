@@ -26,23 +26,6 @@ const createProduct = async (req: Request, res: Response) => {
   }
 };
 
-// const updateProduct = async (req: Request, res: Response) => {
-//   try {
-//     const { id } = req.params;
-//     const product = await productService.updateProductService(id, req.body);
-
-//     if (!product) {
-//       return res
-//         .status(404)
-//         .json({ success: false, message: "Product not found" });
-//     }
-
-//     res.status(200).json({ success: true, data: product });
-//   } catch (error: any) {
-//     res.status(400).json({ success: false, message: error.message });
-//   }
-// };
-
 const updateProduct = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -188,9 +171,18 @@ const getNewArrivalsProductsService = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
 const getBestSellingProductsService = async (req: Request, res: Response) => {
   try {
-    const product = await productService.getBestSellingProductsService();
+    const { page, limit } = req.query;
+    
+    // If no query parameters provided, show all products (no pagination)
+    const showAll = Object.keys(req.query).length === 0;
+    
+    const pageNumber = page ? parseInt(page as string) : 1;
+    const limitNumber = showAll ? 0 : (limit ? parseInt(limit as string) : 10);
+    
+    const product = await productService.getBestSellingProductsService(pageNumber, limitNumber);
 
     if (!product) {
       return res

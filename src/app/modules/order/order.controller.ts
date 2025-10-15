@@ -288,6 +288,38 @@ const getProductListWithStatusBySellerId = async (
   }
 };
 
+// Get recent orders for seller with pagination
+const getRecentOrdersForSellerController = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.params;
+    const { page, limit } = req.query;
+
+    if (!userId) {
+      res.status(400).json({
+        success: false,
+        message: "User ID is required in params"
+      });
+      return;
+    }
+
+    const result = await OrderService.getRecentOrdersForSellerService(
+      userId, 
+      page ? parseInt(page as string) : 1,
+      limit ? parseInt(limit as string) : 10
+    );
+
+    res.status(200).json(result);
+
+  } catch (error: any) {
+    console.error("Error fetching seller orders:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+
 export const OrderController = {
   createOrder,
   getAllOrders,
@@ -302,4 +334,5 @@ export const OrderController = {
   getActivityList,
   getUserStatistics,
   getProductListWithStatusBySellerId,
+  getRecentOrdersForSellerController,
 };
