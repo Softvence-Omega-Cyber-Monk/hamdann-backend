@@ -1,4 +1,7 @@
+import { Types } from "mongoose";
+
 export interface IPromotion {
+  sellerId: string; // Seller's user ID
   promotionImage: string; // Image URL or path
   promotionName: string;
   promotionType: "percentage" | "fixed";

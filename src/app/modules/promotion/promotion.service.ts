@@ -11,7 +11,7 @@ export const createPromotionService = async (payload: IPromotion) => {
 
   // 🔹 Case 1: Apply to all products
   if (payload.applicableType === "allProducts") {
-    const all = await Product.find({}, "_id");
+    const all = await Product.find({ userId: payload.sellerId }, "_id");
     applicableProducts = all.map((p) => p._id);
     payload.allProducts = applicableProducts;
     payload.specificProducts = []; // ✅ clear others
@@ -34,7 +34,10 @@ export const createPromotionService = async (payload: IPromotion) => {
     payload.productCategories?.length
   ) {
     const categoryProducts = await Product.find(
-      { category: { $in: payload.productCategories } },
+      {
+        category: { $in: payload.productCategories },
+        userId: payload.sellerId,
+      },
       "_id"
     );
     applicableProducts = categoryProducts.map((p) => p._id);
@@ -45,17 +48,18 @@ export const createPromotionService = async (payload: IPromotion) => {
   // ✅ Create promotion
   const promotion = await PromotionModel.create(payload);
 
-  console.log("Final Promotion Data:", promotion);
+  // console.log("Final Promotion Data:", promotion);
 
   return promotion;
 };
 
 // ✅ GET SINGLE PROMOTION
 export const getPromotionService = async (id: string) => {
+  console.log("Fetching promotion with ID:", id);
   if (!mongoose.Types.ObjectId.isValid(id))
     throw new Error("Invalid Promotion ID");
 
-  const promotion = await PromotionModel.findById(id)
+  const promotion = await PromotionModel.find({ sellerId: id })
     .populate("allProducts specificProducts", "name price category")
     .exec();
 

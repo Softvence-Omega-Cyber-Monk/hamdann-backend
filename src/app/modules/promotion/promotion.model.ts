@@ -3,6 +3,8 @@ import { IPromotion } from "./promotion.interface";
 
 const PromotionSchema = new Schema<IPromotion>(
   {
+
+    sellerId: { type: String, required: true },
     promotionImage: { type: String, required: true },
     promotionName: { type: String, required: true },
     promotionType: {

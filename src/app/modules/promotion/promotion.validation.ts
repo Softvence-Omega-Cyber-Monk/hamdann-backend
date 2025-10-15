@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export const CreatePromotionSchema = z.object({
+  // ✅ required fields
+  sellerId: z.string(),
   promotionName: z.string(),
   promotionType: z.enum(["percentage", "fixed"]),
 

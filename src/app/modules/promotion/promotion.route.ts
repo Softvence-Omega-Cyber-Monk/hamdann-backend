@@ -18,7 +18,7 @@ router.post("/create", promotionUpload.single("promotionImage"), createPromotion
 router.get("/getAll", getAllPromotions);
 
 // Get single promotion
-router.get("/:id", getPromotion);
+router.get("/single/:id", getPromotion);
 
 // ✅ Update promotion by ID (optional image upload)
 router.put(
@@ -31,6 +31,6 @@ router.put(
 router.patch("/pause/:id", pausePromotion);
 
 // Get seller-specific promotions
-router.get("/marketing-promotions/:userId", getSellerPromotions);
+router.get("/singl_user_promotioin/:userId", getSellerPromotions);
 
 export const PromotionRoute = router;
