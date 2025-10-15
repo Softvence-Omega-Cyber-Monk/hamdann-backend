@@ -6,6 +6,12 @@ import { Types } from "mongoose";
 
 const createSupport = async (supportData: ISupport): Promise<ISupport> => {
   try {
+    // Check if userId exists in User model
+    const userExists = await User_Model.findById(supportData.userId);
+    
+    if (!userExists) {
+      throw new Error("User not found");
+    }
     const support = new Support({
       userId: new Types.ObjectId(supportData.userId),
       supportSubject: supportData.supportSubject,
@@ -92,6 +98,13 @@ const createReply = async (
   replyData: { userId: string; message: string }
 ): Promise<ISupport | null> => {
   try {
+    const userExists = await User_Model.findById(replyData.userId);
+    
+    if (!userExists) {
+      throw new Error("User not found");
+    }
+
+
     if (!Types.ObjectId.isValid(supportId)) {
       throw new Error("Invalid support ID");
     }
