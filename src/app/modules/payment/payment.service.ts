@@ -16,7 +16,7 @@ export const createCheckoutSessionService = async (orderId: string) => {
         price_data: {
           currency: "aed",
           product_data: { name: `Order #${orderId}` },
-          unit_amount: (orderAmount?.totalAmount as number) * 100,
+          unit_amount: orderAmount?.totalAmount as number,
         },
         quantity: 1,
       },
