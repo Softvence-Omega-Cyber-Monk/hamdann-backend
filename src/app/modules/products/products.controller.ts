@@ -224,61 +224,7 @@ const getSellerBestSellingProductsService = async (
     res.status(500).json({ success: false, message: error.message });
   }
 };
-const getWishlistedProductsService = async (req: Request, res: Response) => {
-  try {
-    const { userId } = req.params;
-    const product = await productService.getWishlistedProductsService(userId);
 
-    if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Products not found" });
-    }
-
-    res.status(200).json({ success: true, data: product });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-const updateWishlistedProductsService = async (req: Request, res: Response) => {
-  try {
-    const { productId } = req.params;
-    const { isWishlisted } = req.body;
-    const userId = req.user?._id; // Assuming userId is set in req.user by auth middleware
-    const product = await productService.updateWishlistedProductsService(
-      productId,
-      userId as string,
-      isWishlisted
-    );
-
-    if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Products not found" });
-    }
-
-    res.status(200).json({ success: true, data: product });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-const removeProductsWishlist = async (req: Request, res: Response) => {
-  try {
-    const { productIds } = req.body;
-    console.log("Received product IDs:", productIds);
-    const product = await productService.removeProductsWishlist(productIds);
-
-    if (!product) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Products not found" });
-    }
-
-    res.status(200).json({ success: true, data: product });
-  } catch (error: any) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
 
 const getProductStats = async (req: Request, res: Response) => {
   try {
@@ -489,9 +435,6 @@ export const productController = {
   getNewArrivalsProductsService,
   getBestSellingProductsService,
   getSellerBestSellingProductsService,
-  getWishlistedProductsService,
-  updateWishlistedProductsService,
-  removeProductsWishlist,
   getProductStats,
   addReviewToProduct,
   getInventoryStatus,

@@ -1,6 +1,6 @@
+import mongoose from "mongoose";
 import { isWishlistedProducts } from "./wishListedProducts.interface";
 import { Wishlist } from "./wishListedProducts.model";
-
 
 export const createOrUpdateWishlist = async (
   userId: string,
@@ -35,29 +35,51 @@ export const getUserWishlist = async (
   return Wishlist.findOne({ userId }).populate("withlistProducts");
 };
 
-
 export const removeWishlistProducts = async (
   userId: string,
   productIds: string[]
-) : Promise<isWishlistedProducts | null> => {
-  console.log(userId, productIds);
+): Promise<isWishlistedProducts | null> => {
+  try {
+    // Validate inputs
+    if (!userId || !mongoose.Types.ObjectId.isValid(userId)) {
+      throw new Error("Invalid or missing userId");
+    }
 
-  const wishlist = await Wishlist.findOne({ userId });
+    if (!Array.isArray(productIds) || productIds.length === 0) {
+      throw new Error("productIds must be a non-empty array");
+    }
 
-  console.log('Wishlist before removal:', wishlist);
+    // Find wishlist
+    const wishlist = await Wishlist.findOne({ userId });
+    if (!wishlist) {
+      throw new Error("Wishlist not found for this user");
+    }
 
-  if (!wishlist) return null;
+    // Filter out removed products
+    const beforeCount = wishlist.withlistProducts.length;
 
-  wishlist.wishlistProducts = wishlist.wishlistProducts?.filter(
-    (id) => !productIds.includes(id)
-  );
+    wishlist.withlistProducts = wishlist.withlistProducts.filter(
+      (id: any) => !productIds.includes(id.toString())
+    );
 
-  await wishlist.save();
-  return wishlist;
+    const afterCount = wishlist.withlistProducts.length;
+
+    // Check if anything was removed
+    if (beforeCount === afterCount) {
+      throw new Error("No matching products found in wishlist to remove");
+    }
+
+    await wishlist.save();
+
+    return wishlist;
+  } catch (error: any) {
+    console.error("Error in removeWishlistProducts:", error.message);
+    throw new Error(error.message || "Failed to remove wishlist products");
+  }
 };
 
 export const wishlistService = {
   createOrUpdateWishlist,
   getUserWishlist,
-  removeWishlistProducts
+  removeWishlistProducts,
 };

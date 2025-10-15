@@ -30,14 +30,6 @@ router.get("/getBestSelling", productController.getBestSellingProductsService);
 router.get("/getSellerBestSelling/:userId", productController.getSellerBestSellingProductsService);
 
 
-router.get("/getWishlist-product/:userId", productController.getWishlistedProductsService);
-router.put(
-  "/update/wishList/:productId",
-  auth('Admin','Seller','Buyer'),
-  productController.updateWishlistedProductsService
-);
-router.put("/remove/wishList", productController.removeProductsWishlist);
-// New route for product statistics
 
 router.put("/addReview/:productId", productController.addReviewToProduct);
 router.get("/stats/:userId", productController.getProductStats); 
