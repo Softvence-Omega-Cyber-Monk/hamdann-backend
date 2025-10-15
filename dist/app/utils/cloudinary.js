@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MultiUpload = exports.uploadMultiple = exports.uploadSingle = exports.upload = exports.deleteImageFromCloudinary = exports.uploadMultipleImages = exports.uploadImgToCloudinary = exports.deleteFile = void 0;
+exports.MultiUpload = exports.uploadMultiple = exports.uploadSingleforBusinessLogo = exports.uploadSingle = exports.upload = exports.deleteImageFromCloudinary = exports.uploadMultipleImages = exports.uploadImgToCloudinary = exports.deleteFile = void 0;
 const multer_1 = __importDefault(require("multer"));
 const path_1 = __importDefault(require("path"));
 const cloudinary_1 = require("cloudinary");
@@ -101,6 +101,8 @@ const storage = multer_1.default.diskStorage({
 exports.upload = (0, multer_1.default)({ storage }); // Single file or fields
 // Single image upload (req.file)
 exports.uploadSingle = exports.upload.single("image");
+// Single image for BusinessLogo upload (req.file)
+exports.uploadSingleforBusinessLogo = exports.upload.single("businessLogo");
 // Multiple image upload (req.files)
 exports.uploadMultiple = exports.upload.array("images", 30);
 // Fields-based upload (req.files.photo1, req.files.photo2)

@@ -322,12 +322,34 @@ const getNewArrivalsProductsService = async () => {
 
   return newArrivals;
 };
-const getBestSellingProductsService = async () => {
-  const bestSellingProducts = await Product.find().sort({ salesCount: -1 }); // Sort by salesCount in descending order (highest first)
+const getBestSellingProductsService = async (
+  page: number,
+  limit: number
+) => {
+  const skip = (page - 1) * limit;
+  
+  const [bestSellingProducts, totalCount] = await Promise.all([
+    Product.find()
+      .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
+      .skip(skip)
+      .limit(limit)
+      .exec(),
+    Product.countDocuments()
+  ]);
 
-  console.log("bestSellingProducts ", bestSellingProducts.length);
+  const totalPages = Math.ceil(totalCount / limit);
 
-  return bestSellingProducts;
+  return {
+    success: true,
+    data: bestSellingProducts,
+    pagination: {
+      currentPage: page,
+      totalPages,
+      totalProducts: totalCount,
+      hasNext: page < totalPages,
+      hasPrev: page > 1
+    }
+  };
 };
 const getSellerBestSellingProductsService = async (userId: string) => {
   console.log("userId in service ", userId);

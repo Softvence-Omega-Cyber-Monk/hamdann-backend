@@ -17,8 +17,47 @@ const catch_async_1 = __importDefault(require("../../utils/catch_async"));
 const manage_response_1 = __importDefault(require("../../utils/manage_response"));
 const user_service_1 = require("./user.service");
 const http_status_1 = __importDefault(require("http-status"));
+// const create_user = catchAsync(async (req, res) => {
+//   const result = await user_service.createUser(req.body);
+//   manageResponse(res, {
+//     success: true,
+//     statusCode: httpStatus.CREATED,
+//     message: "User created successfully.",
+//     data: result,
+//   });
+// });
 const create_user = (0, catch_async_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield user_service_1.user_service.createUser(req.body);
+    var _a;
+    const file = req.file;
+    const files = req.files;
+    // Prepare user data from form data
+    const userData = Object.assign({}, req.body);
+    // Handle business logo file (priority to multiple files, then single file)
+    if ((_a = files === null || files === void 0 ? void 0 : files['businessLogo']) === null || _a === void 0 ? void 0 : _a[0]) {
+        userData.businessLogoFile = files['businessLogo'][0];
+    }
+    else if (file) {
+        userData.businessLogoFile = file;
+    }
+    // Parse any JSON fields if needed (like address, paymentMethods, etc.)
+    if (userData.address && typeof userData.address === 'string') {
+        try {
+            userData.address = JSON.parse(userData.address);
+        }
+        catch (error) {
+            // If parsing fails, keep as string or handle error
+            console.warn('Failed to parse address field');
+        }
+    }
+    if (userData.paymentMethods && typeof userData.paymentMethods === 'string') {
+        try {
+            userData.paymentMethods = JSON.parse(userData.paymentMethods);
+        }
+        catch (error) {
+            console.warn('Failed to parse paymentMethods field');
+        }
+    }
+    const result = yield user_service_1.user_service.createUser(userData);
     (0, manage_response_1.default)(res, {
         success: true,
         statusCode: http_status_1.default.CREATED,
@@ -58,9 +97,26 @@ const myProfile = (0, catch_async_1.default)((req, res) => __awaiter(void 0, voi
     });
 }));
 const update_single_user = (0, catch_async_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     const { id } = req.params;
-    const file = req.file;
-    const result = yield user_service_1.user_service.updateUser(id, Object.assign(Object.assign({}, req.body), { file }));
+    // Handle multiple file uploads
+    const files = req.files;
+    const profileImageFile = (_a = files === null || files === void 0 ? void 0 : files["profileImage"]) === null || _a === void 0 ? void 0 : _a[0];
+    const businessLogoFile = (_b = files === null || files === void 0 ? void 0 : files["businessLogo"]) === null || _b === void 0 ? void 0 : _b[0];
+    // Prepare update data
+    const updateData = Object.assign({}, req.body);
+    // Add files to update data if they exist
+    if (profileImageFile) {
+        updateData.profileImageFile = profileImageFile;
+    }
+    if (businessLogoFile) {
+        updateData.businessLogoFile = businessLogoFile;
+    }
+    // Backward compatibility: if single file upload (from previous implementation)
+    if (req.file && !profileImageFile && !businessLogoFile) {
+        updateData.profileImageFile = req.file;
+    }
+    const result = yield user_service_1.user_service.updateUser(id, updateData);
     (0, manage_response_1.default)(res, {
         success: true,
         statusCode: http_status_1.default.OK,

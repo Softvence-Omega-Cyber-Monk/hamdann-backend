@@ -14,6 +14,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.productService = exports.addProductReviewService = exports.createProductService = void 0;
 const products_model_1 = require("./products.model");
+const order_model_1 = require("../order/order.model");
 const cloudinary_1 = require("../../utils/cloudinary");
 const user_schema_1 = require("../user/user.schema");
 const mongoose_1 = __importDefault(require("mongoose"));
@@ -66,21 +67,120 @@ const createProductService = (payload, imageInput) => __awaiter(void 0, void 0, 
 });
 exports.createProductService = createProductService;
 const updateProductService = (id, payload) => __awaiter(void 0, void 0, void 0, function* () {
-    // console.log('update payload in service ', payload);
-    const product = yield products_model_1.Product.findByIdAndUpdate(id, payload, { new: true });
+    // Handle multiple product images upload
+    if (payload.productImagesFiles && payload.productImagesFiles.length > 0) {
+        const imageUploadPromises = payload.productImagesFiles.map((file) => (0, cloudinary_1.uploadImgToCloudinary)(`product-${id}-${Date.now()}-${Math.random()}`, file.path, "product-images"));
+        try {
+            const uploadResults = yield Promise.all(imageUploadPromises);
+            const imageUrls = uploadResults.map((result) => result.secure_url);
+            // Append new images to existing ones
+            if (payload.productImages && Array.isArray(payload.productImages)) {
+                payload.productImages = [...payload.productImages, ...imageUrls];
+            }
+            else {
+                payload.productImages = imageUrls;
+            }
+            delete payload.productImagesFiles;
+        }
+        catch (error) {
+            throw new Error("Failed to upload product images");
+        }
+    }
+    // Handle main image upload
+    if (payload.mainImageFile) {
+        try {
+            const uploadResult = yield (0, cloudinary_1.uploadImgToCloudinary)(`product-${id}-main-${Date.now()}`, payload.mainImageFile.path, "product-images");
+            payload.productImages = payload.productImages || [];
+            if (payload.productImages.length > 0) {
+                payload.productImages[0] = uploadResult.secure_url;
+            }
+            else {
+                payload.productImages.push(uploadResult.secure_url);
+            }
+            delete payload.mainImageFile;
+        }
+        catch (error) {
+            throw new Error("Failed to upload main image");
+        }
+    }
+    const product = yield products_model_1.Product.findByIdAndUpdate(id, payload, {
+        new: true,
+        runValidators: true,
+    });
+    if (!product) {
+        throw new Error("Product not found");
+    }
     return product;
 });
-const getAllProductsService = () => __awaiter(void 0, void 0, void 0, function* () {
-    const products = yield products_model_1.Product.find();
-    return products;
+const getAllProductsService = (...args_1) => __awaiter(void 0, [...args_1], void 0, function* (page = 1, limit = 10, search = "") {
+    try {
+        // Calculate skip value for pagination
+        const skip = (page - 1) * limit;
+        // Build search query
+        const query = {};
+        if (search) {
+            query.name = { $regex: search, $options: "i" }; // Case-insensitive search
+        }
+        // Execute queries in parallel for better performance
+        const [products, totalProducts] = yield Promise.all([
+            products_model_1.Product.find(query)
+                .select("-reviews") // Exclude reviews if not needed
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            products_model_1.Product.countDocuments(query),
+        ]);
+        // Calculate pagination metadata
+        const totalPages = Math.ceil(totalProducts / limit);
+        const hasNextPage = page < totalPages;
+        const hasPrevPage = page > 1;
+        return {
+            products,
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalProducts,
+                hasNextPage,
+                hasPrevPage,
+                nextPage: hasNextPage ? page + 1 : null,
+                prevPage: hasPrevPage ? page - 1 : null,
+            },
+        };
+    }
+    catch (error) {
+        console.error("Error in getAllProductsService:", error);
+        throw new Error("Failed to fetch products");
+    }
 });
 const getSingleProductService = (id) => __awaiter(void 0, void 0, void 0, function* () {
     const product = yield products_model_1.Product.findById(id);
     return product;
 });
-const getSingleUserProductService = (userId) => __awaiter(void 0, void 0, void 0, function* () {
-    const product = yield products_model_1.Product.find({ userId: userId });
-    return product;
+// const getSingleUserProductService = async (userId: string) => {
+//   const product = await Product.find({ userId: userId });
+//   return product;
+// };
+const getSingleUserProductService = (userId_1, page_1, limit_1, ...args_1) => __awaiter(void 0, [userId_1, page_1, limit_1, ...args_1], void 0, function* (userId, page, limit, search = "") {
+    const skip = (page - 1) * limit;
+    // Build search query
+    const query = { userId };
+    if (search) {
+        query.name = { $regex: search, $options: "i" };
+    }
+    const [products, total] = yield Promise.all([
+        products_model_1.Product.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
+        products_model_1.Product.countDocuments(query),
+    ]);
+    return {
+        products,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+        },
+    };
 });
 const getProductByCategoryService = (category_1, ...args_1) => __awaiter(void 0, [category_1, ...args_1], void 0, function* (category, options = {}) {
     const { sort, search, page = 1, limit = 10 } = options;
@@ -124,10 +224,28 @@ const getNewArrivalsProductsService = () => __awaiter(void 0, void 0, void 0, fu
     }).sort({ createdAt: -1 });
     return newArrivals;
 });
-const getBestSellingProductsService = () => __awaiter(void 0, void 0, void 0, function* () {
-    const bestSellingProducts = yield products_model_1.Product.find().sort({ salesCount: -1 }); // Sort by salesCount in descending order (highest first)
-    console.log("bestSellingProducts ", bestSellingProducts.length);
-    return bestSellingProducts;
+const getBestSellingProductsService = (page, limit) => __awaiter(void 0, void 0, void 0, function* () {
+    const skip = (page - 1) * limit;
+    const [bestSellingProducts, totalCount] = yield Promise.all([
+        products_model_1.Product.find()
+            .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
+            .skip(skip)
+            .limit(limit)
+            .exec(),
+        products_model_1.Product.countDocuments()
+    ]);
+    const totalPages = Math.ceil(totalCount / limit);
+    return {
+        success: true,
+        data: bestSellingProducts,
+        pagination: {
+            currentPage: page,
+            totalPages,
+            totalProducts: totalCount,
+            hasNext: page < totalPages,
+            hasPrev: page > 1
+        }
+    };
 });
 const getSellerBestSellingProductsService = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     console.log("userId in service ", userId);
@@ -136,29 +254,6 @@ const getSellerBestSellingProductsService = (userId) => __awaiter(void 0, void 0
     }); // Sort by salesCount in descending order (highest first)
     console.log("bestSellingProducts ", bestSellingProducts.length);
     return bestSellingProducts;
-});
-const getWishlistedProductsService = (userId) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("userid -------------0000 ", userId);
-    const wishListedProducts = yield products_model_1.Product.find({
-        isWishlisted: true,
-        userId: userId,
-    });
-    console.log("wishListedProducts ", wishListedProducts.length);
-    return wishListedProducts;
-});
-const updateWishlistedProductsService = (productId, isWishlisted) => __awaiter(void 0, void 0, void 0, function* () {
-    const wishListedProducts = yield products_model_1.Product.findOneAndUpdate({ _id: productId }, { isWishlisted: isWishlisted }, { new: true }); // Return the updated document
-    return wishListedProducts;
-});
-const removeProductsWishlist = (productIds) => __awaiter(void 0, void 0, void 0, function* () {
-    // Set `isWishlisted` to false for multiple products
-    console.log("Product IDs to update:", productIds);
-    const result = yield products_model_1.Product.updateMany({ _id: { $in: productIds } }, { $set: { isWishlisted: false } });
-    console.log("Update result:", result);
-    // Return updated products
-    const updatedProducts = yield products_model_1.Product.find({ _id: { $in: productIds } });
-    return updatedProducts;
-    // Product statistics
 });
 const getProductStatsService = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -308,14 +403,47 @@ const updateProductQuantity = (productId, newQuantity) => __awaiter(void 0, void
     }
     const updatedProduct = yield products_model_1.Product.findByIdAndUpdate(productId, {
         quantity: newQuantity,
-        $inc: { salesCount: newQuantity < product.quantity ? product.quantity - newQuantity : 0 }
+        $inc: {
+            salesCount: newQuantity < product.quantity ? product.quantity - newQuantity : 0,
+        },
     }, { new: true });
     if (!updatedProduct) {
         throw new Error("Failed to update product quantity");
     }
     return {
         success: true,
-        quantity: updatedProduct.quantity
+        quantity: updatedProduct.quantity,
+    };
+});
+const getSingleProductStats = (productId) => __awaiter(void 0, void 0, void 0, function* () {
+    const product = yield products_model_1.Product.findById(productId);
+    if (!product) {
+        throw new Error("Product not found");
+    }
+    const orders = yield order_model_1.Order.find({
+        "items.productId": productId,
+    });
+    const totalOrders = orders.length;
+    const deliveredOrders = orders.filter((order) => order.status === "delivered").length;
+    const conversionRate = totalOrders > 0 ? (deliveredOrders / totalOrders) * 100 : 0;
+    let totalSales = 0;
+    let revenue = 0;
+    orders.forEach((order) => {
+        if (order.status === "delivered") {
+            const productItem = order.items.find((item) => item.productId.toString() === productId.toString());
+            if (productItem) {
+                totalSales += productItem.quantity;
+                revenue += productItem.quantity * productItem.price;
+            }
+        }
+    });
+    const growthPercentage = 12;
+    return {
+        totalSales,
+        revenue,
+        totalOrders,
+        deliveredOrders,
+        conversionRate: Number(conversionRate.toFixed(2)),
     };
 });
 exports.productService = {
@@ -328,12 +456,10 @@ exports.productService = {
     getNewArrivalsProductsService,
     getBestSellingProductsService,
     getSellerBestSellingProductsService,
-    getWishlistedProductsService,
-    updateWishlistedProductsService,
-    removeProductsWishlist,
     getProductStatsService,
     addProductReviewService: exports.addProductReviewService,
     getInventoryStatusService,
     getInventoryStatusForSingleProduct,
     updateProductQuantity,
+    getSingleProductStats,
 };

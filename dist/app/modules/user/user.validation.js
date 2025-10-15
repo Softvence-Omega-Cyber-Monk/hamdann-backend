@@ -40,6 +40,8 @@ exports.create_user = zod_1.z
         businessLogo: zod_1.z.string().optional(),
     })
         .optional(),
+    isPaidPlan: zod_1.z.boolean().optional(),
+    subscribtionPlan: zod_1.z.enum(["basic", "professional", "premium"]).optional(),
 })
     .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -79,4 +81,5 @@ exports.update_user = zod_1.z.object({
     }))
         .optional(),
     profileImage: zod_1.z.string().optional(),
+    businessLogo: zod_1.z.string().optional(),
 });

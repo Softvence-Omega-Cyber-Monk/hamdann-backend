@@ -609,7 +609,151 @@ const getProductListWithStatusBySellerIdService = async (
   };
 };
 
+// Get recent orders for seller by user ID from params
+interface FormattedOrderItem {
+  name: string;
+  quantity: number;
+  price: number;
+  total: number;
+}
 
+interface FormattedOrder {
+  orderNumber: string;
+  status: string;
+  date: Date;
+  items: FormattedOrderItem[];
+  totalAmount: number;
+  currency: string;
+}
+
+interface PaginationInfo {
+  currentPage: number;
+  totalPages: number;
+  totalOrders: number;
+  hasNext: boolean;
+  hasPrev: boolean;
+}
+
+interface SellerOrdersResponse {
+  success: boolean;
+  data: FormattedOrder[];
+  pagination: PaginationInfo;
+}
+
+// Get recent orders for seller - userId IS the sellerId
+const getRecentOrdersForSellerService = async (
+  userId: string, 
+  page: number = 1, 
+  limit: number = 10
+): Promise<SellerOrdersResponse> => {
+  if (!Types.ObjectId.isValid(userId)) {
+    throw new Error("Invalid user ID");
+  }
+
+  try {
+    const skip = (page - 1) * limit;
+
+    const aggregationPipeline : any = [
+      // Match orders where userId = sellerId
+      { $match: { userId: new Types.ObjectId(userId) } },
+      
+      // Lookup product details for items
+      {
+        $lookup: {
+          from: "products",
+          localField: "items.productId",
+          foreignField: "_id",
+          as: "productDetails"
+        }
+      },
+      
+      // Sort by most recent
+      { $sort: { createdAt: -1 } },
+      
+      // Facet for pagination
+      {
+        $facet: {
+          metadata: [{ $count: "totalCount" }],
+          data: [
+            { $skip: skip },
+            { $limit: limit },
+            // Project final format
+            {
+              $project: {
+                orderNumber: 1,
+                status: 1,
+                totalAmount: 1,
+                currency: 1,
+                createdAt: 1,
+                items: {
+                  $map: {
+                    input: "$items",
+                    as: "item",
+                    in: {
+                      name: {
+                        $let: {
+                          vars: {
+                            matchedProduct: {
+                              $arrayElemAt: [
+                                {
+                                  $filter: {
+                                    input: "$productDetails",
+                                    as: "product",
+                                    cond: { $eq: ["$$product._id", "$$item.productId"] }
+                                  }
+                                },
+                                0
+                              ]
+                            }
+                          },
+                          in: { $ifNull: ["$$matchedProduct.name", "Product"] }
+                        }
+                      },
+                      quantity: "$$item.quantity",
+                      price: "$$item.price",
+                      total: { $multiply: ["$$item.price", "$$item.quantity"] }
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    ];
+
+    const result = await Order.aggregate(aggregationPipeline);
+    
+    const orders = result[0]?.data || [];
+    const totalCount = result[0]?.metadata[0]?.totalCount || 0;
+    const totalPages = Math.ceil(totalCount / limit);
+
+    // Format response
+    const formattedOrders: FormattedOrder[] = orders.map((order: any) => ({
+      orderNumber: order.orderNumber,
+      status: order.status,
+      date: order.createdAt,
+      items: order.items,
+      totalAmount: order.totalAmount,
+      currency: order.currency
+    }));
+
+    return {
+      success: true,
+      data: formattedOrders,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalOrders: totalCount,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    };
+
+  } catch (error: any) {
+    throw new Error(`Failed to fetch seller orders: ${error.message}`);
+  }
+};
 
 export const OrderService = {
   createOrder,
@@ -625,4 +769,5 @@ export const OrderService = {
   getActivityListService,
   getUserStatisticsService,
   getProductListWithStatusBySellerIdService,
+  getRecentOrdersForSellerService,
 };

@@ -25,4 +25,6 @@ router.get("/admin/activities-list", order_controller_1.OrderController.getActiv
 router.get('/seller-analytics/:userId', order_controller_1.OrderController.getUserStatistics);
 // Product list with delivery status base on seller ID
 router.get("/seller/:sellerId", order_controller_1.OrderController.getProductListWithStatusBySellerId);
+// Seller orders routes - using userId
+router.get("/seller/recent/:userId", order_controller_1.OrderController.getRecentOrdersForSellerController);
 exports.OrderRoute = router;

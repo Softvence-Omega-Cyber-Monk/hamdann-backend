@@ -27,9 +27,12 @@ const createProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
     }
 });
 const updateProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
         const { id } = req.params;
-        const product = yield products_service_1.productService.updateProductService(id, req.body);
+        const files = req.files;
+        const updateData = Object.assign(Object.assign(Object.assign({}, req.body), ((files === null || files === void 0 ? void 0 : files.productImages) && { productImagesFiles: files.productImages })), (((_a = files === null || files === void 0 ? void 0 : files.mainImage) === null || _a === void 0 ? void 0 : _a[0]) && { mainImageFile: files.mainImage[0] }));
+        const product = yield products_service_1.productService.updateProductService(id, updateData);
         if (!product) {
             return res
                 .status(404)
@@ -43,8 +46,32 @@ const updateProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* 
 });
 const getAllProducts = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const products = yield products_service_1.productService.getAllProductsService();
-        res.status(200).json({ success: true, data: products });
+        // Get query parameters with default values
+        const page = parseInt(req.query.page);
+        const limit = parseInt(req.query.limit);
+        const search = req.query.search || "";
+        // Validate pagination parameters
+        if (page < 1) {
+            res.status(400).json({
+                success: false,
+                message: "Page must be a positive number",
+            });
+            return;
+        }
+        if (limit < 1 || limit > 100) {
+            res.status(400).json({
+                success: false,
+                message: "Limit must be between 1 and 100",
+            });
+            return;
+        }
+        const result = yield products_service_1.productService.getAllProductsService(page, limit, search);
+        res.status(200).json({
+            success: true,
+            message: "Products fetched successfully",
+            data: result.products,
+            pagination: result.pagination,
+        });
     }
     catch (error) {
         res.status(500).json({ success: false, message: error.message });
@@ -65,19 +92,21 @@ const getSingleProduct = (req, res) => __awaiter(void 0, void 0, void 0, functio
         res.status(500).json({ success: false, message: error.message });
     }
 });
-const getSingleUserProductService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+const getSingleUserProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId } = req.params;
-        const product = yield products_service_1.productService.getSingleUserProductService(userId);
-        if (!product) {
-            return res
-                .status(404)
-                .json({ success: false, message: "Product not found" });
-        }
-        res.status(200).json({ success: true, data: product });
+        const page = parseInt(req.query.page);
+        const limit = parseInt(req.query.limit);
+        const search = req.query.search || "";
+        const result = yield products_service_1.productService.getSingleUserProductService(userId, page, limit, search);
+        res.status(200).json({
+            success: true,
+            data: result.products,
+            pagination: result.pagination,
+        });
     }
     catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        res.status(400).json({ success: false, message: error.message });
     }
 });
 const getProductByCategoryService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -117,7 +146,12 @@ const getNewArrivalsProductsService = (req, res) => __awaiter(void 0, void 0, vo
 });
 const getBestSellingProductsService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const product = yield products_service_1.productService.getBestSellingProductsService();
+        const { page, limit } = req.query;
+        // If no query parameters provided, show all products (no pagination)
+        const showAll = Object.keys(req.query).length === 0;
+        const pageNumber = page ? parseInt(page) : 1;
+        const limitNumber = showAll ? 0 : (limit ? parseInt(limit) : 10);
+        const product = yield products_service_1.productService.getBestSellingProductsService(pageNumber, limitNumber);
         if (!product) {
             return res
                 .status(404)
@@ -133,53 +167,6 @@ const getSellerBestSellingProductsService = (req, res) => __awaiter(void 0, void
     const { userId } = req.params;
     try {
         const product = yield products_service_1.productService.getSellerBestSellingProductsService(userId);
-        if (!product) {
-            return res
-                .status(404)
-                .json({ success: false, message: "Products not found" });
-        }
-        res.status(200).json({ success: true, data: product });
-    }
-    catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-const getWishlistedProductsService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { userId } = req.params;
-        const product = yield products_service_1.productService.getWishlistedProductsService(userId);
-        if (!product) {
-            return res
-                .status(404)
-                .json({ success: false, message: "Products not found" });
-        }
-        res.status(200).json({ success: true, data: product });
-    }
-    catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-const updateWishlistedProductsService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { productId } = req.params;
-        const { isWishlisted } = req.body;
-        const product = yield products_service_1.productService.updateWishlistedProductsService(productId, isWishlisted);
-        if (!product) {
-            return res
-                .status(404)
-                .json({ success: false, message: "Products not found" });
-        }
-        res.status(200).json({ success: true, data: product });
-    }
-    catch (error) {
-        res.status(500).json({ success: false, message: error.message });
-    }
-});
-const removeProductsWishlist = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        const { productIds } = req.body;
-        console.log("Received product IDs:", productIds);
-        const product = yield products_service_1.productService.removeProductsWishlist(productIds);
         if (!product) {
             return res
                 .status(404)
@@ -328,22 +315,53 @@ const handleUpdateQuantity = (req, res) => __awaiter(void 0, void 0, void 0, fun
         }
     }
 });
+// Get single product statistics
+const handleGetSingleProductStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { productId } = req.params;
+        const { startDate, endDate } = req.query;
+        if (!productId) {
+            res.status(400).json({
+                success: false,
+                message: "Product ID is required",
+            });
+            return;
+        }
+        const stats = yield products_service_1.productService.getSingleProductStats(productId);
+        res.status(200).json({
+            success: true,
+            data: stats,
+        });
+    }
+    catch (error) {
+        if (error.message === "Product not found") {
+            res.status(404).json({
+                success: false,
+                message: "Product not found",
+            });
+        }
+        else {
+            res.status(500).json({
+                success: false,
+                message: "Failed to get product statistics",
+            });
+        }
+    }
+});
 exports.productController = {
     createProduct,
     updateProduct,
     getAllProducts,
     getSingleProduct,
-    getSingleUserProductService,
+    getSingleUserProduct,
     getProductByCategoryService,
     getNewArrivalsProductsService,
     getBestSellingProductsService,
     getSellerBestSellingProductsService,
-    getWishlistedProductsService,
-    updateWishlistedProductsService,
-    removeProductsWishlist,
     getProductStats,
     addReviewToProduct: exports.addReviewToProduct,
     getInventoryStatus,
     handleGetInventoryStatus,
     handleUpdateQuantity,
+    handleGetSingleProductStats,
 };

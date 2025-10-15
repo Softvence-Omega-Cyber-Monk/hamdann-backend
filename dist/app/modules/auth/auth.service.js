@@ -54,6 +54,8 @@ const login_user_from_db = (payload) => __awaiter(void 0, void 0, void 0, functi
         refreshToken,
         role: user.role,
         userId: user._id,
+        isPaidPlan: user.isPaidPlan || false,
+        subscribtionPlan: user.subscribtionPlan || null,
     };
 });
 const refresh_token_from_db = (token) => __awaiter(void 0, void 0, void 0, function* () {
