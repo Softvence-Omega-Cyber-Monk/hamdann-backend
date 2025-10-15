@@ -1,6 +1,5 @@
 import { Schema, model, Types } from "mongoose";
 import { IPromotion } from "./promotion.interface";
-import { number, string } from "zod";
 
 const PromotionSchema = new Schema<IPromotion>(
   {
@@ -13,19 +12,37 @@ const PromotionSchema = new Schema<IPromotion>(
     },
     discountValue: { type: Number, required: true },
     minimumPurchase: { type: Number, required: true },
+
+    applicableType: {
+      type: String,
+      enum: ["allProducts", "specificProducts", "productCategories"],
+      required: true,
+    },
+
     allProducts: [{ type: Types.ObjectId, ref: "Product" }],
     specificProducts: [{ type: Types.ObjectId, ref: "Product" }],
-    ProductsCategories: [{ type: String }],
+    productCategories: [{ type: String }],
+
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     termsAndConditions: { type: String },
     isActive: { type: Boolean, default: true },
-    totalView: {type: Number},
-    totalClick: {type: Number},
-    redemptionRate: {type: String},
-    conversionRate: {type: String},
+
+    totalView: { type: Number, default: 0 },
+    totalClick: { type: Number, default: 0 },
+    redemptionRate: { type: String },
+    conversionRate: { type: String },
   },
   { timestamps: true }
 );
+
+// Automatically deactivate expired promotions
+PromotionSchema.pre("save", function (next) {
+  const now = new Date();
+  if (this.endDate < now) {
+    this.isActive = false;
+  }
+  next();
+});
 
 export const PromotionModel = model<IPromotion>("Promotion", PromotionSchema);

@@ -1,5 +1,12 @@
 import { Router } from "express";
-import { createPromotion, getPromotion, getAllPromotions, updatePromotion, pausePromotion, getSellerPromotions } from "./promotion.controller";
+import { 
+  createPromotion, 
+  getPromotion, 
+  getAllPromotions, 
+  updatePromotion, 
+  pausePromotion, 
+  getSellerPromotions 
+} from "./promotion.controller";
 import { promotionUpload } from "./promotion.multer";
 
 const router = Router();
@@ -23,7 +30,7 @@ router.put(
 // Pause a promotion by ID
 router.patch("/pause/:id", pausePromotion);
 
-// In your routes file
-router.get('/marketing-promotions/:userId', getSellerPromotions);
+// Get seller-specific promotions
+router.get("/marketing-promotions/:userId", getSellerPromotions);
 
 export const PromotionRoute = router;
