@@ -1,3 +1,4 @@
+import { is } from "zod/v4/locales";
 import { configs } from "../../configs";
 import catchAsync from "../../utils/catch_async";
 import manageResponse from "../../utils/manage_response";
@@ -24,7 +25,9 @@ const login_user = catchAsync(async (req, res) => {
             accessToken: result.accessToken,
             refresh_token : result.refreshToken,
             role: result?.role,
-            userId: result?.userId
+            userId: result?.userId ,
+            isPaidPlan: result?.isPaidPlan || false,
+            subscribtionPlan: result?.subscribtionPlan || null,
         },
     });
 });

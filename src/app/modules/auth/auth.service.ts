@@ -62,7 +62,7 @@ const login_user_from_db = async (payload: TLoginPayload) => {
     role: user.role,
     userId: user._id,
     isPaidPlan: user.isPaidPlan || false,
-    plan: user.subscribtionPlan || null,
+    subscribtionPlan: user.subscribtionPlan || null,
   };
 };
 
