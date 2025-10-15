@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { is } from "zod/v4/locales";
 
 // Create user schema
 export const create_user = z
@@ -40,6 +41,8 @@ export const create_user = z
         businessLogo: z.string().optional(),
       })
       .optional(),
+      isPaidPlan: z.boolean().optional(),
+      subscribtionPlan: z.enum(["basic", "professional", "premium"]).optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
