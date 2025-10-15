@@ -5,7 +5,7 @@ import { User_Model } from "../user/user.schema";
 import { Order } from "../order/order.model";
 
 export const createCheckoutSessionService = async (orderId: string) => {
-  const orderAmount = await Order.findById(orderId);
+  const orderAmount :any = await Order.findById(orderId);
 
 
   const session = await stripe.checkout.sessions.create({
@@ -16,7 +16,7 @@ export const createCheckoutSessionService = async (orderId: string) => {
         price_data: {
           currency: "aed",
           product_data: { name: `Order #${orderId}` },
-          unit_amount: orderAmount?.totalAmount as number,
+          unit_amount: Math.round(orderAmount?.totalAmount * 100), 
         },
         quantity: 1,
       },
@@ -25,6 +25,7 @@ export const createCheckoutSessionService = async (orderId: string) => {
     cancel_url: `${configs.jwt.front_end_url}/payment-failed`,
     metadata: { orderId },
   });
+  //  console.log("session", session);
 
   // store pending payment
   await Payment.create({
