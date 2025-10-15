@@ -24,6 +24,7 @@ export const createPromotion = async (req: Request, res: Response) => {
   try {
     const validatedData = CreatePromotionSchema.parse(req.body);
 
+
     let imageUrl = "";
     if (req.file?.buffer) {
       const result: any = await new Promise((resolve, reject) => {

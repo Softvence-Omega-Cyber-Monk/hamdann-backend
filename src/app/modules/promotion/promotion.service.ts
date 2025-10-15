@@ -5,6 +5,9 @@ import mongoose from "mongoose";
 
 // ✅ CREATE PROMOTION SERVICE
 export const createPromotionService = async (payload: IPromotion) => {
+
+console.log('Initial Payload:', payload);
+
   let productIds: any[] = [];
 
   if (payload.applicableType === "allProducts") {
@@ -30,6 +33,8 @@ export const createPromotionService = async (payload: IPromotion) => {
     payload.allProducts = payload.specificProducts;
   }
 
+
+  // console.log('Payload to Save:', payload);
   const promotion = await PromotionModel.create(payload);
   return promotion;
 };
