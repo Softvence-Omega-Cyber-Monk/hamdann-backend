@@ -67,6 +67,8 @@ export const createPromotionService = async (payload: IPromotion) => {
       await Product.findByIdAndUpdate(product._id, {
         $set: {
           newPrice, // ✅ discounted price
+          discountType: promotionType,
+          discountValue: discountValue,
           isNewArrival: false, // optional: disable new arrival flag
         },
       });

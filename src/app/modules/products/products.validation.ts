@@ -22,6 +22,8 @@ export const ProductSchema = z.object({
   quantity: z.number().min(0, "Quantity must be 0 or more").default(0),
   price: z.number().positive("Price must be greater than 0"),
   newPrice: z.number().optional(),
+  discountType: z.enum(["percentage", "fixed"]).optional().nullable(),
+  discountValue: z.number().min(0).optional(),
   productImages: z
     .array(z.string().url("Must be a valid URL"))
     .min(1, "At least one image is required"),

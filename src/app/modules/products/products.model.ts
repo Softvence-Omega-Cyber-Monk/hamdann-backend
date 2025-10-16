@@ -31,6 +31,13 @@ const ProductSchema = new Schema<IProduct>(
     quantity: { type: Number, required: true, default: 0 },
     price: { type: Number, required: true },
     newPrice: { type: Number },
+    discountType: {
+      type: String,
+      enum: ["percentage", "fixed", null],
+      default: null,
+    },
+    discountValue: { type: Number, default: 0 },
+
     reviews: [
       {
         userId: { type: String, required: true },

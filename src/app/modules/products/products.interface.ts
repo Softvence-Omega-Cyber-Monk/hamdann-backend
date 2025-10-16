@@ -18,6 +18,8 @@ export interface IProduct {
   quantity: number;
   price: number;
   newPrice?: number;
+  discountType?: "percentage" | "fixed" | null;
+  discountValue?: number;
   productImages?: string[];
   reviews?: { rating: number; comment?: string ; userId :string }[];
   shopReviews?: number | null;
