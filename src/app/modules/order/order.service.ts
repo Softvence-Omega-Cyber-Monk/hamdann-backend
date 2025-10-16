@@ -277,6 +277,7 @@ export const updateOrderStatus = async (
 };
 
 const getCurrentOrdersService = async (userId: string) => {
+  console.log("hit hit ---------------");
   const currentStatuses = [
     "placed",
     "payment_processed",
@@ -286,7 +287,10 @@ const getCurrentOrdersService = async (userId: string) => {
   const orders = await Order.find({
     userId,
     status: { $in: currentStatuses },
-  }).sort({ createdAt: -1 });
+  })
+    .sort({ createdAt: -1 })
+    .populate("items.productId", "name ");
+  console.log("orders ", orders);
   return orders;
 };
 
@@ -296,7 +300,9 @@ const getPreviousOrdersService = async (userId: string) => {
   const orders = await Order.find({
     userId,
     status: { $in: previousStatuses },
-  }).sort({ createdAt: -1 });
+  })
+    .sort({ createdAt: -1 })
+    .populate("items.productId", "name ");
   return orders;
 };
 
@@ -678,7 +684,7 @@ const getProductListWithStatusBySellerIdService = async (
   sellerId: string,
   options: GetOrdersOptions = {}
 ) => {
-  const { status, page = 1, limit = 10,  } = options;
+  const { status, page = 1, limit = 10 } = options;
 
   // Filter orders by seller (userId) and status if provided
   const filter: Record<string, any> = { userId: sellerId };
@@ -691,7 +697,6 @@ const getProductListWithStatusBySellerIdService = async (
       filter.status = status;
     }
   }
-
 
   const skip = (page - 1) * limit;
 
@@ -739,7 +744,7 @@ const getRecentOrdersForSellerService = async (
       .skip(skip)
       .limit(currentLimit)
       .exec(),
-    Order.countDocuments({ userId })
+    Order.countDocuments({ userId }),
   ]);
 
   const totalPages = Math.ceil(totalOrders / currentLimit);
@@ -751,8 +756,8 @@ const getRecentOrdersForSellerService = async (
       totalPages,
       totalOrders,
       hasNext: currentPage < totalPages,
-      hasPrev: currentPage > 1
-    }
+      hasPrev: currentPage > 1,
+    },
   };
 };
 
