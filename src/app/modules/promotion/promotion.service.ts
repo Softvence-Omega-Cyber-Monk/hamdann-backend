@@ -57,7 +57,7 @@ export const getPromotionService = async (id: string) => {
     throw new Error("Invalid Promotion ID");
 
   const promotion = await PromotionModel.findById(id)
-    .populate("allProducts specificProducts", "name price category")
+    .populate("allProducts specificProducts", "name price category productImages  reviews  averageRating")
     .exec();
 
   if (!promotion) throw new Error("Promotion not found");
@@ -68,7 +68,7 @@ export const getPromotionService = async (id: string) => {
 export const getAllPromotionsService = async () => {
   return await PromotionModel.find()
     .sort({ createdAt: -1 })
-    .populate("allProducts specificProducts", "name price category")
+    .populate("allProducts specificProducts", "name price category productImages  reviews  averageRating")
     .exec();
 };
 
@@ -98,12 +98,5 @@ export const getSellerPromotionsService = async (userId: string) => {
   // In real use, filter promotions by seller’s products
   return await PromotionModel.find(
     { isActive: true  , sellerId: userId},  // Filter by sellerId
-    {
-      promotionName: 1,
-      endDate: 1,
-      discountValue: 1,
-      isActive: 1,
-      promotionType: 1,
-    }
-  ).sort({ endDate: 1 });
+  ).sort({ endDate: 1 }).populate("allProducts specificProducts", "name price category productImages  reviews  averageRating");
 };
