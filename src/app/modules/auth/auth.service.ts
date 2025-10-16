@@ -61,6 +61,8 @@ const login_user_from_db = async (payload: TLoginPayload) => {
     refreshToken,
     role: user.role,
     userId: user._id,
+    isPaidPlan: user.isPaidPlan || false,
+    subscribtionPlan: user.subscribtionPlan || null,
   };
 };
 

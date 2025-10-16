@@ -5,7 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
 const user_controller_1 = require("./user.controller");
-const user_validation_1 = require("./user.validation");
 const auth_1 = __importDefault(require("../../middlewares/auth"));
 const cloudinary_1 = require("../../utils/cloudinary");
 const userRoute = (0, express_1.Router)();
@@ -19,16 +18,20 @@ const validate = (schema) => (req, res, next) => {
     next();
 };
 // Create user
-userRoute.post("/create", validate(user_validation_1.create_user), user_controller_1.user_controllers.create_user);
+// userRoute.post("/create", validate(create_user), user_controllers.create_user);
+userRoute.post("/create", cloudinary_1.upload.fields([
+    { name: 'businessLogo', maxCount: 1 }
+]), user_controller_1.user_controllers.create_user);
 // Get single user by ID
 userRoute.get("/get-single/:id", user_controller_1.user_controllers.get_single_user);
 // Get all users
 userRoute.get("/getAll", user_controller_1.user_controllers.get_all_users);
 userRoute.get("/myProfile", (0, auth_1.default)("Admin", "Buyer", "Seller"), user_controller_1.user_controllers.myProfile);
 // Update user
-userRoute.put("/update/:id", cloudinary_1.uploadSingle, 
-// validate(update_user),
-user_controller_1.user_controllers.update_single_user);
+userRoute.put("/update/:id", cloudinary_1.upload.fields([
+    { name: 'profileImage', maxCount: 1 },
+    { name: 'businessLogo', maxCount: 1 }
+]), user_controller_1.user_controllers.update_single_user);
 // Soft delete user
 userRoute.put("/delete/:id", user_controller_1.user_controllers.delete_user);
 // FCM TOKEN UPDATE

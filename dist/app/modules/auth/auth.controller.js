@@ -34,7 +34,9 @@ const login_user = (0, catch_async_1.default)((req, res) => __awaiter(void 0, vo
             accessToken: result.accessToken,
             refresh_token: result.refreshToken,
             role: result === null || result === void 0 ? void 0 : result.role,
-            userId: result === null || result === void 0 ? void 0 : result.userId
+            userId: result === null || result === void 0 ? void 0 : result.userId,
+            isPaidPlan: (result === null || result === void 0 ? void 0 : result.isPaidPlan) || false,
+            subscribtionPlan: (result === null || result === void 0 ? void 0 : result.subscribtionPlan) || null,
         },
     });
 }));

@@ -28,15 +28,6 @@ const createOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* ()
         res.status(400).json({ success: false, message: error.message });
     }
 });
-// Get All Orders
-// const getAllOrders = async (req: Request, res: Response) => {
-//   try {
-//     const orders = await OrderService.getAllOrders();
-//     res.status(200).json({ success: true, data: orders });
-//   } catch (error: any) {
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// };
 const getAllOrders = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { status } = req.query;
@@ -270,6 +261,29 @@ const getProductListWithStatusBySellerId = (req, res) => __awaiter(void 0, void 
         res.status(500).json({ success: false, message: error.message });
     }
 });
+// Get recent orders for seller with pagination
+const getRecentOrdersForSellerController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId } = req.params;
+        const { page, limit } = req.query;
+        if (!userId) {
+            res.status(400).json({
+                success: false,
+                message: "User ID is required in params"
+            });
+            return;
+        }
+        const result = yield order_service_1.OrderService.getRecentOrdersForSellerService(userId, page ? parseInt(page) : 1, limit ? parseInt(limit) : 10);
+        res.status(200).json(result);
+    }
+    catch (error) {
+        console.error("Error fetching seller orders:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
 exports.OrderController = {
     createOrder,
     getAllOrders,
@@ -284,4 +298,5 @@ exports.OrderController = {
     getActivityList,
     getUserStatistics,
     getProductListWithStatusBySellerId,
+    getRecentOrdersForSellerController,
 };

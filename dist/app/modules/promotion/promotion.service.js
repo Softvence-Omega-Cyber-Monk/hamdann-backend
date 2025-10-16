@@ -35,6 +35,14 @@ const createPromotionService = (payload) => __awaiter(void 0, void 0, void 0, fu
         }
     }
     const promotion = yield promotion_model_1.PromotionModel.create(payload);
+    // const customers = await User_Model.find({ role: "Buyer" });
+    // for (const buyer of customers) {
+    //   await sendNotification(
+    //     buyer._id.toString(),
+    //     "🛒 New Order Added!",
+    //     ` is now available!`
+    //   );
+    // }
     return promotion;
 });
 exports.createPromotionService = createPromotionService;
@@ -88,7 +96,7 @@ const getSellerPromotionsService = (userId) => __awaiter(void 0, void 0, void 0,
         discountValue: 1,
         isActive: 1,
         promotionType: 1,
-        _id: 0
+        _id: 1
     }).sort({ endDate: 1 });
     return promotions;
 });

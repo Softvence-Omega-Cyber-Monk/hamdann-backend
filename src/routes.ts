@@ -8,6 +8,7 @@ import { PromotionRoute } from './app/modules/promotion/promotion.route';
 import { supportRoutes } from './app/modules/supports/support.route';
 import { paymentRoutes } from './app/modules/payment/payment.route'
 import { notificationRoutes } from './app/modules/notifications/notification.route';
+import { withlistProductsRoutes } from './app/modules/wishListedProducts/wishListedProducts.route';
 
 
 const appRouter = Router();
@@ -22,6 +23,7 @@ const moduleRoutes = [
     { path: "/support", route: supportRoutes},
     { path: "/payment", route: paymentRoutes },
     { path: "/notification", route: notificationRoutes },
+    { path: "/wishListProducts", route: withlistProductsRoutes },
 
 
 ];

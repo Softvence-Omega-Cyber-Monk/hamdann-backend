@@ -54,7 +54,16 @@ const UserSchema = new mongoose_1.Schema({
         type: String,
         default: "https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg",
     },
+    businessLogo: {
+        type: String,
+        default: "https://img.freepik.com/premium-vector/male-face-avatar-icon-set-flat-design-social-media-profiles_1281173-3806.jpg",
+    },
     isPaidPlan: { type: Boolean, default: false },
+    subscribtionPlan: {
+        type: String,
+        enum: ["basic", "professional", "premium"],
+        default: "basic",
+    },
 }, {
     versionKey: false,
     timestamps: true,

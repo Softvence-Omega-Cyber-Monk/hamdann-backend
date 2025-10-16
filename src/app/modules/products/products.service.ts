@@ -401,44 +401,6 @@ const getSellerBestSellingProductsService = async (
   };
 };
 
-const getWishlistedProductsService = async (userId: string) => {
-  console.log("userid -------------0000 ", userId);
-  const wishListedProducts = await Product.find({
-    isWishlisted: true,
-    userId: userId,
-  });
-
-  console.log("wishListedProducts ", wishListedProducts.length);
-
-  return wishListedProducts;
-};
-const updateWishlistedProductsService = async (
-  productId: string,
-  isWishlisted: boolean
-) => {
-  const wishListedProducts = await Product.findOneAndUpdate(
-    { _id: productId },
-    { isWishlisted: isWishlisted },
-    { new: true }
-  ); // Return the updated document
-  return wishListedProducts;
-};
-
-const removeProductsWishlist = async (productIds: string[]) => {
-  // Set `isWishlisted` to false for multiple products
-  console.log("Product IDs to update:", productIds);
-  const result = await Product.updateMany(
-    { _id: { $in: productIds } },
-    { $set: { isWishlisted: false } }
-  );
-
-  console.log("Update result:", result);
-  // Return updated products
-  const updatedProducts = await Product.find({ _id: { $in: productIds } });
-  return updatedProducts;
-  // Product statistics
-};
-
 const getProductStatsService = async (userId: string) => {
   const userObjectId = new mongoose.Types.ObjectId(userId);
 
@@ -644,7 +606,7 @@ const updateProductQuantity = async (
   const updatedProduct = await Product.findByIdAndUpdate(
     productId,
     {
-      quantity: newQuantity,
+      quantity: product.quantity + newQuantity,
       $inc: {
         salesCount:
           newQuantity < product.quantity ? product.quantity - newQuantity : 0,
@@ -726,9 +688,6 @@ export const productService = {
   getNewArrivalsProductsService,
   getBestSellingProductsService,
   getSellerBestSellingProductsService,
-  getWishlistedProductsService,
-  updateWishlistedProductsService,
-  removeProductsWishlist,
   getProductStatsService,
   addProductReviewService,
   getInventoryStatusService,

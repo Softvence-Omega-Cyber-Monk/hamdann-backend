@@ -7,6 +7,7 @@ router.post("/create", OrderController.createOrder); // Create Order
 router.get("/getAll", OrderController.getAllOrders); // Get All Orders
 router.get("/get-single/:id", OrderController.getOrderById); // Get Single Order
 router.put("/update/:id", OrderController.updateOrder); // Update Order
+router.put("/update-status/:orderId", OrderController.updateOrderStatus); // Update Order Status
 
 router.get("/current-orders/:userId", OrderController.getCurrentOrders);
 

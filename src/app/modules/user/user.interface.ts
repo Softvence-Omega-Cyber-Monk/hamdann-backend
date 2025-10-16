@@ -42,4 +42,5 @@ export type TUser = {
   profileImage?: string;
   businessLogo?: string;
   isPaidPlan?: boolean;
+  subscribtionPlan?: "basic" |  "professional" | "premium"
 };

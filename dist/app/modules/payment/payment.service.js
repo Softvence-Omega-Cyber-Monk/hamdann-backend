@@ -25,7 +25,7 @@ const createCheckoutSessionService = (orderId) => __awaiter(void 0, void 0, void
                 price_data: {
                     currency: "aed",
                     product_data: { name: `Order #${orderId}` },
-                    unit_amount: (orderAmount === null || orderAmount === void 0 ? void 0 : orderAmount.totalAmount) * 100,
+                    unit_amount: Math.round((orderAmount === null || orderAmount === void 0 ? void 0 : orderAmount.totalAmount) * 100),
                 },
                 quantity: 1,
             },
@@ -34,6 +34,7 @@ const createCheckoutSessionService = (orderId) => __awaiter(void 0, void 0, void
         cancel_url: `${configs_1.configs.jwt.front_end_url}/payment-failed`,
         metadata: { orderId },
     });
+    //  console.log("session", session);
     // store pending payment
     yield payment_model_1.Payment.create({
         orderId,

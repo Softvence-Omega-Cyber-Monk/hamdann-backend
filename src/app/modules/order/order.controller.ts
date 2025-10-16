@@ -18,16 +18,6 @@ const createOrder = async (req: Request, res: Response) => {
   }
 };
 
-// Get All Orders
-// const getAllOrders = async (req: Request, res: Response) => {
-//   try {
-//     const orders = await OrderService.getAllOrders();
-//     res.status(200).json({ success: true, data: orders });
-//   } catch (error: any) {
-//     res.status(500).json({ success: false, message: error.message });
-//   }
-// };
-
 const getAllOrders = async (req: Request, res: Response) => {
   try {
     const { status } = req.query;
@@ -88,6 +78,38 @@ const updateOrder = async (req: Request, res: Response) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
+const updateOrderStatus = async (req: Request, res: Response) => {
+  try {
+    const orderId = req.params.orderId;
+    const { status } = req.body;
+
+    if (!status) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Status is required" });
+    }
+
+    const updatedOrder = await OrderService.updateOrderStatus(orderId, status);
+
+    if (!updatedOrder) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Order not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Order status updated successfully",
+      data: updatedOrder,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message || "Failed to update order status",
+    });
+  }
+}
+
 
 const getCurrentOrders = async (req: Request, res: Response) => {
   try {
@@ -352,6 +374,7 @@ export const OrderController = {
   getAllOrders,
   getOrderById,
   updateOrder,
+  updateOrderStatus,
   getCurrentOrders,
   getPreviousOrders,
   getUserOrderStatistics,
