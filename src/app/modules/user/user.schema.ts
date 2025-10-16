@@ -80,7 +80,10 @@ const UserSchema = new Schema<TUser>(
     subscribtionPlan: {
       type: String,
       enum: ["basic", "professional", "premium"],
-      default: "basic",
+    },
+    productAddedPowerQuantity: {
+      type: Schema.Types.Mixed,
+      enum: [50, 200, "unlimited"],
     },
   },
   {
