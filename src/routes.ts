@@ -9,6 +9,7 @@ import { supportRoutes } from './app/modules/supports/support.route';
 import { paymentRoutes } from './app/modules/payment/payment.route'
 import { notificationRoutes } from './app/modules/notifications/notification.route';
 import { withlistProductsRoutes } from './app/modules/wishListedProducts/wishListedProducts.route';
+import { RequestRefundRoutes } from './app/modules/requestRefund/requestRefund.route'
 
 
 const appRouter = Router();
@@ -24,6 +25,7 @@ const moduleRoutes = [
     { path: "/payment", route: paymentRoutes },
     { path: "/notification", route: notificationRoutes },
     { path: "/wishListProducts", route: withlistProductsRoutes },
+    { path: "/request-refund", route: RequestRefundRoutes },
 
 
 ];

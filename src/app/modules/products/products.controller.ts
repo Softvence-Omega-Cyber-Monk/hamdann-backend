@@ -190,7 +190,7 @@ const getBestSellingProductsService = async (req: Request, res: Response) => {
 const getSellerBestSellingProductsController = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
-    const { page, limit } = req.query;
+    const { page, limit, sea } = req.query;
 
     if (!userId) {
       return res.status(400).json({
