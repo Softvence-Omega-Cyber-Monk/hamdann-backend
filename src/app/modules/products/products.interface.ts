@@ -17,6 +17,7 @@ export interface IProduct {
   description: string;
   quantity: number;
   price: number;
+  newPrice?: number;
   productImages?: string[];
   reviews?: { rating: number; comment?: string ; userId :string }[];
   shopReviews?: number | null;
@@ -26,5 +27,4 @@ export interface IProduct {
   isWishlisted?: boolean; // Flag for wishlist
   createdAt?: Date;
   updatedAt?: Date;
-  newPrice?: number;
 }
