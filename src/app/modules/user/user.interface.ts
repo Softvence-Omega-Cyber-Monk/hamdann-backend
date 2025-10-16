@@ -42,5 +42,7 @@ export type TUser = {
   profileImage?: string;
   businessLogo?: string;
   isPaidPlan?: boolean;
-  subscribtionPlan?: "basic" |  "professional" | "premium"
+  subscribtionPlan?: "basic" |  "professional" | "premium";
+  productAddedPowerQuantity?: 50 | 200 | "unlimited";
+
 };

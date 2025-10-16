@@ -5,8 +5,7 @@ import { User_Model } from "../user/user.schema";
 import { Order } from "../order/order.model";
 
 export const createCheckoutSessionService = async (orderId: string) => {
-  const orderAmount :any = await Order.findById(orderId);
-
+  const orderAmount: any = await Order.findById(orderId);
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
@@ -16,7 +15,7 @@ export const createCheckoutSessionService = async (orderId: string) => {
         price_data: {
           currency: "aed",
           product_data: { name: `Order #${orderId}` },
-          unit_amount: Math.round(orderAmount?.totalAmount * 100), 
+          unit_amount: Math.round(orderAmount?.totalAmount * 100),
         },
         quantity: 1,
       },
@@ -40,8 +39,6 @@ export const createCheckoutSessionService = async (orderId: string) => {
 
   return session.url;
 };
-
-// Subscription service
 export const createSubscriptionSessionService = async (
   userId: string,
   plan: "basic" | "professional" | "premium"
@@ -55,16 +52,42 @@ export const createSubscriptionSessionService = async (
 
   const amount = planPrices[plan];
 
+  let productAddedPowerQuantity: number | "unlimited";
+  if (plan === "basic") {
+    productAddedPowerQuantity = 50;
+  } else if (plan === "professional") {
+    productAddedPowerQuantity = 200;
+  } else {
+    productAddedPowerQuantity = "unlimited";
+  }
+
+  let updatedUser = null;
+
+  // ✅ Update user's paid plan
+  if (userId) {
+    updatedUser = await User_Model.findByIdAndUpdate(
+      userId,
+      {
+        isPaidPlan: true,
+        paidPlan: plan,
+        subscribtionPlan: plan,
+        productAddedPowerQuantity: productAddedPowerQuantity,
+      },
+      { new: true } // return updated user
+    );
+  }
+
   // ✅ Create Stripe Checkout Session
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
-    mode: "payment", // not recurring (for simplicity)
+    mode: "payment",
     line_items: [
       {
         price_data: {
           currency: "AED",
           product_data: {
             name: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
+            description: `Includes ${productAddedPowerQuantity} product slots`,
           },
           unit_amount: amount,
         },
@@ -73,7 +96,11 @@ export const createSubscriptionSessionService = async (
     ],
     success_url: `${configs.jwt.front_end_url}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${configs.jwt.front_end_url}/payment-failed`,
-    metadata: { userId, plan },
+    metadata: {
+      userId,
+      plan,
+      productAddedPowerQuantity: productAddedPowerQuantity.toString(),
+    },
   });
 
   // ✅ Store pending payment
@@ -88,15 +115,17 @@ export const createSubscriptionSessionService = async (
     mode: "subscription",
   });
 
-  if (session) {
-    await User_Model.findByIdAndUpdate(
-      userId,
-      { isPaidPlan: true },
-      { new: true }
-    );
-  }
+  // ❌ REMOVE THIS - Payment won't be completed immediately
+  // const sessionV = await stripe.checkout.sessions.retrieve(session.id);
+  // if (sessionV.payment_status === "paid") {
+  //   ... user update logic
+  // }
 
-  return session.url;
+  // ✅ Return only session URL for frontend redirect
+  return {
+    sessionUrl: session.url,
+    sessionId: session.id,
+  };
 };
 
 export const verifySubscriptionPaymentService = async (sessionId: string) => {
@@ -106,7 +135,14 @@ export const verifySubscriptionPaymentService = async (sessionId: string) => {
   if (session.payment_status === "paid") {
     const userId = session.metadata?.userId;
     const plan = session.metadata?.plan;
-
+    let productAddedPowerQuantity;
+    if (plan === "basic") {
+      productAddedPowerQuantity = 50;
+    } else if (plan === "professional") {
+      productAddedPowerQuantity = 200;
+    } else {
+      productAddedPowerQuantity = "unlimited";
+    }
     // ✅ Update Payment status
     const payment = await Payment.findOneAndUpdate(
       { paymentIntentId: session.id },
@@ -120,7 +156,12 @@ export const verifySubscriptionPaymentService = async (sessionId: string) => {
     if (userId) {
       updatedUser = await User_Model.findByIdAndUpdate(
         userId,
-        { isPaidPlan: true, paidPlan: plan },
+        {
+          isPaidPlan: true,
+          paidPlan: plan,
+          subscribtionPlan: plan,
+          productAddedPowerQuantity: productAddedPowerQuantity,
+        },
         { new: true } // return updated user
       );
     }
