@@ -678,7 +678,7 @@ const getProductListWithStatusBySellerIdService = async (
   sellerId: string,
   options: GetOrdersOptions = {}
 ) => {
-  const { status, page = 1, limit = 10,  } = options;
+  const { status, page = 1, limit = 10 } = options;
 
   // Filter orders by seller (userId) and status if provided
   const filter: Record<string, any> = { userId: sellerId };
@@ -691,7 +691,6 @@ const getProductListWithStatusBySellerIdService = async (
       filter.status = status;
     }
   }
-
 
   const skip = (page - 1) * limit;
 
@@ -714,7 +713,7 @@ const getProductListWithStatusBySellerIdService = async (
 
 // Get recent orders for seller - userId IS the sellerId
 const getRecentOrdersForSellerService = async (
-  userId: string,
+  sellerId: string,
   page: number = 1,
   limit: number = 10
 ): Promise<{
@@ -727,34 +726,56 @@ const getRecentOrdersForSellerService = async (
     hasPrev: boolean;
   };
 }> => {
-  // Ensure valid page and limit values
   const currentPage = Math.max(1, page);
   const currentLimit = Math.max(1, limit);
   const skip = (currentPage - 1) * currentLimit;
 
-  const [orders, totalOrders] = await Promise.all([
-    Order.find({ userId })
-      .populate("items.productId", "name")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(currentLimit)
-      .exec(),
-    Order.countDocuments({ userId })
-  ]);
+  // Fetch orders with populated products
+  const ordersWithProducts = await Order.find()
+    .populate({
+      path: "items.productId",
+      select: "name userId",
+    })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(currentLimit)
+    .exec();
+
+  // Filter orders safely (ignore null products)
+  const filteredOrders = ordersWithProducts.filter((order) =>
+    order.items.some(
+      (item) =>
+        item.productId && (item.productId as any).userId?.toString() === sellerId
+    )
+  );
+
+
+  // Count total orders safely
+  const allOrders = await Order.find().populate({
+    path: "items.productId",
+    select: "userId",
+  });
+
+  const totalOrders = allOrders.filter((order) =>
+    order.items.some(
+      (item) => item.productId && (item.productId as any).userId?.toString() === sellerId
+    )
+  ).length;
 
   const totalPages = Math.ceil(totalOrders / currentLimit);
 
   return {
-    orders,
+    orders: filteredOrders,
     pagination: {
       currentPage,
       totalPages,
       totalOrders,
       hasNext: currentPage < totalPages,
-      hasPrev: currentPage > 1
-    }
+      hasPrev: currentPage > 1,
+    },
   };
 };
+
 
 export const OrderService = {
   createOrder,
