@@ -83,6 +83,8 @@ export const getPromotionService = async (id: string) => {
   if (!mongoose.Types.ObjectId.isValid(id))
     throw new Error("Invalid Promotion ID");
 
+  
+
   const promotion = await PromotionModel.findById(id)
     .populate(
       "allProducts specificProducts",
