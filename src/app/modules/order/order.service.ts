@@ -411,90 +411,159 @@ const getAdminStatisticsService = async (): Promise<IAdminStatistics> => {
   }
 };
 
-const getOrderStatusCountsService = async (
-  userId: string
+// const getOrderStatusCountsService = async (
+//   userId: string
+// ): Promise<IOrderStatusData> => {
+//   // Check if user exists and is a seller
+//   const existingUser = await User_Model.findById(userId);
+//   if (!existingUser) {
+//     throw new Error("User not found");
+//   }
+
+//   if (existingUser.role !== "Seller") {
+//     throw new Error("Only seller can access this data");
+//   }
+
+//   try {
+//     // Get counts and order lists in parallel
+//     const [
+//       newOrdersCount,
+//       processingCount,
+//       completedCount,
+//       newOrdersList,
+//       processingOrdersList,
+//       completedOrdersList,
+//     ] = await Promise.all([
+//       // Counts
+//       Order.countDocuments({
+//         userId,
+//         status: "placed",
+//       }),
+//       Order.countDocuments({
+//         userId,
+//         status: {
+//           $in: ["payment_processed", "shipped", "out_for_delivery"],
+//         },
+//       }),
+//       Order.countDocuments({
+//         userId,
+//         status: "delivered",
+//       }),
+
+//       // Order Lists
+//       Order.find({
+//         userId,
+//         status: "placed",
+//       })
+//         .populate("items.productId", "name price productImages")
+//         .sort({ createdAt: -1 }),
+
+//       Order.find({
+//         userId,
+//         status: {
+//           $in: ["payment_processed", "shipped", "out_for_delivery"],
+//         },
+//       })
+//         .populate("items.productId", "name price productImages")
+//         .sort({ createdAt: -1 }),
+
+//       Order.find({
+//         userId,
+//         status: "delivered",
+//       })
+//         .populate("items.productId", "name price productImages")
+//         .sort({ createdAt: -1 }),
+//     ]);
+
+//     return {
+//       counts: {
+//         newOrders: newOrdersCount,
+//         processing: processingCount,
+//         completed: completedCount,
+//       },
+//       newOrders: newOrdersList,
+//       processingOrders: processingOrdersList,
+//       completedOrders: completedOrdersList,
+//     };
+//   } catch (error) {
+//     console.error("Error in getOrderStatusCountsService:", error);
+//     throw new Error(
+//       error instanceof Error
+//         ? error.message
+//         : "Failed to fetch order status counts and lists"
+//     );
+//   }
+// };
+
+const getOrderStatusCountsBySellerService = async (
+  sellerId: string
 ): Promise<IOrderStatusData> => {
   // Check if user exists and is a seller
-  const existingUser = await User_Model.findById(userId);
-  if (!existingUser) {
-    throw new Error("User not found");
-  }
+  const existingUser = await User_Model.findById(sellerId);
+  if (!existingUser) throw new Error("User not found");
+  if (existingUser.role !== "Seller") throw new Error("Only seller can access this data");
 
-  if (existingUser.role !== "Seller") {
-    throw new Error("Only seller can access this data");
-  }
+  const sellerObjectId = new Types.ObjectId(sellerId);
 
   try {
-    // Get counts and order lists in parallel
-    const [
-      newOrdersCount,
-      processingCount,
-      completedCount,
-      newOrdersList,
-      processingOrdersList,
-      completedOrdersList,
-    ] = await Promise.all([
-      // Counts
-      Order.countDocuments({
-        userId,
-        status: "placed",
-      }),
-      Order.countDocuments({
-        userId,
-        status: {
-          $in: ["payment_processed", "shipped", "out_for_delivery"],
+    const statuses = {
+      newOrders: ["placed"],
+      processing: ["payment_processed", "shipped", "out_for_delivery"],
+      completed: ["delivered"],
+    };
+
+    // Helper function to fetch orders for a given status
+    const fetchOrders = async (statusArray: string[]) => {
+      return Order.aggregate([
+        { $unwind: "$items" },
+        {
+          $lookup: {
+            from: "products",
+            localField: "items.productId",
+            foreignField: "_id",
+            as: "product",
+          },
         },
-      }),
-      Order.countDocuments({
-        userId,
-        status: "delivered",
-      }),
-
-      // Order Lists
-      Order.find({
-        userId,
-        status: "placed",
-      })
-        .populate("items.productId", "name price productImages")
-        .sort({ createdAt: -1 }),
-
-      Order.find({
-        userId,
-        status: {
-          $in: ["payment_processed", "shipped", "out_for_delivery"],
+        { $unwind: "$product" },
+        { $match: { "product.userId": sellerObjectId, status: { $in: statusArray } } },
+        {
+          $group: {
+            _id: "$_id",
+            orderNumber: { $first: "$orderNumber" },
+            status: { $first: "$status" },
+            contactInfo: { $first: "$contactInfo" },
+            createdAt: { $first: "$createdAt" },
+            items: { $push: "$items" },
+            totalAmount: { $first: "$totalAmount" },
+          },
         },
-      })
-        .populate("items.productId", "name price productImages")
-        .sort({ createdAt: -1 }),
+        { $sort: { createdAt: -1 } },
+      ]);
+    };
 
-      Order.find({
-        userId,
-        status: "delivered",
-      })
-        .populate("items.productId", "name price productImages")
-        .sort({ createdAt: -1 }),
+    const [newOrdersList, processingOrdersList, completedOrdersList] = await Promise.all([
+      fetchOrders(statuses.newOrders),
+      fetchOrders(statuses.processing),
+      fetchOrders(statuses.completed),
     ]);
 
     return {
       counts: {
-        newOrders: newOrdersCount,
-        processing: processingCount,
-        completed: completedCount,
+        newOrders: newOrdersList.length,
+        processing: processingOrdersList.length,
+        completed: completedOrdersList.length,
       },
       newOrders: newOrdersList,
       processingOrders: processingOrdersList,
       completedOrders: completedOrdersList,
     };
   } catch (error) {
-    console.error("Error in getOrderStatusCountsService:", error);
+    console.error("Error in getOrderStatusCountsBySellerService:", error);
     throw new Error(
-      error instanceof Error
-        ? error.message
-        : "Failed to fetch order status counts and lists"
+      error instanceof Error ? error.message : "Failed to fetch order status counts and lists"
     );
   }
 };
-
 const getOrderStatusSummaryService = async (): Promise<
   IOrderStatusSummary[]
 > => {
@@ -537,6 +606,8 @@ const getOrderStatusSummaryService = async (): Promise<
     );
   }
 };
+
+
 
 function capitalizeFirstLetter(str: string): string {
   if (!str) return "";
@@ -691,44 +762,6 @@ const getUserStatisticsService = async (
   }
 };
 
-// const getProductListWithStatusBySellerIdService = async (
-//   sellerId: string,
-//   options: GetOrdersOptions = {}
-// ) => {
-//   const { status, page = 1, limit = 10 } = options;
-
-//   // Filter orders by seller (userId) and status if provided
-//   const filter: Record<string, any> = { userId: sellerId };
-//   if (status) {
-//     if (status === "pending") {
-//       filter.status = {
-//         $in: ["placed", "payment_processed", "out_for_delivery", "pending"],
-//       };
-//     } else {
-//       filter.status = status;
-//     }
-//   }
-
-//   const skip = (page - 1) * limit;
-
-//   const orders = await Order.find(filter)
-//     .sort({ createdAt: -1 }) // latest orders first
-//     .skip(skip)
-//     .limit(limit)
-//     .populate("items.productId", "name")
-//     .exec();
-
-//   const total = await Order.countDocuments(filter);
-
-//   return {
-//     orders,
-//     total,
-//     page,
-//     pages: Math.ceil(total / limit),
-//   };
-// };
-
-// Get recent orders for seller - userId IS the sellerId
 
 const getProductListWithStatusBySellerIdService = async (
   sellerId: string,
@@ -860,6 +893,99 @@ const getRecentOrdersForSellerService = async (
   };
 };
 
+const getSellerStatisticsService = async (
+  sellerId: string
+): Promise<IUserStatistics> => {
+  try {
+    if (!Types.ObjectId.isValid(sellerId)) {
+      throw new Error("Invalid seller ID");
+    }
+
+    const sellerObjectId = new Types.ObjectId(sellerId);
+
+    // Fetch all orders with populated products
+    const allOrders = await Order.find()
+      .populate({
+        path: "items.productId",
+        select: "name userId price",
+      })
+      .exec();
+
+    // Filter only orders that contain at least one product by this seller
+    const sellerOrders = allOrders.filter((order) =>
+      order.items.some(
+        (item) =>
+          item.productId &&
+          (item.productId as any).userId?.toString() === sellerId
+      )
+    );
+
+    if (sellerOrders.length === 0) {
+      return {
+        totalRevenue: 0,
+        totalOrders: 0,
+        conversionRate: 0,
+        productsSold: 0,
+        averageOrderValue: 0,
+      };
+    }
+
+    // ✅ Filter delivered orders
+    const deliveredOrders = sellerOrders.filter(
+      (order) => order.status === "delivered"
+    );
+
+    // ✅ Calculate total revenue (for delivered orders, seller’s items only)
+    const totalRevenue = deliveredOrders.reduce((sum, order) => {
+      const sellerItems = order.items.filter(
+        (item) =>
+          item.productId &&
+          (item.productId as any).userId?.toString() === sellerId
+      );
+      const orderRevenue = sellerItems.reduce(
+        (subtotal, item) => subtotal + item.quantity * (item.productId as any).price,
+        0
+      );
+      return sum + orderRevenue;
+    }, 0);
+
+    // ✅ Calculate total products sold (for delivered orders)
+    const productsSold = deliveredOrders.reduce((sum, order) => {
+      const sellerItems = order.items.filter(
+        (item) =>
+          item.productId &&
+          (item.productId as any).userId?.toString() === sellerId
+      );
+      return (
+        sum +
+        sellerItems.reduce((itemSum, item) => itemSum + item.quantity, 0)
+      );
+    }, 0);
+
+    // ✅ Average Order Value (based on seller's delivered orders)
+    const averageOrderValue =
+      deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0;
+
+    // ✅ Conversion rate = (delivered / total seller orders) × 100
+    const conversionRate =
+      (deliveredOrders.length / sellerOrders.length) * 100;
+
+    return {
+      totalRevenue: Number(totalRevenue.toFixed(2)),
+      totalOrders: sellerOrders.length,
+      conversionRate: Number(conversionRate.toFixed(2)),
+      productsSold,
+      averageOrderValue: Number(averageOrderValue.toFixed(2)),
+    };
+  } catch (error: any) {
+    console.error("Error in getSellerStatisticsService:", error);
+    throw new Error(
+      error instanceof Error
+        ? error.message
+        : "Failed to fetch seller statistics"
+    );
+  }
+};
 
 export const OrderService = {
   createOrder,
@@ -871,10 +997,11 @@ export const OrderService = {
   getPreviousOrdersService,
   getUserOrderStatistics,
   getAdminStatisticsService,
-  getOrderStatusCountsService,
+  getOrderStatusCountsBySellerService,
   getOrderStatusSummaryService,
   getActivityListService,
   getUserStatisticsService,
   getProductListWithStatusBySellerIdService,
   getRecentOrdersForSellerService,
+  getSellerStatisticsService,
 };
