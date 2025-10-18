@@ -65,16 +65,17 @@ const getRefundRequestByIdService = async (
     throw new Error("Invalid refund request ID");
   }
 
-  console.log('refund', refundId)
   try {
-    const refundRequest = await RequestRefund.findById(refundId)
-    console.log('reue', refundRequest)
+    const refundRequest = await RequestRefund.findOne({ orderId: refundId });
+    console.log("reue", refundRequest);
 
     return refundRequest;
   } catch (error: any) {
     throw new Error(`Failed to fetch refund request: ${error.message}`);
   }
 };
+
+
 const acceptRefundRequest = async (
   refundId: string
 ): Promise<IrequestRefund | null> => {
@@ -84,7 +85,8 @@ const acceptRefundRequest = async (
 
   try {
     // Find the refund request first
-    const refundRequest = await RequestRefund.findById(refundId);
+    const refundRequest = await RequestRefund.findOne({ orderId: refundId });
+    console.log('resuset ', refundRequest)
     if (!refundRequest) {
       throw new Error("Refund request not found");
     }
@@ -95,22 +97,15 @@ const acceptRefundRequest = async (
     }
 
     // Update isAccepted to true
-    const updatedRefundRequest = await RequestRefund.findByIdAndUpdate(
-      refundId,
+    const updatedRefundRequest = await RequestRefund.findOneAndUpdate(
+      { orderId: refundId },
       {
         $set: {
-          isAccepted: true
-        }
+          isAccepted: true,
+        },
       },
       { new: true }
-    ).populate({
-      path: "orderId",
-      select: "orderNumber totalAmount status statusDates userId items",
-      populate: {
-        path: "userId",
-        select: "name email"
-      }
-    });
+    )
 
     return updatedRefundRequest;
   } catch (error: any) {
