@@ -41,23 +41,32 @@ export const createCheckoutSessionService = async (orderId: string) => {
 };
 export const createSubscriptionSessionService = async (
   userId: string,
-  plan: "basic" | "professional" | "premium"
+  plan: "starter" | "advance" | "starterYearly" | "advanceYearly"
 ) => {
+
+  // ✅ Check if user already has a subscription plan
+  const existingUser = await User_Model.findById(userId);
+  
+  if (existingUser && existingUser.isPaidPlan && existingUser.subscribtionPlan) {
+    throw new Error(`You are already subscribed to the ${existingUser.subscribtionPlan} plan.`);
+  }
   // 💰 Plan pricing
   const planPrices: Record<string, number> = {
-    basic: 1999,
-    professional: 4999,
-    premium: 9999,
+    starter: 6900,
+    advance: 19900,
+    starterYearly: 69900,
+    advanceYearly: 199900
   };
 
   const amount = planPrices[plan];
 
   let productAddedPowerQuantity: number | "unlimited";
-  if (plan === "basic") {
-    productAddedPowerQuantity = 50;
-  } else if (plan === "professional") {
-    productAddedPowerQuantity = 200;
-  } else {
+  if (plan === "starter") {
+    productAddedPowerQuantity = 20;
+  }else if(plan==="starterYearly"){
+    productAddedPowerQuantity = 240;
+  }
+  else {
     productAddedPowerQuantity = "unlimited";
   }
 
@@ -136,10 +145,8 @@ export const verifySubscriptionPaymentService = async (sessionId: string) => {
     const userId = session.metadata?.userId;
     const plan = session.metadata?.plan;
     let productAddedPowerQuantity;
-    if (plan === "basic") {
-      productAddedPowerQuantity = 50;
-    } else if (plan === "professional") {
-      productAddedPowerQuantity = 200;
+    if (plan === "starter") {
+      productAddedPowerQuantity = 20;
     } else {
       productAddedPowerQuantity = "unlimited";
     }
