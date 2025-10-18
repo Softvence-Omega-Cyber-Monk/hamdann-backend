@@ -21,7 +21,10 @@ router.get("/statistics/:userId", OrderController.getUserOrderStatistics);
 router.get("/admin/statistics", OrderController.getAdminStatistics);
 
 //admin Order status counts route
-router.get("/order-status-counts/:sellerId",OrderController.getOrderStatusCountsBySellerController);
+router.get(
+  "/order-status-counts/:sellerId",
+  OrderController.getOrderStatusCountsBySellerController
+);
 
 // Order status summary route
 router.get("/status-summary", OrderController.getOrderStatusSummary);
@@ -30,13 +33,24 @@ router.get("/status-summary", OrderController.getOrderStatusSummary);
 router.get("/admin/activities-list", OrderController.getActivityList);
 
 // Seller Analytics
-router.get('/seller-analytics/:userId', OrderController.getUserStatistics);
+router.get("/seller-analytics/:userId", OrderController.getUserStatistics);
 
 // Product list with delivery status base on seller ID
-router.get("/seller/:sellerId", OrderController.getProductListWithStatusBySellerId); 
+router.get(
+  "/seller/:sellerId",
+  OrderController.getProductListWithStatusBySellerId
+);
 // Seller orders routes - using userId
-router.get("/seller/recent/:userId", OrderController.getRecentOrdersForSellerController);
+router.get(
+  "/seller/recent/:userId",
+  OrderController.getRecentOrdersForSellerController
+);
 // GET /api/v1/order/seller/:sellerId/statistics
-router.get("/seller/statistics/:sellerId", OrderController.getSellerStatisticsController);
+router.get(
+  "/seller/statistics/:sellerId",
+  OrderController.getSellerStatisticsController
+);
+// Seller order statistic
+router.get("/seller-statistics/:sellerId", OrderController.getSellerOrderStatisticsController);
 
 export const OrderRoute = router;
