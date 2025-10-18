@@ -65,16 +65,10 @@ const getRefundRequestByIdService = async (
     throw new Error("Invalid refund request ID");
   }
 
+  console.log('refund', refundId)
   try {
     const refundRequest = await RequestRefund.findById(refundId)
-      .populate({
-        path: "orderId",
-        select: "orderNumber totalAmount status statusDates userId items",
-        populate: {
-          path: "userId",
-          select: "name email"
-        }
-      });
+    console.log('reue', refundRequest)
 
     return refundRequest;
   } catch (error: any) {
