@@ -79,11 +79,11 @@ const UserSchema = new Schema<TUser>(
     isPaidPlan: { type: Boolean, default: false },
     subscribtionPlan: {
       type: String,
-      enum: ["basic", "professional", "premium"],
+      enum: ["starter", "advance", "starterYearly", "advanceYearly"],
     },
     productAddedPowerQuantity: {
       type: Schema.Types.Mixed,
-      enum: [50, 200, "unlimited"],
+      enum: [20, 240, "unlimited"],
     },
   },
   {

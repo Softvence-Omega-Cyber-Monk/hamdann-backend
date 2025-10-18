@@ -831,8 +831,8 @@ const getProductListWithStatusBySellerIdService = async (
 
 const getRecentOrdersForSellerService = async (
   sellerId: string,
-  page: number = 1,
-  limit: number = 10
+  page: number,
+  limit: number
 ): Promise<{
   orders: IOrder[];
   pagination: {

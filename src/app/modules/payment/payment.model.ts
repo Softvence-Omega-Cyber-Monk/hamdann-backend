@@ -10,7 +10,7 @@ const PaymentSchema = new Schema<IPayment>(
     userId: { type: Schema.Types.ObjectId, ref: "User" },
     plan: {
       type: String,
-      enum: ["basic", "professional", "premium"],
+      enum: ["starter", "advance", "starterYearly", "advanceYearly"],
     },
     isSubscription: { type: Boolean, default: false },
 
