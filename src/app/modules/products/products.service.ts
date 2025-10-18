@@ -35,7 +35,75 @@ interface ProductQueryOptions {
   limit?: number;
 }
 
-export const createProductService = async (
+// export const createProductService = async (
+//   payload: IProduct,
+//   imageInput: Express.Multer.File | Express.Multer.File[]
+// ) => {
+//   const { userId } = payload;
+
+//   const exitUser = await User_Model.findById({ _id: userId });
+//   if (!exitUser) {
+//     throw new Error("User not found");
+//   }
+
+//   if (exitUser.role !== "Seller") {
+//     throw new Error("Only sellers can add products");
+//   }
+
+//   if(exitUser.isPaidPlan===false)
+//   {
+//     throw new Error("Please take any subscription");
+//   }
+
+//   if(!exitUser.productAddedPowerQuantity)
+//   {
+//     throw new Error("Please subscribe to a plan to add products");
+//   }
+  
+//   const shopReviews = await shopReview(userId);
+//   console.log("shopReviews ", shopReviews);
+
+//   let imageUrls: string[] = [];
+
+//   if (Array.isArray(imageInput)) {
+//     // Multiple images
+//     const filePaths = imageInput.map((file) => file.path);
+//     imageUrls = await uploadMultipleImages(filePaths, "Products");
+//   } else if (imageInput) {
+//     // Single image
+//     const result = await uploadImgToCloudinary(
+//       imageInput.filename,
+//       imageInput.path,
+//       "Products"
+//     );
+//     imageUrls = [result.secure_url];
+//   }
+
+//   const productPayload = {
+//     ...payload,
+//     shopName: exitUser.businessInfo?.businessName || null,
+//     shopReviews: shopReviews[0]?.averageRating,
+//     productImages: imageUrls,
+//   };
+
+//   const product = await Product.create(productPayload);
+
+//   // Notify all customers
+//   const customers = await User_Model.find({ role: "Buyer" });
+//   for (const buyer of customers) {
+//     await sendNotification(
+//       buyer._id.toString(),
+//       "🛒 New Product Added!",
+//       `${product.name} is now available!`
+//     );
+//   }
+
+//   return product;
+// };
+
+
+
+const createProductService = async (
   payload: IProduct,
   imageInput: Express.Multer.File | Express.Multer.File[]
 ) => {
@@ -48,6 +116,23 @@ export const createProductService = async (
 
   if (exitUser.role !== "Seller") {
     throw new Error("Only sellers can add products");
+  }
+
+  if (exitUser.isPaidPlan === false) {
+    throw new Error("Please take any subscription");
+  }
+
+  if (!exitUser.productAddedPowerQuantity) {
+    throw new Error("Please subscribe to a plan to add products");
+  }
+
+  // Check if user has unlimited power or remaining power > 0
+  if (exitUser.productAddedPowerQuantity !== "unlimited") {
+    const currentProductCount = await Product.countDocuments({ userId });
+    
+    if (currentProductCount >= exitUser.productAddedPowerQuantity) {
+      throw new Error(`You have reached your product limit of ${exitUser.productAddedPowerQuantity}. Please upgrade your plan to add more products.`);
+    }
   }
 
   const shopReviews = await shopReview(userId);
@@ -77,6 +162,17 @@ export const createProductService = async (
   };
 
   const product = await Product.create(productPayload);
+
+  // Decrement productAddedPowerQuantity only if it's not "unlimited"
+  if (exitUser.productAddedPowerQuantity !== "unlimited") {
+    await User_Model.findByIdAndUpdate(
+      userId,
+      {
+        $inc: { productAddedPowerQuantity: -1 }
+      }
+    );
+    console.log(`Product added. Remaining power: ${exitUser.productAddedPowerQuantity - 1}`);
+  }
 
   // Notify all customers
   const customers = await User_Model.find({ role: "Buyer" });
@@ -233,10 +329,6 @@ const getSingleProductService = async (id: string) => {
   const product = await Product.findById(id);
   return product;
 };
-// const getSingleUserProductService = async (userId: string) => {
-//   const product = await Product.find({ userId: userId });
-//   return product;
-// };
 
 const getSingleUserProductService = async (
   userId: string,
@@ -329,45 +421,6 @@ const getBestSellingProductsService = async () => {
 
   return bestSellingProducts;
 };
-// const getBestSellingProductsService = async (
-//   page: number,
-//   limit: number
-// ) => {
-//   const skip = (page - 1) * limit;
-
-//   const [bestSellingProducts, totalCount] = await Promise.all([
-//     Product.find()
-//       .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
-//       .skip(skip)
-//       .limit(limit)
-//       .exec(),
-//     Product.countDocuments()
-//   ]);
-
-//   const totalPages = Math.ceil(totalCount / limit);
-
-//   return {
-//     success: true,
-//     data: bestSellingProducts,
-//     pagination: {
-//       currentPage: page,
-//       totalPages,
-//       totalProducts: totalCount,
-//       hasNext: page < totalPages,
-//       hasPrev: page > 1
-//     }
-//   };
-// };
-// const getSellerBestSellingProductsService = async (userId: string) => {
-//   console.log("userId in service ", userId);
-//   const bestSellingProducts = await Product.find({ userId: userId }).sort({
-//     salesCount: -1,
-//   }); // Sort by salesCount in descending order (highest first)
-
-//   console.log("bestSellingProducts ", bestSellingProducts.length);
-
-//   return bestSellingProducts;
-// };
 const getSellerBestSellingProductsService = async (
   userId: string,
   options: { page?: number | null; limit?: number | null } = {}

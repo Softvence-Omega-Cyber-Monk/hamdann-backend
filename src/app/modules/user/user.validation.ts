@@ -87,4 +87,5 @@ export const update_user = z.object({
     .optional(),
   profileImage: z.string().optional(),
   businessLogo: z.string().optional(),
+  subscribtionPlan: z.enum(["basic", "professional", "premium"]).optional(),
 });

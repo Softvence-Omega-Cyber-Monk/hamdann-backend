@@ -242,35 +242,46 @@ export const updateOrderStatus = async (
   }
 
   try {
-    const order: any = await Order.findById(orderId);
+    // ✅ Find existing order first (for validation)
+    const existingOrder: any = await Order.findById(orderId).populate("userId");
 
-    if (!order) {
+    if (!existingOrder) {
       throw new Error("Order not found");
     }
 
-    // ✅ Allow cancellation only when status is "placed"
-    if (status === "cancelled") {
-      if (order.status !== "placed") {
-        throw new Error(
-          `Order cannot be cancelled because it is already "${order.status}".`
-        );
-      }
+    // ✅ Validate status transition (example: only cancel if placed)
+    if (status === "cancelled" && existingOrder.status !== "placed") {
+      throw new Error(
+        `Order cannot be cancelled because it is already "${existingOrder.status}".`
+      );
     }
 
-    // ✅ Update order status
-    order.status = status;
-    order.statusDates.cancelledAt = new Date();
+    // ✅ Prepare the dynamic update for statusDates
+    const statusDateField = `statusDates.${status}`;
+    const updateData = {
+      status,
+      [statusDateField]: new Date(),
+    };
 
-    await order.save();
+    // ✅ Perform the update
+    const updatedOrder: any = await Order.findOneAndUpdate(
+      { _id: orderId },
+      { $set: updateData },
+      { new: true } // return the updated document
+    ).populate("userId");
 
-    // ✅ Notify user about status update
+    if (!updatedOrder) {
+      throw new Error("Failed to update order status");
+    }
+
+    // ✅ Send user notification
     await sendNotification(
-      order.userId._id.toString(),
+      updatedOrder.userId._id.toString(),
       "📦 Order Status Updated",
-      `Your order #${order.orderNumber} status has been updated to "${status}".`
+      `Your order #${updatedOrder.orderNumber} status has been updated to "${status}".`
     );
 
-    return order;
+    return updatedOrder;
   } catch (error: any) {
     throw new Error(`Failed to update order status: ${error.message}`);
   }
