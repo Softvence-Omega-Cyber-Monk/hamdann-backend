@@ -195,23 +195,55 @@ const getAdminStatistics = async (req: Request, res: Response) => {
   }
 };
 
-const getOrderStatusCounts = async (req: Request, res: Response) => {
-  const userId = req.params.userId;
-  try {
-    const statusCounts = await OrderService.getOrderStatusCountsService(userId);
+// const getOrderStatusCounts = async (req: Request, res: Response) => {
+//   const userId = req.params.userId;
+//   try {
+//     const statusCounts = await OrderService.getOrderStatusCountsService(userId);
 
-    res.status(200).json({
+//     res.status(200).json({
+//       success: true,
+//       message: "Order status counts retrieved successfully",
+//       data: statusCounts,
+//     });
+//   } catch (error) {
+//     console.error("Error in getOrderStatusCounts controller:", error);
+
+//     res.status(500).json({
+//       success: false,
+//       message: "Internal server error",
+//       error: error instanceof Error ? error.message : "Unknown error",
+//     });
+//   }
+// };
+const getOrderStatusCountsBySellerController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    // If using auth middleware, you can get sellerId from req.user.id
+    const sellerId = req.params.sellerId;
+
+    if (!sellerId) {
+      return res.status(400).json({
+        success: false,
+        message: "Seller ID is required",
+      });
+    }
+
+    const data = await OrderService.getOrderStatusCountsBySellerService(sellerId);
+
+    return res.status(200).json({
       success: true,
-      message: "Order status counts retrieved successfully",
-      data: statusCounts,
+      data,
     });
   } catch (error) {
-    console.error("Error in getOrderStatusCounts controller:", error);
-
-    res.status(500).json({
+    console.error("Error in getOrderStatusCountsBySellerController:", error);
+    return res.status(500).json({
       success: false,
-      message: "Internal server error",
-      error: error instanceof Error ? error.message : "Unknown error",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch seller order status counts",
     });
   }
 };
@@ -370,6 +402,41 @@ const getRecentOrdersForSellerController = async (req: Request, res: Response) =
     });
   }
 };
+
+const getSellerStatisticsController = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { sellerId } = req.params;
+
+    if (!sellerId) {
+      res.status(400).json({
+        success: false,
+        message: "Seller ID is required",
+      });
+      return;
+    }
+
+    const statistics = await OrderService.getSellerStatisticsService(sellerId);
+
+    res.status(200).json({
+      success: true,
+      message: "Seller statistics fetched successfully",
+      data: statistics,
+    });
+  } catch (error) {
+    console.error("Error in getSellerStatisticsController:", error);
+    res.status(500).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch seller statistics",
+    });
+  }
+};
+
 export const OrderController = {
   createOrder,
   getAllOrders,
@@ -380,10 +447,11 @@ export const OrderController = {
   getPreviousOrders,
   getUserOrderStatistics,
   getAdminStatistics,
-  getOrderStatusCounts,
+  getOrderStatusCountsBySellerController,
   getOrderStatusSummary,
   getActivityList,
   getUserStatistics,
   getProductListWithStatusBySellerId,
   getRecentOrdersForSellerController,
+  getSellerStatisticsController,
 };
