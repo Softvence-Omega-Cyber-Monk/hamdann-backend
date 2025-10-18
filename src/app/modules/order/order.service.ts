@@ -986,6 +986,68 @@ const getSellerStatisticsService = async (
     );
   }
 };
+const getSellerOrderStatisticsService = async (sellerId: string) => {
+  try {
+    if (!Types.ObjectId.isValid(sellerId)) {
+      throw new Error("Invalid seller ID");
+    }
+
+    const sellerObjectId = new Types.ObjectId(sellerId);
+
+    // Fetch all orders that contain at least one product belonging to the seller
+    const orders = await Order.find()
+      .populate({
+        path: "items.productId",
+        select: "userId price",
+      })
+      .exec();
+
+    // Filter orders related to this seller
+    const sellerOrders = orders.filter((order) =>
+      order.items.some(
+        (item) =>
+          item.productId &&
+          (item.productId as any).userId?.toString() === sellerId
+      )
+    );
+
+    const totalOrders = sellerOrders.length;
+
+    // Count pending orders
+    const pendingOrders = sellerOrders.filter((order) =>
+      ["placed", "payment_processed", "shipped", "out_for_delivery"].includes(
+        order.status
+      )
+    ).length;
+
+    // Count returned orders
+    const returnedOrders = sellerOrders.filter(
+      (order) => order.status === "returned"
+    ).length;
+
+    // Calculate total sales (sum of item prices * quantity for delivered orders)
+    let totalSales = 0;
+    for (const order of sellerOrders) {
+      if (order.status === "delivered") {
+        for (const item of order.items) {
+          const product = item.productId as any;
+          if (product?.userId?.toString() === sellerId) {
+            totalSales += item.price * item.quantity;
+          }
+        }
+      }
+    }
+
+    return {
+      totalOrders,
+      pendingOrders,
+      totalSales: Number(totalSales.toFixed(2)),
+      returnedOrders,
+    };
+  } catch (error: any) {
+    throw new Error(`Failed to get seller order statistics: ${error.message}`);
+  }
+};
 
 export const OrderService = {
   createOrder,
@@ -1004,4 +1066,5 @@ export const OrderService = {
   getProductListWithStatusBySellerIdService,
   getRecentOrdersForSellerService,
   getSellerStatisticsService,
+  getSellerOrderStatisticsService,
 };

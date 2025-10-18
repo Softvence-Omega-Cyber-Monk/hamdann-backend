@@ -437,6 +437,40 @@ const getSellerStatisticsController = async (
   }
 };
 
+const getSellerOrderStatisticsController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { sellerId } = req.params;
+
+    if (!sellerId) {
+      return res.status(400).json({
+        success: false,
+        message: "Seller ID is required",
+      });
+    }
+
+    const statistics = await OrderService.getSellerOrderStatisticsService(sellerId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Seller order statistics fetched successfully",
+      data: statistics,
+    });
+  } catch (error: any) {
+    console.error("Error in getSellerOrderStatisticsController:", error);
+
+    return res.status(500).json({
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch seller order statistics",
+    });
+  }
+};
+
 export const OrderController = {
   createOrder,
   getAllOrders,
@@ -454,4 +488,5 @@ export const OrderController = {
   getProductListWithStatusBySellerId,
   getRecentOrdersForSellerController,
   getSellerStatisticsController,
+  getSellerOrderStatisticsController,
 };
