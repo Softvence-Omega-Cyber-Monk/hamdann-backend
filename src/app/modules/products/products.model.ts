@@ -17,7 +17,7 @@ const ProductSchema = new Schema<IProduct>(
       enum: ["Fashion", "Food", "Beauty", "Perfume"], // restrict categories
     },
     brand: { type: String, trim: true },
-    shopName: { type: String , trim: true , default: null},
+    shopName: { type: String, trim: true, default: null },
     weight: { type: Number },
     gender: {
       type: String,
@@ -30,6 +30,14 @@ const ProductSchema = new Schema<IProduct>(
     description: { type: String, required: true },
     quantity: { type: Number, required: true, default: 0 },
     price: { type: Number, required: true },
+    newPrice: { type: Number },
+    discountType: {
+      type: String,
+      enum: ["percentage", "fixed", null],
+      default: null,
+    },
+    discountValue: { type: Number, default: 0 },
+
     reviews: [
       {
         userId: { type: String, required: true },
@@ -39,12 +47,11 @@ const ProductSchema = new Schema<IProduct>(
     ],
 
     averageRating: { type: Number, default: 0 },
-      shopReviews: { type: Number, default: null },
+    shopReviews: { type: Number, default: null },
     productImages: [{ type: String, required: true }],
     salesCount: { type: Number, default: 0 }, // Flag for best-selling
     isNewArrival: { type: Boolean, default: false }, // Flag for new arrival
     isWishlisted: { type: Boolean, default: false }, // Flag for wishlist
-    newPrice: {type: Number},
   },
   { timestamps: true }
 );

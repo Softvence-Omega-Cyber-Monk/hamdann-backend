@@ -100,6 +100,9 @@ interface ProductQueryOptions {
 
 //   return product;
 // };
+
+
+
 const createProductService = async (
   payload: IProduct,
   imageInput: Express.Multer.File | Express.Multer.File[]

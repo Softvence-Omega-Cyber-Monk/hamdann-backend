@@ -8,13 +8,17 @@ export interface IOrderItem {
 }
 
 export interface IOrderStatusDates {
-  placedAt?: Date;
-  paymentProcessedAt?: Date;
-  shippedAt?: Date;
-  outForDeliveryAt?: Date;
-  deliveredAt?: Date;
-  cancelledAt?: Date;
+  placed?: Date;
+  payment_processed?: Date;
+  shipped?: Date;
+  out_for_delivery?: Date;
+  delivered?: Date;
+  cancelled?: Date;
+  return_requested?: Date;
+  returned?: Date;
 }
+
+
 
 export interface IShippingAddress {
   fullName: string;

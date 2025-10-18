@@ -11,7 +11,7 @@ export const createPromotionService = async (payload: IPromotion) => {
 
   // 🔹 Case 1: Apply to all products
   if (payload.applicableType === "allProducts") {
-    const all = await Product.find({userId: payload.sellerId}, "_id");
+    const all = await Product.find({ userId: payload.sellerId }, "_id");
     applicableProducts = all.map((p) => p._id);
     payload.allProducts = applicableProducts;
     payload.specificProducts = []; // ✅ clear others
@@ -34,7 +34,10 @@ export const createPromotionService = async (payload: IPromotion) => {
     payload.productCategories?.length
   ) {
     const categoryProducts = await Product.find(
-      { category: { $in: payload.productCategories } , userId: payload.sellerId },
+      {
+        category: { $in: payload.productCategories },
+        userId: payload.sellerId,
+      },
       "_id"
     );
     applicableProducts = categoryProducts.map((p) => p._id);
@@ -44,20 +47,47 @@ export const createPromotionService = async (payload: IPromotion) => {
 
   // ✅ Create promotion
   const promotion = await PromotionModel.create(payload);
+  // ✅ Apply discount to all applicable products
+  if (promotion.allProducts?.length) {
+    const { promotionType, discountValue } = promotion;
 
-  // console.log("Final Promotion Data:", promotion);
+    const products = await Product.find({
+      _id: { $in: promotion.allProducts },
+    });
+
+    for (const product of products) {
+      let newPrice = product.price;
+
+      if (promotionType === "percentage") {
+        newPrice = product.price - (product.price * discountValue) / 100;
+      } else if (promotionType === "fixed") {
+        newPrice = Math.max(product.price - discountValue, 0);
+      }
+
+      await Product.findByIdAndUpdate(product._id, {
+        $set: {
+          newPrice, // ✅ discounted price
+          discountType: promotionType,
+          discountValue: discountValue,
+          isNewArrival: false, // optional: disable new arrival flag
+        },
+      });
+    }
+  }
 
   return promotion;
 };
 
 // ✅ GET SINGLE PROMOTION
 export const getPromotionService = async (id: string) => {
-
   if (!mongoose.Types.ObjectId.isValid(id))
     throw new Error("Invalid Promotion ID");
 
   const promotion = await PromotionModel.findById(id)
-    .populate("allProducts specificProducts", "name price category")
+    .populate(
+      "allProducts specificProducts",
+      "name price category productImages  reviews  averageRating"
+    )
     .exec();
 
   if (!promotion) throw new Error("Promotion not found");
@@ -68,7 +98,10 @@ export const getPromotionService = async (id: string) => {
 export const getAllPromotionsService = async () => {
   return await PromotionModel.find()
     .sort({ createdAt: -1 })
-    .populate("allProducts specificProducts", "name price category")
+    .populate(
+      "allProducts specificProducts",
+      "name price category productImages  reviews  averageRating"
+    )
     .exec();
 };
 
@@ -91,19 +124,17 @@ export const updatePromotionService = async (
 
 // ✅ GET SELLER PROMOTIONS
 export const getSellerPromotionsService = async (userId: string) => {
-  console.log('Fetching promotions for userId:', userId);
+  console.log("Fetching promotions for userId:", userId);
   if (!mongoose.Types.ObjectId.isValid(userId)) {
     throw new Error("Invalid User ID");
   }
   // In real use, filter promotions by seller’s products
   return await PromotionModel.find(
-    { isActive: true  , sellerId: userId},  // Filter by sellerId
-    {
-      promotionName: 1,
-      endDate: 1,
-      discountValue: 1,
-      isActive: 1,
-      promotionType: 1,
-    }
-  ).sort({ endDate: 1 });
+    { isActive: true, sellerId: userId } // Filter by sellerId
+  )
+    .sort({ endDate: 1 })
+    .populate(
+      "allProducts specificProducts",
+      "name price category productImages  reviews  averageRating"
+    );
 };

@@ -19,12 +19,14 @@ const OrderItemSchema = new Schema<IOrderItem>(
 
 const OrderStatusDatesSchema = new Schema<IOrderStatusDates>(
   {
-    placedAt: { type: Date },
-    paymentProcessedAt: { type: Date },
-    shippedAt: { type: Date },
-    outForDeliveryAt: { type: Date },
-    deliveredAt: { type: Date },
-    cancelledAt: { type: Date },
+    placed: { type: Date },
+    payment_processed: { type: Date },
+    shipped: { type: Date },
+    out_for_delivery: { type: Date },
+    delivered: { type: Date },
+    cancelled: { type: Date },
+    return_requested: { type: Date },
+    returned: { type: Date },
   },
   { _id: false }
 );
@@ -81,7 +83,7 @@ const OrderSchema = new Schema<IOrder>(
     tax: { type: Number, required: true },
     totalAmount: { type: Number, required: true },
     currency: { type: String, required: true, default: "AED" },
-    paymentMethod: { type: String, required: true ,default: "Stripe"},
+    paymentMethod: { type: String, required: true, default: "Stripe" },
     paymentInfo: { type: PaymentInfoSchema, default: {} },
     status: {
       type: String,
@@ -93,7 +95,7 @@ const OrderSchema = new Schema<IOrder>(
         "delivered",
         "cancelled",
         "return_requested",
-        "returned"
+        "returned",
       ],
       default: "placed",
     },
@@ -101,9 +103,10 @@ const OrderSchema = new Schema<IOrder>(
       email: { type: String, required: true },
       phone: { type: String },
     },
+
     statusDates: {
       type: OrderStatusDatesSchema,
-      default: { placedAt: new Date() },
+      default: () => ({ placed: new Date() }),
     },
 
     shippingAddress: { type: ShippingAddressSchema, required: true },
