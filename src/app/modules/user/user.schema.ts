@@ -85,6 +85,7 @@ const UserSchema = new Schema<TUser>(
       type: Schema.Types.Mixed,
       enum: [20, 240, "unlimited"],
     },
+    stripeAccountId: { type: String },
   },
   {
     versionKey: false,

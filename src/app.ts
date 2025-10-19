@@ -38,57 +38,113 @@ app.get("/", (req: Request, res: Response) => {
 });
 
 // ✅ Success payment route
+// app.get("/payment-success", async (req: Request, res: Response) => {
+//   try {
+//     const { session_id } = req.query;
+
+//     if (!session_id) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Session ID required" });
+//     }
+
+//     const session = await stripe.checkout.sessions.retrieve(
+//       session_id as string
+//     );
+
+//     if (session.payment_status === "paid") {
+//       const payment = await Payment.findOneAndUpdate(
+//         { paymentIntentId: session.id },
+//         { paymentStatus: "succeeded" },
+//         { new: true }
+//       );
+
+//       const orderId = session.metadata?.orderId;
+//       // 2️⃣ Update Order status + statusDates
+//       const order = await Order.findByIdAndUpdate(
+//         orderId,
+//         {
+//           status: "payment_processed",
+//           "statusDates.paymentProcessedAt": new Date(), // ✅ update nested field
+//         },
+//         { new: true }
+//       ).populate({
+//         path: "items.productId",
+//         select: "name price image", // populate product info
+//       });
+
+//       return res.status(200).json({
+//         success: true,
+//         message: "Payment successful",
+//         session,
+//         payment,
+//         order,
+//       });
+//     }
+
+//     res
+//       .status(200)
+//       .json({ success: false, message: "Payment not completed", session });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: (error as Error).message });
+//   }
+// });
+
 app.get("/payment-success", async (req: Request, res: Response) => {
   try {
     const { session_id } = req.query;
+    if (!session_id) return res.status(400).json({ success: false, message: "Session ID required" });
 
-    if (!session_id) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Session ID required" });
-    }
-
-    const session = await stripe.checkout.sessions.retrieve(
-      session_id as string
-    );
+    const session = await stripe.checkout.sessions.retrieve(session_id as string);
 
     if (session.payment_status === "paid") {
+      // Update payment status
       const payment = await Payment.findOneAndUpdate(
         { paymentIntentId: session.id },
         { paymentStatus: "succeeded" },
         { new: true }
       );
 
+      // Update order
       const orderId = session.metadata?.orderId;
-      // 2️⃣ Update Order status + statusDates
       const order = await Order.findByIdAndUpdate(
         orderId,
         {
           status: "payment_processed",
-          "statusDates.paymentProcessedAt": new Date(), // ✅ update nested field
+          "statusDates.payment_processed": new Date(),
         },
         { new: true }
-      ).populate({
-        path: "items.productId",
-        select: "name price image", // populate product info
-      });
+      ).populate("items.productId");
+
+      // 🔹 Transfer to sellers
+      if (session.metadata?.sellers) {
+        const sellers = JSON.parse(session.metadata.sellers);
+        for (const { stripeAccountId, amount, sellerId, orderId } of sellers) {
+          // ⚠️ Make sure amount is in cents
+          await stripe.transfers.create({
+            amount: Math.round(amount * 100),
+            currency: session.currency || "aed",
+            destination: stripeAccountId,
+            metadata: { orderId, sellerId },
+          });
+        }
+      }
 
       return res.status(200).json({
         success: true,
-        message: "Payment successful",
+        message: "Payment successful and transfers completed",
         session,
         payment,
         order,
       });
     }
 
-    res
-      .status(200)
-      .json({ success: false, message: "Payment not completed", session });
+    res.status(200).json({ success: false, message: "Payment not completed", session });
   } catch (error) {
     res.status(500).json({ success: false, message: (error as Error).message });
   }
 });
+
 
 // Create Default SuperAdmin if not exists
 export const createDefaultSuperAdmin = async () => {

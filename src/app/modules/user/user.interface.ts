@@ -44,5 +44,6 @@ export type TUser = {
   isPaidPlan?: boolean;
   subscribtionPlan?: "starter" |  "advance" | "starterYearly" | "advanceYearly";
   productAddedPowerQuantity?: 20 | 240 | "unlimited";
+  stripeAccountId?: string;
 
 };
