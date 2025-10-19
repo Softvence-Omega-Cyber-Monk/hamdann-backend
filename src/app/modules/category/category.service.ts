@@ -1,4 +1,4 @@
-import { uploadImgToCloudinary } from "../../utils/cloudinary";
+import { deleteFile, uploadImgToCloudinary } from "../../utils/cloudinary";
 import { TCategory } from "./category.interface";
 import { Category } from "./category.model";
 
@@ -6,18 +6,32 @@ export const CategoryService = {
   async createCategory(payload: TCategory, filePath?: string) {
     try {
       let imageUrl = payload.image || "";
-      console.log("image url ", imageUrl);
 
-      console.log("payload file path  ", payload, filePath);
+      console.log(
+        "Service received - payload:",
+        payload,
+        "filePath:",
+        filePath
+      );
 
       // If image file exists, upload to Cloudinary
       if (filePath) {
+        // Generate a unique name for the image
+        const imageName = `category-${Date.now()}-${Math.random()
+          .toString(36)
+          .substring(7)}`;
+
         const uploadResult = await uploadImgToCloudinary(
-          payload.name,
+          imageName, // Use generated name instead of category name
           filePath,
           "categories"
         );
         imageUrl = uploadResult.secure_url;
+      }
+
+      // Validate that we have an image URL
+      if (!imageUrl) {
+        throw new Error("Category image is required");
       }
 
       const category = new Category({
@@ -28,6 +42,14 @@ export const CategoryService = {
       return await category.save();
     } catch (error: any) {
       console.error("Error in createCategory:", error);
+
+      // Clean up file if upload failed
+      if (filePath) {
+        await deleteFile(filePath).catch((cleanupError) =>
+          console.error("File cleanup error:", cleanupError)
+        );
+      }
+
       throw new Error(error.message || "Failed to create category");
     }
   },

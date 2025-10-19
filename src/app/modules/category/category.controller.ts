@@ -21,17 +21,21 @@ export const CategoryController = {
           .json({ success: false, message: "Category name is required" });
       }
 
-      // Construct image path
-      const imagePath = file
-        ? `/uploads/${file.filename}`
-        : sanitizedBody.img || "";
+      // If no file uploaded but image URL provided in body
+      if (!file && !sanitizedBody.img) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Category image is required" });
+      }
 
-      const categoryData : any = { name, image: imagePath };
+      console.log("Uploaded file:", file);
 
-      console.log('cate', categoryData)
-  
-
-      const category = await CategoryService.createCategory(req.body,imagePath);
+      // Pass the actual file path to the service
+      const filePath = file ? file.path : undefined;
+      const category = await CategoryService.createCategory(
+        { name, image: sanitizedBody.img }, // payload
+        filePath // file path for upload
+      );
 
       res.status(201).json({
         success: true,
