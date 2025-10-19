@@ -10,3 +10,16 @@ router.put("/update/:id", CategoryController.update);
 router.delete("/delete/:id", CategoryController.delete);
 
 export const categoryRoute = router;
+
+
+
+
+
+
+
+
+
+
+
+
+

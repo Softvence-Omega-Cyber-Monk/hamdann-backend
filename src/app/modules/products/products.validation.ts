@@ -10,7 +10,7 @@ export const ProductSchema = z.object({
   userId: z.string().min(1, "User ID is required"),
   name: z.string().min(2, "Product name must be at least 2 characters"),
   sku: z.string().min(1, "SKU is required"),
-  category: z.enum(["Fashion", "Food", "Beauty", "Perfume"]),
+  category: z.string(),
   brand: z.string().optional(),
   shopName: z.string().optional().nullable(),
   weight: z.number().optional(),

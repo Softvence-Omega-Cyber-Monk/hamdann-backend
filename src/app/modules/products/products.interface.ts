@@ -6,7 +6,7 @@ export interface IProduct {
   userId: Types.ObjectId;
   name: string;
   sku: string;
-  category: "Fashion" | "Food" | "Beauty" | "Perfume";
+  category: string,
   brand?: string;
   shopName?: string | null;
   weight?: number;
