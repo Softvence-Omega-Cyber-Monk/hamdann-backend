@@ -42,12 +42,14 @@ const OrderItemSchema = new mongoose_1.Schema({
     image: { type: String },
 }, { _id: false });
 const OrderStatusDatesSchema = new mongoose_1.Schema({
-    placedAt: { type: Date },
-    paymentProcessedAt: { type: Date },
-    shippedAt: { type: Date },
-    outForDeliveryAt: { type: Date },
-    deliveredAt: { type: Date },
-    cancelledAt: { type: Date },
+    placed: { type: Date },
+    payment_processed: { type: Date },
+    shipped: { type: Date },
+    out_for_delivery: { type: Date },
+    delivered: { type: Date },
+    cancelled: { type: Date },
+    return_requested: { type: Date },
+    returned: { type: Date },
 }, { _id: false });
 const ShippingAddressSchema = new mongoose_1.Schema({
     fullName: { type: String, required: true },
@@ -101,7 +103,7 @@ const OrderSchema = new mongoose_1.Schema({
             "delivered",
             "cancelled",
             "return_requested",
-            "returned"
+            "returned",
         ],
         default: "placed",
     },
@@ -111,7 +113,7 @@ const OrderSchema = new mongoose_1.Schema({
     },
     statusDates: {
         type: OrderStatusDatesSchema,
-        default: { placedAt: new Date() },
+        default: () => ({ placed: new Date() }),
     },
     shippingAddress: { type: ShippingAddressSchema, required: true },
 }, { timestamps: true });

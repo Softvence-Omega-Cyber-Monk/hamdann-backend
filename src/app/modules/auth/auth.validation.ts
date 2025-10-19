@@ -5,7 +5,8 @@ import { z } from "zod";
 
 const login_validation = z.object({
     email: z.string({ message: "Email is required" }),
-    password: z.string({ message: "Email is required" })
+    password: z.string({ message: "Email is required" }),
+    deviceToken: z.string({message: 'Device token is required'})
 })
 
 const changePassword = z.object({

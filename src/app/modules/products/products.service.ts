@@ -42,6 +42,8 @@ const createProductService = async (
 ) => {
   const { userId } = payload;
 
+  console.log('product', payload)
+
   const exitUser = await User_Model.findById({ _id: userId });
   if (!exitUser) {
     throw new Error("User not found");

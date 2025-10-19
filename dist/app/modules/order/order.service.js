@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OrderService = void 0;
+exports.OrderService = exports.updateOrderStatus = void 0;
 const order_model_1 = require("./order.model");
 const mongoose_1 = require("mongoose");
 const products_model_1 = require("../products/products.model");
@@ -118,7 +118,44 @@ const updateOrder = (orderId, updateData) => __awaiter(void 0, void 0, void 0, f
         throw new Error(`Failed to update order: ${error.message}`);
     }
 });
+// Update Order Status
+const updateOrderStatus = (orderId, status) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!mongoose_1.Types.ObjectId.isValid(orderId)) {
+        throw new Error("Invalid order ID");
+    }
+    try {
+        // ✅ Find existing order first (for validation)
+        const existingOrder = yield order_model_1.Order.findById(orderId).populate("userId");
+        if (!existingOrder) {
+            throw new Error("Order not found");
+        }
+        // ✅ Validate status transition (example: only cancel if placed)
+        if (status === "cancelled" && existingOrder.status !== "placed") {
+            throw new Error(`Order cannot be cancelled because it is already "${existingOrder.status}".`);
+        }
+        // ✅ Prepare the dynamic update for statusDates
+        const statusDateField = `statusDates.${status}`;
+        const updateData = {
+            status,
+            [statusDateField]: new Date(),
+        };
+        // ✅ Perform the update
+        const updatedOrder = yield order_model_1.Order.findOneAndUpdate({ _id: orderId }, { $set: updateData }, { new: true } // return the updated document
+        ).populate("userId");
+        if (!updatedOrder) {
+            throw new Error("Failed to update order status");
+        }
+        // ✅ Send user notification
+        yield (0, notificationHelper_1.sendNotification)(updatedOrder.userId._id.toString(), "📦 Order Status Updated", `Your order #${updatedOrder.orderNumber} status has been updated to "${status}".`);
+        return updatedOrder;
+    }
+    catch (error) {
+        throw new Error(`Failed to update order status: ${error.message}`);
+    }
+});
+exports.updateOrderStatus = updateOrderStatus;
 const getCurrentOrdersService = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("hit hit ---------------");
     const currentStatuses = [
         "placed",
         "payment_processed",
@@ -128,7 +165,10 @@ const getCurrentOrdersService = (userId) => __awaiter(void 0, void 0, void 0, fu
     const orders = yield order_model_1.Order.find({
         userId,
         status: { $in: currentStatuses },
-    }).sort({ createdAt: -1 });
+    })
+        .sort({ createdAt: -1 })
+        .populate("items.productId", "name ");
+    console.log("orders ", orders);
     return orders;
 });
 // 🟣 Get previous (completed/cancelled) orders
@@ -137,7 +177,9 @@ const getPreviousOrdersService = (userId) => __awaiter(void 0, void 0, void 0, f
     const orders = yield order_model_1.Order.find({
         userId,
         status: { $in: previousStatuses },
-    }).sort({ createdAt: -1 });
+    })
+        .sort({ createdAt: -1 })
+        .populate("items.productId", "name ");
     return orders;
 });
 // Add this to your existing order.service.ts
@@ -220,60 +262,135 @@ const getAdminStatisticsService = () => __awaiter(void 0, void 0, void 0, functi
             : "Failed to fetch admin statistics");
     }
 });
-const getOrderStatusCountsService = (userId) => __awaiter(void 0, void 0, void 0, function* () {
+// const getOrderStatusCountsService = async (
+//   userId: string
+// ): Promise<IOrderStatusData> => {
+//   // Check if user exists and is a seller
+//   const existingUser = await User_Model.findById(userId);
+//   if (!existingUser) {
+//     throw new Error("User not found");
+//   }
+//   if (existingUser.role !== "Seller") {
+//     throw new Error("Only seller can access this data");
+//   }
+//   try {
+//     // Get counts and order lists in parallel
+//     const [
+//       newOrdersCount,
+//       processingCount,
+//       completedCount,
+//       newOrdersList,
+//       processingOrdersList,
+//       completedOrdersList,
+//     ] = await Promise.all([
+//       // Counts
+//       Order.countDocuments({
+//         userId,
+//         status: "placed",
+//       }),
+//       Order.countDocuments({
+//         userId,
+//         status: {
+//           $in: ["payment_processed", "shipped", "out_for_delivery"],
+//         },
+//       }),
+//       Order.countDocuments({
+//         userId,
+//         status: "delivered",
+//       }),
+//       // Order Lists
+//       Order.find({
+//         userId,
+//         status: "placed",
+//       })
+//         .populate("items.productId", "name price productImages")
+//         .sort({ createdAt: -1 }),
+//       Order.find({
+//         userId,
+//         status: {
+//           $in: ["payment_processed", "shipped", "out_for_delivery"],
+//         },
+//       })
+//         .populate("items.productId", "name price productImages")
+//         .sort({ createdAt: -1 }),
+//       Order.find({
+//         userId,
+//         status: "delivered",
+//       })
+//         .populate("items.productId", "name price productImages")
+//         .sort({ createdAt: -1 }),
+//     ]);
+//     return {
+//       counts: {
+//         newOrders: newOrdersCount,
+//         processing: processingCount,
+//         completed: completedCount,
+//       },
+//       newOrders: newOrdersList,
+//       processingOrders: processingOrdersList,
+//       completedOrders: completedOrdersList,
+//     };
+//   } catch (error) {
+//     console.error("Error in getOrderStatusCountsService:", error);
+//     throw new Error(
+//       error instanceof Error
+//         ? error.message
+//         : "Failed to fetch order status counts and lists"
+//     );
+//   }
+// };
+const getOrderStatusCountsBySellerService = (sellerId) => __awaiter(void 0, void 0, void 0, function* () {
     // Check if user exists and is a seller
-    const existingUser = yield user_schema_1.User_Model.findById(userId);
-    if (!existingUser) {
+    const existingUser = yield user_schema_1.User_Model.findById(sellerId);
+    if (!existingUser)
         throw new Error("User not found");
-    }
-    if (existingUser.role !== "Seller") {
+    if (existingUser.role !== "Seller")
         throw new Error("Only seller can access this data");
-    }
+    const sellerObjectId = new mongoose_1.Types.ObjectId(sellerId);
     try {
-        // Get counts and order lists in parallel
-        const [newOrdersCount, processingCount, completedCount, newOrdersList, processingOrdersList, completedOrdersList,] = yield Promise.all([
-            // Counts
-            order_model_1.Order.countDocuments({
-                userId,
-                status: "placed",
-            }),
-            order_model_1.Order.countDocuments({
-                userId,
-                status: {
-                    $in: ["payment_processed", "shipped", "out_for_delivery"],
+        const statuses = {
+            newOrders: ["placed"],
+            processing: ["payment_processed", "shipped", "out_for_delivery"],
+            completed: ["delivered"],
+        };
+        // Helper function to fetch orders for a given status
+        const fetchOrders = (statusArray) => __awaiter(void 0, void 0, void 0, function* () {
+            return order_model_1.Order.aggregate([
+                { $unwind: "$items" },
+                {
+                    $lookup: {
+                        from: "products",
+                        localField: "items.productId",
+                        foreignField: "_id",
+                        as: "product",
+                    },
                 },
-            }),
-            order_model_1.Order.countDocuments({
-                userId,
-                status: "delivered",
-            }),
-            // Order Lists
-            order_model_1.Order.find({
-                userId,
-                status: "placed",
-            })
-                .populate("items.productId", "name price productImages")
-                .sort({ createdAt: -1 }),
-            order_model_1.Order.find({
-                userId,
-                status: {
-                    $in: ["payment_processed", "shipped", "out_for_delivery"],
+                { $unwind: "$product" },
+                { $match: { "product.userId": sellerObjectId, status: { $in: statusArray } } },
+                {
+                    $group: {
+                        _id: "$_id",
+                        orderNumber: { $first: "$orderNumber" },
+                        status: { $first: "$status" },
+                        contactInfo: { $first: "$contactInfo" },
+                        createdAt: { $first: "$createdAt" },
+                        items: { $push: "$items" },
+                        totalAmount: { $first: "$totalAmount" },
+                    },
                 },
-            })
-                .populate("items.productId", "name price productImages")
-                .sort({ createdAt: -1 }),
-            order_model_1.Order.find({
-                userId,
-                status: "delivered",
-            })
-                .populate("items.productId", "name price productImages")
-                .sort({ createdAt: -1 }),
+                { $sort: { createdAt: -1 } },
+            ]);
+        });
+        const [newOrdersList, processingOrdersList, completedOrdersList] = yield Promise.all([
+            fetchOrders(statuses.newOrders),
+            fetchOrders(statuses.processing),
+            fetchOrders(statuses.completed),
         ]);
         return {
             counts: {
-                newOrders: newOrdersCount,
-                processing: processingCount,
-                completed: completedCount,
+                newOrders: newOrdersList.length,
+                processing: processingOrdersList.length,
+                completed: completedOrdersList.length,
             },
             newOrders: newOrdersList,
             processingOrders: processingOrdersList,
@@ -281,10 +398,8 @@ const getOrderStatusCountsService = (userId) => __awaiter(void 0, void 0, void 0
         };
     }
     catch (error) {
-        console.error("Error in getOrderStatusCountsService:", error);
-        throw new Error(error instanceof Error
-            ? error.message
-            : "Failed to fetch order status counts and lists");
+        console.error("Error in getOrderStatusCountsBySellerService:", error);
+        throw new Error(error instanceof Error ? error.message : "Failed to fetch order status counts and lists");
     }
 });
 const getOrderStatusSummaryService = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -462,119 +577,182 @@ const getProductListWithStatusBySellerIdService = (sellerId_1, ...args_1) => __a
         }
     }
     const skip = (page - 1) * limit;
-    const orders = yield order_model_1.Order.find(filter)
-        .sort({ createdAt: -1 }) // latest orders first
+    // Fetch orders with populated products
+    const ordersWithProducts = yield order_model_1.Order.find(status
+        ? status === "pending"
+            ? { status: { $in: ["placed", "payment_processed", "out_for_delivery", "pending"] } }
+            : { status }
+        : {})
+        .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
+        .populate("items.productId", "name userId")
         .exec();
-    const total = yield order_model_1.Order.countDocuments(filter);
+    // Filter orders where at least one product belongs to the seller
+    const filteredOrders = ordersWithProducts.filter((order) => order.items.some((item) => { var _a; return item.productId && ((_a = item.productId.userId) === null || _a === void 0 ? void 0 : _a.toString()) === sellerId; }));
+    // Count total orders for pagination
+    const allOrders = yield order_model_1.Order.find(status
+        ? status === "pending"
+            ? { status: { $in: ["placed", "payment_processed", "out_for_delivery", "pending"] } }
+            : { status }
+        : {}).populate("items.productId", "userId");
+    const total = allOrders.filter((order) => order.items.some((item) => { var _a; return item.productId && ((_a = item.productId.userId) === null || _a === void 0 ? void 0 : _a.toString()) === sellerId; })).length;
     return {
-        orders,
+        orders: filteredOrders,
         total,
         page,
         pages: Math.ceil(total / limit),
     };
 });
-// Get recent orders for seller - userId IS the sellerId
-const getRecentOrdersForSellerService = (userId_1, ...args_1) => __awaiter(void 0, [userId_1, ...args_1], void 0, function* (userId, page = 1, limit = 10) {
-    var _a, _b, _c;
-    if (!mongoose_1.Types.ObjectId.isValid(userId)) {
-        throw new Error("Invalid user ID");
-    }
+const getRecentOrdersForSellerService = (sellerId_1, ...args_1) => __awaiter(void 0, [sellerId_1, ...args_1], void 0, function* (sellerId, page = 1, limit = 10) {
+    const currentPage = Math.max(1, page);
+    const currentLimit = Math.max(1, limit);
+    const skip = (currentPage - 1) * currentLimit;
+    // Fetch orders with populated products
+    const ordersWithProducts = yield order_model_1.Order.find()
+        .populate({
+        path: "items.productId",
+        select: "name userId",
+    })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(currentLimit)
+        .exec();
+    // Filter orders safely (ignore null products)
+    const filteredOrders = ordersWithProducts.filter((order) => order.items.some((item) => { var _a; return item.productId && ((_a = item.productId.userId) === null || _a === void 0 ? void 0 : _a.toString()) === sellerId; }));
+    // Count total orders safely
+    const allOrders = yield order_model_1.Order.find().populate({
+        path: "items.productId",
+        select: "userId",
+    });
+    const totalOrders = allOrders.filter((order) => order.items.some((item) => { var _a; return item.productId && ((_a = item.productId.userId) === null || _a === void 0 ? void 0 : _a.toString()) === sellerId; })).length;
+    const totalPages = Math.ceil(totalOrders / currentLimit);
+    return {
+        orders: filteredOrders,
+        pagination: {
+            currentPage,
+            totalPages,
+            totalOrders,
+            hasNext: currentPage < totalPages,
+            hasPrev: currentPage > 1,
+        },
+    };
+});
+const getSellerStatisticsService = (sellerId) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const skip = (page - 1) * limit;
-        const aggregationPipeline = [
-            // Match orders where userId = sellerId
-            { $match: { userId: new mongoose_1.Types.ObjectId(userId) } },
-            // Lookup product details for items
-            {
-                $lookup: {
-                    from: "products",
-                    localField: "items.productId",
-                    foreignField: "_id",
-                    as: "productDetails"
-                }
-            },
-            // Sort by most recent
-            { $sort: { createdAt: -1 } },
-            // Facet for pagination
-            {
-                $facet: {
-                    metadata: [{ $count: "totalCount" }],
-                    data: [
-                        { $skip: skip },
-                        { $limit: limit },
-                        // Project final format
-                        {
-                            $project: {
-                                orderNumber: 1,
-                                status: 1,
-                                totalAmount: 1,
-                                currency: 1,
-                                createdAt: 1,
-                                items: {
-                                    $map: {
-                                        input: "$items",
-                                        as: "item",
-                                        in: {
-                                            name: {
-                                                $let: {
-                                                    vars: {
-                                                        matchedProduct: {
-                                                            $arrayElemAt: [
-                                                                {
-                                                                    $filter: {
-                                                                        input: "$productDetails",
-                                                                        as: "product",
-                                                                        cond: { $eq: ["$$product._id", "$$item.productId"] }
-                                                                    }
-                                                                },
-                                                                0
-                                                            ]
-                                                        }
-                                                    },
-                                                    in: { $ifNull: ["$$matchedProduct.name", "Product"] }
-                                                }
-                                            },
-                                            quantity: "$$item.quantity",
-                                            price: "$$item.price",
-                                            total: { $multiply: ["$$item.price", "$$item.quantity"] }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    ]
-                }
-            }
-        ];
-        const result = yield order_model_1.Order.aggregate(aggregationPipeline);
-        const orders = ((_a = result[0]) === null || _a === void 0 ? void 0 : _a.data) || [];
-        const totalCount = ((_c = (_b = result[0]) === null || _b === void 0 ? void 0 : _b.metadata[0]) === null || _c === void 0 ? void 0 : _c.totalCount) || 0;
-        const totalPages = Math.ceil(totalCount / limit);
-        // Format response
-        const formattedOrders = orders.map((order) => ({
-            orderNumber: order.orderNumber,
-            status: order.status,
-            date: order.createdAt,
-            items: order.items,
-            totalAmount: order.totalAmount,
-            currency: order.currency
+        if (!mongoose_1.Types.ObjectId.isValid(sellerId)) {
+            throw new Error("Invalid seller ID");
+        }
+        const sellerObjectId = new mongoose_1.Types.ObjectId(sellerId);
+        // Fetch all orders with populated products
+        const allOrders = yield order_model_1.Order.find()
+            .populate({
+            path: "items.productId",
+            select: "name userId price",
+        })
+            .exec();
+        // Filter only orders that contain at least one product by this seller
+        const sellerOrders = allOrders.filter((order) => order.items.some((item) => {
+            var _a;
+            return item.productId &&
+                ((_a = item.productId.userId) === null || _a === void 0 ? void 0 : _a.toString()) === sellerId;
         }));
+        if (sellerOrders.length === 0) {
+            return {
+                totalRevenue: 0,
+                totalOrders: 0,
+                conversionRate: 0,
+                productsSold: 0,
+                averageOrderValue: 0,
+            };
+        }
+        // ✅ Filter delivered orders
+        const deliveredOrders = sellerOrders.filter((order) => order.status === "delivered");
+        // ✅ Calculate total revenue (for delivered orders, seller’s items only)
+        const totalRevenue = deliveredOrders.reduce((sum, order) => {
+            const sellerItems = order.items.filter((item) => {
+                var _a;
+                return item.productId &&
+                    ((_a = item.productId.userId) === null || _a === void 0 ? void 0 : _a.toString()) === sellerId;
+            });
+            const orderRevenue = sellerItems.reduce((subtotal, item) => subtotal + item.quantity * item.productId.price, 0);
+            return sum + orderRevenue;
+        }, 0);
+        // ✅ Calculate total products sold (for delivered orders)
+        const productsSold = deliveredOrders.reduce((sum, order) => {
+            const sellerItems = order.items.filter((item) => {
+                var _a;
+                return item.productId &&
+                    ((_a = item.productId.userId) === null || _a === void 0 ? void 0 : _a.toString()) === sellerId;
+            });
+            return (sum +
+                sellerItems.reduce((itemSum, item) => itemSum + item.quantity, 0));
+        }, 0);
+        // ✅ Average Order Value (based on seller's delivered orders)
+        const averageOrderValue = deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0;
+        // ✅ Conversion rate = (delivered / total seller orders) × 100
+        const conversionRate = (deliveredOrders.length / sellerOrders.length) * 100;
         return {
-            success: true,
-            data: formattedOrders,
-            pagination: {
-                currentPage: page,
-                totalPages,
-                totalOrders: totalCount,
-                hasNext: page < totalPages,
-                hasPrev: page > 1
-            }
+            totalRevenue: Number(totalRevenue.toFixed(2)),
+            totalOrders: sellerOrders.length,
+            conversionRate: Number(conversionRate.toFixed(2)),
+            productsSold,
+            averageOrderValue: Number(averageOrderValue.toFixed(2)),
         };
     }
     catch (error) {
-        throw new Error(`Failed to fetch seller orders: ${error.message}`);
+        console.error("Error in getSellerStatisticsService:", error);
+        throw new Error(error instanceof Error
+            ? error.message
+            : "Failed to fetch seller statistics");
+    }
+});
+const getSellerOrderStatisticsService = (sellerId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
+    try {
+        if (!mongoose_1.Types.ObjectId.isValid(sellerId)) {
+            throw new Error("Invalid seller ID");
+        }
+        const sellerObjectId = new mongoose_1.Types.ObjectId(sellerId);
+        // Fetch all orders that contain at least one product belonging to the seller
+        const orders = yield order_model_1.Order.find()
+            .populate({
+            path: "items.productId",
+            select: "userId price",
+        })
+            .exec();
+        // Filter orders related to this seller
+        const sellerOrders = orders.filter((order) => order.items.some((item) => {
+            var _a;
+            return item.productId &&
+                ((_a = item.productId.userId) === null || _a === void 0 ? void 0 : _a.toString()) === sellerId;
+        }));
+        const totalOrders = sellerOrders.length;
+        // Count pending orders
+        const pendingOrders = sellerOrders.filter((order) => ["placed", "payment_processed", "shipped", "out_for_delivery"].includes(order.status)).length;
+        // Count returned orders
+        const returnedOrders = sellerOrders.filter((order) => order.status === "returned").length;
+        // Calculate total sales (sum of item prices * quantity for delivered orders)
+        let totalSales = 0;
+        for (const order of sellerOrders) {
+            if (order.status === "delivered") {
+                for (const item of order.items) {
+                    const product = item.productId;
+                    if (((_a = product === null || product === void 0 ? void 0 : product.userId) === null || _a === void 0 ? void 0 : _a.toString()) === sellerId) {
+                        totalSales += item.price * item.quantity;
+                    }
+                }
+            }
+        }
+        return {
+            totalOrders,
+            pendingOrders,
+            totalSales: Number(totalSales.toFixed(2)),
+            returnedOrders,
+        };
+    }
+    catch (error) {
+        throw new Error(`Failed to get seller order statistics: ${error.message}`);
     }
 });
 exports.OrderService = {
@@ -582,14 +760,17 @@ exports.OrderService = {
     getAllOrders,
     getOrderById,
     updateOrder,
+    updateOrderStatus: exports.updateOrderStatus,
     getCurrentOrdersService,
     getPreviousOrdersService,
     getUserOrderStatistics,
     getAdminStatisticsService,
-    getOrderStatusCountsService,
+    getOrderStatusCountsBySellerService,
     getOrderStatusSummaryService,
     getActivityListService,
     getUserStatisticsService,
     getProductListWithStatusBySellerIdService,
     getRecentOrdersForSellerService,
+    getSellerStatisticsService,
+    getSellerOrderStatisticsService,
 };

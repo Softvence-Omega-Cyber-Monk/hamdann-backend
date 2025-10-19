@@ -146,12 +146,7 @@ const getNewArrivalsProductsService = (req, res) => __awaiter(void 0, void 0, vo
 });
 const getBestSellingProductsService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const { page, limit } = req.query;
-        // If no query parameters provided, show all products (no pagination)
-        const showAll = Object.keys(req.query).length === 0;
-        const pageNumber = page ? parseInt(page) : 1;
-        const limitNumber = showAll ? 0 : (limit ? parseInt(limit) : 10);
-        const product = yield products_service_1.productService.getBestSellingProductsService(pageNumber, limitNumber);
+        const product = yield products_service_1.productService.getBestSellingProductsService();
         if (!product) {
             return res
                 .status(404)
@@ -163,19 +158,30 @@ const getBestSellingProductsService = (req, res) => __awaiter(void 0, void 0, vo
         res.status(500).json({ success: false, message: error.message });
     }
 });
-const getSellerBestSellingProductsService = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userId } = req.params;
+const getSellerBestSellingProductsController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const product = yield products_service_1.productService.getSellerBestSellingProductsService(userId);
-        if (!product) {
-            return res
-                .status(404)
-                .json({ success: false, message: "Products not found" });
+        const { userId } = req.params;
+        const { page, limit, sea } = req.query;
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: "User ID is required"
+            });
         }
-        res.status(200).json({ success: true, data: product });
+        const pageNumber = page ? parseInt(page) : null;
+        const limitNumber = limit ? parseInt(limit) : null;
+        const result = yield products_service_1.productService.getSellerBestSellingProductsService(userId, {
+            page: pageNumber,
+            limit: limitNumber
+        });
+        res.status(200).json(result);
     }
     catch (error) {
-        res.status(500).json({ success: false, message: error.message });
+        console.error("Error fetching seller best selling products:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Failed to fetch best selling products"
+        });
     }
 });
 const getProductStats = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -357,7 +363,7 @@ exports.productController = {
     getProductByCategoryService,
     getNewArrivalsProductsService,
     getBestSellingProductsService,
-    getSellerBestSellingProductsService,
+    getSellerBestSellingProductsController,
     getProductStats,
     addReviewToProduct: exports.addReviewToProduct,
     getInventoryStatus,

@@ -43,6 +43,7 @@ export const create_user = z
       .optional(),
       isPaidPlan: z.boolean().optional(),
       subscribtionPlan: z.enum(["basic", "professional", "premium"]).optional(),
+      deviceToken: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",

@@ -8,6 +8,6 @@ const router = (0, express_1.Router)();
 router.post("/add", wishListedProducts_controller_1.createOrUpdateWishlist);
 // Get all promotion
 router.get("/get-single-user/:userId", wishListedProducts_controller_1.getUserWishlist);
-router.get("/check/isWishlist", wishListedProducts_controller_1.checkProductWishlistStatus);
+router.post("/check/isWishlist", wishListedProducts_controller_1.checkProductWishlistStatus);
 router.delete("/remove", wishListedProducts_controller_1.removeWishlistItems);
 exports.withlistProductsRoutes = router;

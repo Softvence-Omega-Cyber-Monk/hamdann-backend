@@ -10,11 +10,11 @@ router.post("/create", promotion_multer_1.promotionUpload.single("promotionImage
 // Get all promotion
 router.get("/getAll", promotion_controller_1.getAllPromotions);
 // Get single promotion
-router.get("/:id", promotion_controller_1.getPromotion);
+router.get("/single/:id", promotion_controller_1.getPromotion);
 // ✅ Update promotion by ID (optional image upload)
 router.put("/update/:id", promotion_multer_1.promotionUpload.single("promotionImage"), promotion_controller_1.updatePromotion);
 // Pause a promotion by ID
 router.patch("/pause/:id", promotion_controller_1.pausePromotion);
-// In your routes file
-router.get('/marketing-promotions/:userId', promotion_controller_1.getSellerPromotions);
+// Get seller-specific promotions
+router.get("/singl_user_promotioin/:userId", promotion_controller_1.getSellerPromotions);
 exports.PromotionRoute = router;

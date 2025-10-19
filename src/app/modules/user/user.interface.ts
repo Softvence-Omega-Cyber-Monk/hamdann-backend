@@ -44,6 +44,8 @@ export type TUser = {
   isPaidPlan?: boolean;
   subscribtionPlan?: "starter" |  "advance" | "starterYearly" | "advanceYearly";
   productAddedPowerQuantity?: 20 | 240 | "unlimited";
+  deviceToken?:string , 
+  deviceTokens?: string[]
   stripeAccountId?: string;
 
 };

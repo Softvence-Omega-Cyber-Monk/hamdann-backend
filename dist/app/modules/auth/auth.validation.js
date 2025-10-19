@@ -5,7 +5,8 @@ const zod_1 = require("zod");
 // Zod schema matching TAccount / authSchema
 const login_validation = zod_1.z.object({
     email: zod_1.z.string({ message: "Email is required" }),
-    password: zod_1.z.string({ message: "Email is required" })
+    password: zod_1.z.string({ message: "Email is required" }),
+    deviceToken: zod_1.z.string({ message: 'Device token is required' })
 });
 const changePassword = zod_1.z.object({
     oldPassword: zod_1.z.string({ message: "Old Password is required" }),
