@@ -87,6 +87,7 @@ const UserSchema = new Schema<TUser>(
     },
     deviceToken: { type: String, default: null }, // for single device plans
     deviceTokens: { type: [String], default: [] }, // for multiple device plans
+    stripeAccountId: { type: String },
   },
   {
     versionKey: false,

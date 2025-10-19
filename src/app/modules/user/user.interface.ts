@@ -46,5 +46,6 @@ export type TUser = {
   productAddedPowerQuantity?: 20 | 240 | "unlimited";
   deviceToken?:string , 
   deviceTokens?: string[]
+  stripeAccountId?: string;
 
 };
