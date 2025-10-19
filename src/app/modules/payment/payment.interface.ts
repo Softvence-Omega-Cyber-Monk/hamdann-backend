@@ -6,7 +6,7 @@ export interface IPayment extends Document {
 
   // For subscription payments
   userId?: ObjectId;
-  plan?: "basic" | "professional" | "premium";
+  plan?: "starter" | "advance" | "starterYearly" | "advanceYearly";
   isSubscription?: boolean;
 
   // Common fields
