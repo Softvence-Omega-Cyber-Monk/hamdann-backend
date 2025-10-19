@@ -15,6 +15,9 @@ import { isAccountExist } from "../../utils/isAccountExist";
 // login user
 
 const login_user_from_db = async (payload: TLoginPayload) => {
+
+  console.log('device token ', payload?.deviceToken)
+
   // Find user by email and not deleted
   const user = await User_Model.findOne({
     email: payload.email,
@@ -55,7 +58,7 @@ const login_user_from_db = async (payload: TLoginPayload) => {
   );
 
 
-  console.log(' User role from service ',user.role, user._id)
+  // console.log(' User role from service ',user.role, user._id)
   return {
     accessToken,
     refreshToken,

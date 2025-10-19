@@ -16,6 +16,11 @@ const user_schema_1 = require("../user/user.schema");
 const mongoose_1 = require("mongoose");
 const createSupport = (supportData) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        // Check if userId exists in User model
+        const userExists = yield user_schema_1.User_Model.findById(supportData.userId);
+        if (!userExists) {
+            throw new Error("User not found");
+        }
         const support = new support_model_1.Support({
             userId: new mongoose_1.Types.ObjectId(supportData.userId),
             supportSubject: supportData.supportSubject,
@@ -89,6 +94,10 @@ const getSupportStats = () => __awaiter(void 0, void 0, void 0, function* () {
 // Create reply to support ticket
 const createReply = (supportId, replyData) => __awaiter(void 0, void 0, void 0, function* () {
     try {
+        const userExists = yield user_schema_1.User_Model.findById(replyData.userId);
+        if (!userExists) {
+            throw new Error("User not found");
+        }
         if (!mongoose_1.Types.ObjectId.isValid(supportId)) {
             throw new Error("Invalid support ID");
         }

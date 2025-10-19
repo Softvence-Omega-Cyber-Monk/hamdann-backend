@@ -47,7 +47,6 @@ const createCheckoutSessionService = (orderId) => __awaiter(void 0, void 0, void
     return session.url;
 });
 exports.createCheckoutSessionService = createCheckoutSessionService;
-// Subscription service
 const createSubscriptionSessionService = (userId, plan) => __awaiter(void 0, void 0, void 0, function* () {
     // 💰 Plan pricing
     const planPrices = {
@@ -56,16 +55,38 @@ const createSubscriptionSessionService = (userId, plan) => __awaiter(void 0, voi
         premium: 9999,
     };
     const amount = planPrices[plan];
+    let productAddedPowerQuantity;
+    if (plan === "basic") {
+        productAddedPowerQuantity = 50;
+    }
+    else if (plan === "professional") {
+        productAddedPowerQuantity = 200;
+    }
+    else {
+        productAddedPowerQuantity = "unlimited";
+    }
+    let updatedUser = null;
+    // ✅ Update user's paid plan
+    if (userId) {
+        updatedUser = yield user_schema_1.User_Model.findByIdAndUpdate(userId, {
+            isPaidPlan: true,
+            paidPlan: plan,
+            subscribtionPlan: plan,
+            productAddedPowerQuantity: productAddedPowerQuantity,
+        }, { new: true } // return updated user
+        );
+    }
     // ✅ Create Stripe Checkout Session
     const session = yield stripe_config_1.stripe.checkout.sessions.create({
         payment_method_types: ["card"],
-        mode: "payment", // not recurring (for simplicity)
+        mode: "payment",
         line_items: [
             {
                 price_data: {
                     currency: "AED",
                     product_data: {
                         name: `${plan.charAt(0).toUpperCase() + plan.slice(1)} Plan`,
+                        description: `Includes ${productAddedPowerQuantity} product slots`,
                     },
                     unit_amount: amount,
                 },
@@ -74,7 +95,11 @@ const createSubscriptionSessionService = (userId, plan) => __awaiter(void 0, voi
         ],
         success_url: `${configs_1.configs.jwt.front_end_url}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${configs_1.configs.jwt.front_end_url}/payment-failed`,
-        metadata: { userId, plan },
+        metadata: {
+            userId,
+            plan,
+            productAddedPowerQuantity: productAddedPowerQuantity.toString(),
+        },
     });
     // ✅ Store pending payment
     yield payment_model_1.Payment.create({
@@ -87,10 +112,16 @@ const createSubscriptionSessionService = (userId, plan) => __awaiter(void 0, voi
         paymentStatus: "pending",
         mode: "subscription",
     });
-    if (session) {
-        yield user_schema_1.User_Model.findByIdAndUpdate(userId, { isPaidPlan: true }, { new: true });
-    }
-    return session.url;
+    // ❌ REMOVE THIS - Payment won't be completed immediately
+    // const sessionV = await stripe.checkout.sessions.retrieve(session.id);
+    // if (sessionV.payment_status === "paid") {
+    //   ... user update logic
+    // }
+    // ✅ Return only session URL for frontend redirect
+    return {
+        sessionUrl: session.url,
+        sessionId: session.id,
+    };
 });
 exports.createSubscriptionSessionService = createSubscriptionSessionService;
 const verifySubscriptionPaymentService = (sessionId) => __awaiter(void 0, void 0, void 0, function* () {
@@ -100,12 +131,27 @@ const verifySubscriptionPaymentService = (sessionId) => __awaiter(void 0, void 0
     if (session.payment_status === "paid") {
         const userId = (_a = session.metadata) === null || _a === void 0 ? void 0 : _a.userId;
         const plan = (_b = session.metadata) === null || _b === void 0 ? void 0 : _b.plan;
+        let productAddedPowerQuantity;
+        if (plan === "basic") {
+            productAddedPowerQuantity = 50;
+        }
+        else if (plan === "professional") {
+            productAddedPowerQuantity = 200;
+        }
+        else {
+            productAddedPowerQuantity = "unlimited";
+        }
         // ✅ Update Payment status
         const payment = yield payment_model_1.Payment.findOneAndUpdate({ paymentIntentId: session.id }, { paymentStatus: "succeeded" }, { new: true });
         let updatedUser = null;
         // ✅ Update user's paid plan
         if (userId) {
-            updatedUser = yield user_schema_1.User_Model.findByIdAndUpdate(userId, { isPaidPlan: true, paidPlan: plan }, { new: true } // return updated user
+            updatedUser = yield user_schema_1.User_Model.findByIdAndUpdate(userId, {
+                isPaidPlan: true,
+                paidPlan: plan,
+                subscribtionPlan: plan,
+                productAddedPowerQuantity: productAddedPowerQuantity,
+            }, { new: true } // return updated user
             );
         }
         return {

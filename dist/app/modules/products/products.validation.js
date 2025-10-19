@@ -22,6 +22,9 @@ exports.ProductSchema = zod_1.z.object({
     description: zod_1.z.string().min(5, "Description must be at least 5 characters"),
     quantity: zod_1.z.number().min(0, "Quantity must be 0 or more").default(0),
     price: zod_1.z.number().positive("Price must be greater than 0"),
+    newPrice: zod_1.z.number().optional(),
+    discountType: zod_1.z.enum(["percentage", "fixed"]).optional().nullable(),
+    discountValue: zod_1.z.number().min(0).optional(),
     productImages: zod_1.z
         .array(zod_1.z.string().url("Must be a valid URL"))
         .min(1, "At least one image is required"),

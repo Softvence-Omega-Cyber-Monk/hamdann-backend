@@ -62,7 +62,10 @@ const UserSchema = new mongoose_1.Schema({
     subscribtionPlan: {
         type: String,
         enum: ["basic", "professional", "premium"],
-        default: "basic",
+    },
+    productAddedPowerQuantity: {
+        type: mongoose_1.Schema.Types.Mixed,
+        enum: [50, 200, "unlimited"],
     },
 }, {
     versionKey: false,

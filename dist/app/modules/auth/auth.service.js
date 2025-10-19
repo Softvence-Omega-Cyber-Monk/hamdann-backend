@@ -24,6 +24,7 @@ const mail_sender_1 = __importDefault(require("../../utils/mail_sender"));
 const isAccountExist_1 = require("../../utils/isAccountExist");
 // login user
 const login_user_from_db = (payload) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log('device token ', payload === null || payload === void 0 ? void 0 : payload.deviceToken);
     // Find user by email and not deleted
     const user = yield user_schema_1.User_Model.findOne({
         email: payload.email,

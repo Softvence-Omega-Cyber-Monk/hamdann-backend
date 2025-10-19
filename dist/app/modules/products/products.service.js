@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productService = exports.addProductReviewService = exports.createProductService = void 0;
+exports.productService = exports.addProductReviewService = void 0;
 const products_model_1 = require("./products.model");
 const order_model_1 = require("../order/order.model");
 const cloudinary_1 = require("../../utils/cloudinary");
@@ -43,6 +43,19 @@ const createProductService = (payload, imageInput) => __awaiter(void 0, void 0, 
     if (exitUser.role !== "Seller") {
         throw new Error("Only sellers can add products");
     }
+    if (exitUser.isPaidPlan === false) {
+        throw new Error("Please take any subscription");
+    }
+    if (!exitUser.productAddedPowerQuantity) {
+        throw new Error("Please subscribe to a plan to add products");
+    }
+    // Check if user has unlimited power or remaining power > 0
+    if (exitUser.productAddedPowerQuantity !== "unlimited") {
+        const currentProductCount = yield products_model_1.Product.countDocuments({ userId });
+        if (currentProductCount >= exitUser.productAddedPowerQuantity) {
+            throw new Error(`You have reached your product limit of ${exitUser.productAddedPowerQuantity}. Please upgrade your plan to add more products.`);
+        }
+    }
     const shopReviews = yield shopReview(userId);
     console.log("shopReviews ", shopReviews);
     let imageUrls = [];
@@ -58,6 +71,13 @@ const createProductService = (payload, imageInput) => __awaiter(void 0, void 0, 
     }
     const productPayload = Object.assign(Object.assign({}, payload), { shopName: ((_a = exitUser.businessInfo) === null || _a === void 0 ? void 0 : _a.businessName) || null, shopReviews: (_b = shopReviews[0]) === null || _b === void 0 ? void 0 : _b.averageRating, productImages: imageUrls });
     const product = yield products_model_1.Product.create(productPayload);
+    // Decrement productAddedPowerQuantity only if it's not "unlimited"
+    if (exitUser.productAddedPowerQuantity !== "unlimited") {
+        yield user_schema_1.User_Model.findByIdAndUpdate(userId, {
+            $inc: { productAddedPowerQuantity: -1 }
+        });
+        console.log(`Product added. Remaining power: ${exitUser.productAddedPowerQuantity - 1}`);
+    }
     // Notify all customers
     const customers = yield user_schema_1.User_Model.find({ role: "Buyer" });
     for (const buyer of customers) {
@@ -65,7 +85,6 @@ const createProductService = (payload, imageInput) => __awaiter(void 0, void 0, 
     }
     return product;
 });
-exports.createProductService = createProductService;
 const updateProductService = (id, payload) => __awaiter(void 0, void 0, void 0, function* () {
     // Handle multiple product images upload
     if (payload.productImagesFiles && payload.productImagesFiles.length > 0) {
@@ -157,10 +176,6 @@ const getSingleProductService = (id) => __awaiter(void 0, void 0, void 0, functi
     const product = yield products_model_1.Product.findById(id);
     return product;
 });
-// const getSingleUserProductService = async (userId: string) => {
-//   const product = await Product.find({ userId: userId });
-//   return product;
-// };
 const getSingleUserProductService = (userId_1, page_1, limit_1, ...args_1) => __awaiter(void 0, [userId_1, page_1, limit_1, ...args_1], void 0, function* (userId, page, limit, search = "") {
     const skip = (page - 1) * limit;
     // Build search query
@@ -224,16 +239,22 @@ const getNewArrivalsProductsService = () => __awaiter(void 0, void 0, void 0, fu
     }).sort({ createdAt: -1 });
     return newArrivals;
 });
-const getBestSellingProductsService = (page, limit) => __awaiter(void 0, void 0, void 0, function* () {
+const getBestSellingProductsService = () => __awaiter(void 0, void 0, void 0, function* () {
+    const bestSellingProducts = yield products_model_1.Product.find().sort({ salesCount: -1 }); // Sort by salesCount in descending order (highest first)
+    console.log("bestSellingProducts ", bestSellingProducts.length);
+    return bestSellingProducts;
+});
+const getSellerBestSellingProductsService = (userId_1, ...args_1) => __awaiter(void 0, [userId_1, ...args_1], void 0, function* (userId, options = {}) {
+    const { page, limit } = options;
     const skip = (page - 1) * limit;
     const [bestSellingProducts, totalCount] = yield Promise.all([
-        products_model_1.Product.find()
-            .sort({ salesCount: -1 }) // Sort by salesCount in descending order (highest first)
+        products_model_1.Product.find({ userId: userId })
+            .sort({ salesCount: -1 })
             .skip(skip)
-            .limit(limit)
-            .exec(),
-        products_model_1.Product.countDocuments()
+            .limit(limit),
+        products_model_1.Product.countDocuments({ userId: userId }),
     ]);
+    console.log("bestSellingProducts ", bestSellingProducts.length);
     const totalPages = Math.ceil(totalCount / limit);
     return {
         success: true,
@@ -243,17 +264,9 @@ const getBestSellingProductsService = (page, limit) => __awaiter(void 0, void 0,
             totalPages,
             totalProducts: totalCount,
             hasNext: page < totalPages,
-            hasPrev: page > 1
-        }
+            hasPrev: page > 1,
+        },
     };
-});
-const getSellerBestSellingProductsService = (userId) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log("userId in service ", userId);
-    const bestSellingProducts = yield products_model_1.Product.find({ userId: userId }).sort({
-        salesCount: -1,
-    }); // Sort by salesCount in descending order (highest first)
-    console.log("bestSellingProducts ", bestSellingProducts.length);
-    return bestSellingProducts;
 });
 const getProductStatsService = (userId) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -402,7 +415,7 @@ const updateProductQuantity = (productId, newQuantity) => __awaiter(void 0, void
         throw new Error("Quantity cannot be negative");
     }
     const updatedProduct = yield products_model_1.Product.findByIdAndUpdate(productId, {
-        quantity: newQuantity,
+        quantity: product.quantity + newQuantity,
         $inc: {
             salesCount: newQuantity < product.quantity ? product.quantity - newQuantity : 0,
         },
@@ -447,7 +460,7 @@ const getSingleProductStats = (productId) => __awaiter(void 0, void 0, void 0, f
     };
 });
 exports.productService = {
-    createProductService: exports.createProductService,
+    createProductService,
     updateProductService,
     getAllProductsService,
     getSingleProductService,

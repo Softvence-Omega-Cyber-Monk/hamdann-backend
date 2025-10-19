@@ -82,4 +82,5 @@ exports.update_user = zod_1.z.object({
         .optional(),
     profileImage: zod_1.z.string().optional(),
     businessLogo: zod_1.z.string().optional(),
+    subscribtionPlan: zod_1.z.enum(["basic", "professional", "premium"]).optional(),
 });

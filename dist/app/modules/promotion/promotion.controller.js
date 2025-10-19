@@ -14,38 +14,27 @@ const promotion_validation_1 = require("./promotion.validation");
 const promotion_service_1 = require("./promotion.service");
 const cloudinary_1 = require("cloudinary");
 const configs_1 = require("../../configs");
-// Configure Cloudinary
 cloudinary_1.v2.config({
     cloud_name: configs_1.configs.cloudinary.cloud_name,
     api_key: configs_1.configs.cloudinary.cloud_api_key,
     api_secret: configs_1.configs.cloudinary.cloud_api_secret,
 });
+// ✅ CREATE PROMOTION
 const createPromotion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
-        // Validate form-data
         const validatedData = promotion_validation_1.CreatePromotionSchema.parse(req.body);
         let imageUrl = "";
-        // Only upload if a file exists
         if ((_a = req.file) === null || _a === void 0 ? void 0 : _a.buffer) {
-            // console.log("Buffer", req.file?.buffer);
             const result = yield new Promise((resolve, reject) => {
                 var _a;
-                const stream = cloudinary_1.v2.uploader.upload_stream({ folder: "promotions" }, (error, result) => {
-                    if (error)
-                        reject(error);
-                    else
-                        resolve(result);
-                });
+                const stream = cloudinary_1.v2.uploader.upload_stream({ folder: "promotions" }, (error, result) => (error ? reject(error) : resolve(result)));
                 stream.end((_a = req.file) === null || _a === void 0 ? void 0 : _a.buffer);
             });
             imageUrl = result.secure_url;
         }
-        // Prepare data to save
         const dataToSave = Object.assign(Object.assign({}, validatedData), { startDate: new Date(validatedData.startDate), endDate: new Date(validatedData.endDate), promotionImage: imageUrl });
-        // Call service to create promotion
         const promotion = yield (0, promotion_service_1.createPromotionService)(dataToSave);
-        // console.log("Save data", promotion)
         res.status(201).json({ success: true, data: promotion });
     }
     catch (error) {
@@ -53,7 +42,7 @@ const createPromotion = (req, res) => __awaiter(void 0, void 0, void 0, function
     }
 });
 exports.createPromotion = createPromotion;
-// Get single promotion
+// ✅ GET SINGLE PROMOTION
 const getPromotion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -65,41 +54,32 @@ const getPromotion = (req, res) => __awaiter(void 0, void 0, void 0, function* (
     }
 });
 exports.getPromotion = getPromotion;
-// Get all promotions
+// ✅ GET ALL PROMOTIONS
 const getAllPromotions = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        console.log("Route hit");
-        const promotion = yield (0, promotion_service_1.getAllPromotionsService)();
-        res.status(200).json({ success: true, data: promotion });
+        const promotions = yield (0, promotion_service_1.getAllPromotionsService)();
+        res.status(200).json({ success: true, data: promotions });
     }
     catch (error) {
         res.status(500).json({ success: false, message: error.message });
     }
 });
 exports.getAllPromotions = getAllPromotions;
-// ✅ Update Promotion
+// ✅ UPDATE PROMOTION
 const updatePromotion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     try {
         const { id } = req.params;
-        // Validate incoming data
         const validatedData = promotion_validation_1.UpdatePromotionSchema.parse(req.body);
         let imageUrl;
-        // Upload new image if provided
-        if (req.file && ((_a = req.file) === null || _a === void 0 ? void 0 : _a.buffer)) {
+        if ((_a = req.file) === null || _a === void 0 ? void 0 : _a.buffer) {
             const result = yield new Promise((resolve, reject) => {
                 var _a;
-                const uploadStream = cloudinary_1.v2.uploader.upload_stream({ folder: "promotions" }, (error, result) => {
-                    if (error)
-                        reject(error);
-                    else
-                        resolve(result);
-                });
-                uploadStream.end((_a = req.file) === null || _a === void 0 ? void 0 : _a.buffer);
+                const upload = cloudinary_1.v2.uploader.upload_stream({ folder: "promotions" }, (error, result) => (error ? reject(error) : resolve(result)));
+                upload.end((_a = req.file) === null || _a === void 0 ? void 0 : _a.buffer);
             });
             imageUrl = result.secure_url;
         }
-        // Prepare update data — safely converting strings to Date
         const dataToUpdate = Object.assign(Object.assign(Object.assign(Object.assign({}, validatedData), (validatedData.startDate && {
             startDate: new Date(validatedData.startDate),
         })), (validatedData.endDate && {
@@ -113,14 +93,11 @@ const updatePromotion = (req, res) => __awaiter(void 0, void 0, void 0, function
         });
     }
     catch (error) {
-        res.status(400).json({
-            success: false,
-            message: error.message,
-        });
+        res.status(400).json({ success: false, message: error.message });
     }
 });
 exports.updatePromotion = updatePromotion;
-// Pause Promotion
+// ✅ PAUSE PROMOTION
 const pausePromotion = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { id } = req.params;
@@ -134,40 +111,23 @@ const pausePromotion = (req, res) => __awaiter(void 0, void 0, void 0, function*
         });
     }
     catch (error) {
-        res.status(400).json({
-            success: false,
-            message: error.message,
-        });
+        res.status(400).json({ success: false, message: error.message });
     }
 });
 exports.pausePromotion = pausePromotion;
+// ✅ GET PROMOTIONS BY SELLER
 const getSellerPromotions = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { userId } = req.params;
-        if (!userId) {
-            return res.status(400).json({
-                success: false,
-                message: "User ID is required"
-            });
-        }
+        if (!userId)
+            return res
+                .status(400)
+                .json({ success: false, message: "User ID is required" });
         const promotions = yield (0, promotion_service_1.getSellerPromotionsService)(userId);
-        if (!promotions || promotions.length === 0) {
-            return res.status(404).json({
-                success: false,
-                message: "No promotions found for this seller"
-            });
-        }
-        res.status(200).json({
-            success: true,
-            data: promotions
-        });
+        res.status(200).json({ success: true, data: promotions });
     }
     catch (error) {
-        console.error("Error fetching promotions:", error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
+        res.status(500).json({ success: false, message: error.message });
     }
 });
 exports.getSellerPromotions = getSellerPromotions;

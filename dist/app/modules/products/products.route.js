@@ -21,7 +21,7 @@ router.get("/getAll", products_controller_1.productController.getAllProducts);
 router.get("/getSingleCategory/:category", products_controller_1.productController.getProductByCategoryService);
 router.get("/getNewArrivals", products_controller_1.productController.getNewArrivalsProductsService);
 router.get("/getBestSelling", products_controller_1.productController.getBestSellingProductsService);
-router.get("/getSellerBestSelling/:userId", products_controller_1.productController.getSellerBestSellingProductsService);
+router.get("/getSellerBestSelling/:userId", products_controller_1.productController.getSellerBestSellingProductsController);
 router.put("/addReview/:productId", products_controller_1.productController.addReviewToProduct);
 router.get("/stats/:userId", products_controller_1.productController.getProductStats);
 // Inventory status

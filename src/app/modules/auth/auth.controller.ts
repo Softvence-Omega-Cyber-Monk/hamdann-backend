@@ -7,11 +7,13 @@ import httpStatus from 'http-status';
 
 
 const login_user = catchAsync(async (req, res) => {
-    console.log(' req body form controller ',req.body)
+
+    // console.log(' req body form controller ',req.body)
+    
     const result = await auth_services.login_user_from_db(req.body);
 
 
-    console.log(' login result from controller ',result)
+    // console.log(' login result from controller ',result)
     
     res.cookie('refreshToken', result.refreshToken, {
         secure: configs.env == 'production',
