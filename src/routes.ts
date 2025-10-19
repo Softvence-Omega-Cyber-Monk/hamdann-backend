@@ -10,6 +10,7 @@ import { paymentRoutes } from './app/modules/payment/payment.route'
 import { notificationRoutes } from './app/modules/notifications/notification.route';
 import { withlistProductsRoutes } from './app/modules/wishListedProducts/wishListedProducts.route';
 import { RequestRefundRoutes } from './app/modules/requestRefund/requestRefund.route'
+import { categoryRoute } from './app/modules/category/category.route';
 
 
 const appRouter = Router();
@@ -17,6 +18,7 @@ const appRouter = Router();
 const moduleRoutes = [
     { path: '/auth', route: authRoute },
     { path: "/user", route: userRoute },
+    { path: "/category", route: categoryRoute },
     { path: "/product", route: productRoutes },
     { path: "/cart", route: CartRoute },
     { path: "/order", route: OrderRoute },
