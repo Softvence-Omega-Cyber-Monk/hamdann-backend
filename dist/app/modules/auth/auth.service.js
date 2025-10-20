@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.auth_services = void 0;
+exports.auth_services = exports.logoutRemoveToken = exports.login_user_from_db = void 0;
 const app_error_1 = require("../../utils/app_error");
 const auth_schema_1 = require("./auth.schema");
 const http_status_1 = __importDefault(require("http-status"));
@@ -24,8 +24,8 @@ const mail_sender_1 = __importDefault(require("../../utils/mail_sender"));
 const isAccountExist_1 = require("../../utils/isAccountExist");
 // login user
 const login_user_from_db = (payload) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log('device token ', payload === null || payload === void 0 ? void 0 : payload.deviceToken);
-    // Find user by email and not deleted
+    console.log("device token:", payload.deviceToken);
+    // 1️⃣ Find the user
     const user = yield user_schema_1.User_Model.findOne({
         email: payload.email,
         isDeleted: false,
@@ -33,23 +33,41 @@ const login_user_from_db = (payload) => __awaiter(void 0, void 0, void 0, functi
     if (!user) {
         throw new app_error_1.AppError("User not found", http_status_1.default.NOT_FOUND);
     }
-    // Compare password
+    // 2️⃣ Check password
     const isPasswordMatch = yield bcrypt_1.default.compare(payload.password, user.password);
     if (!isPasswordMatch) {
         throw new app_error_1.AppError("Invalid password", http_status_1.default.UNAUTHORIZED);
     }
-    // Generate tokens
-    const accessToken = JWT_1.jwtHelpers.generateToken({
-        userId: user._id,
-        email: user.email,
-        role: user.role,
-    }, configs_1.configs.jwt.accessToken_secret, configs_1.configs.jwt.accessToken_expires);
-    const refreshToken = JWT_1.jwtHelpers.generateToken({
-        userId: user._id,
-        email: user.email,
-        role: user.role,
-    }, configs_1.configs.jwt.refreshToken_secret, configs_1.configs.jwt.refreshToken_expires);
-    console.log(' User role from service ', user.role, user._id);
+    // 3️⃣ Check device limit based on plan
+    const singleDevicePlans = ["starter", "starterYearly"];
+    const multiDevicePlans = ["advanced", "advancedYearly"];
+    if (singleDevicePlans.includes(user === null || user === void 0 ? void 0 : user.subscribtionPlan)) {
+        // Single-device restriction
+        if (user.deviceToken && user.deviceToken !== payload.deviceToken) {
+            throw new app_error_1.AppError("Your account is already logged in on another device. Please logout from that device first.", http_status_1.default.FORBIDDEN);
+        }
+        // Save new deviceToken if not set yet
+        if (!user.deviceToken) {
+            user.deviceToken = payload.deviceToken;
+            yield user.save();
+        }
+    }
+    // 4️⃣ For multi-device plans, optionally track devices (optional)
+    if (multiDevicePlans.includes(user.subscribtionPlan)) {
+        if (!user.deviceTokens)
+            user.deviceTokens = [];
+        // Store up to 5 recent devices
+        if (!user.deviceTokens.includes(payload.deviceToken)) {
+            user.deviceTokens.push(payload.deviceToken);
+            if (user.deviceTokens.length > 5)
+                user.deviceTokens.shift(); // keep last 5
+            yield user.save();
+        }
+    }
+    // 5️⃣ Generate tokens
+    const accessToken = JWT_1.jwtHelpers.generateToken({ userId: user._id, email: user.email, role: user.role }, configs_1.configs === null || configs_1.configs === void 0 ? void 0 : configs_1.configs.jwt.accessToken_secret, configs_1.configs.jwt.accessToken_expires);
+    const refreshToken = JWT_1.jwtHelpers.generateToken({ userId: user._id, email: user.email, role: user.role }, configs_1.configs.jwt.refreshToken_secret, configs_1.configs.jwt.refreshToken_expires);
+    // 6️⃣ Return response
     return {
         accessToken,
         refreshToken,
@@ -59,6 +77,7 @@ const login_user_from_db = (payload) => __awaiter(void 0, void 0, void 0, functi
         subscribtionPlan: user.subscribtionPlan || null,
     };
 });
+exports.login_user_from_db = login_user_from_db;
 const refresh_token_from_db = (token) => __awaiter(void 0, void 0, void 0, function* () {
     let decodedData;
     try {
@@ -76,7 +95,7 @@ const refresh_token_from_db = (token) => __awaiter(void 0, void 0, void 0, funct
         email: userData === null || userData === void 0 ? void 0 : userData.email,
         role: userData === null || userData === void 0 ? void 0 : userData.role,
     }, configs_1.configs.jwt.accessToken_secret, configs_1.configs.jwt.accessToken_expires);
-    return accessToken;
+    return { accessToken };
 });
 const change_password_from_db = (user, payload) => __awaiter(void 0, void 0, void 0, function* () {
     const isExistAccount = yield (0, isAccountExist_1.isAccountExist)(user === null || user === void 0 ? void 0 : user.email);
@@ -111,9 +130,34 @@ const forget_password_from_db = (email) => __awaiter(void 0, void 0, void 0, fun
     });
     return "Check your email for reset link";
 });
+// const logoutRemoveToken = async (email: string) => {
+//   const updatedUser = await User_Model.findOneAndUpdate(
+//     { email },
+//     { $unset: { deviceToken: "" } }, // 👈 removes the field entirely
+//     { new: true } // returns updated document
+//   );
+//   return updatedUser;
+// };
+const logoutRemoveToken = (userId, deviceToken) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = yield user_schema_1.User_Model.findById(userId);
+    if (!user)
+        throw new app_error_1.AppError("User not found", http_status_1.default.NOT_FOUND);
+    const singleDevicePlans = ["starter", "starterYearly"];
+    const multiDevicePlans = ["advanced", "advancedYearly"];
+    if (singleDevicePlans.includes(user === null || user === void 0 ? void 0 : user.subscribtionPlan)) {
+        user.deviceToken = null;
+    }
+    else if (multiDevicePlans.includes(user.subscribtionPlan)) {
+        user.deviceTokens = user.deviceTokens.filter((token) => token !== deviceToken);
+    }
+    yield user.save();
+    return { message: "Logged out successfully" };
+});
+exports.logoutRemoveToken = logoutRemoveToken;
 exports.auth_services = {
-    login_user_from_db,
+    login_user_from_db: exports.login_user_from_db,
     refresh_token_from_db,
     change_password_from_db,
     forget_password_from_db,
+    logoutRemoveToken: exports.logoutRemoveToken,
 };

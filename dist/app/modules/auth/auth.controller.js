@@ -19,17 +19,17 @@ const manage_response_1 = __importDefault(require("../../utils/manage_response")
 const auth_service_1 = require("./auth.service");
 const http_status_1 = __importDefault(require("http-status"));
 const login_user = (0, catch_async_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    console.log(' req body form controller ', req.body);
+    // console.log(' req body form controller ',req.body)
     const result = yield auth_service_1.auth_services.login_user_from_db(req.body);
-    console.log(' login result from controller ', result);
-    res.cookie('refreshToken', result.refreshToken, {
-        secure: configs_1.configs.env == 'production',
+    // console.log(' login result from controller ',result)
+    res.cookie("refreshToken", result.refreshToken, {
+        secure: configs_1.configs.env == "production",
         httpOnly: true,
     });
     (0, manage_response_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
-        message: 'User is logged in successful !',
+        message: "User is logged in successful !",
         data: {
             accessToken: result.accessToken,
             refresh_token: result.refreshToken,
@@ -41,12 +41,12 @@ const login_user = (0, catch_async_1.default)((req, res) => __awaiter(void 0, vo
     });
 }));
 const refresh_token = (0, catch_async_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { refreshToken } = req.cookies;
+    const { refreshToken } = req.body;
     const result = yield auth_service_1.auth_services.refresh_token_from_db(refreshToken);
     (0, manage_response_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
-        message: 'Refresh token generated successfully!',
+        message: "Refresh token generated successfully!",
         data: result,
     });
 }));
@@ -57,7 +57,7 @@ const change_password = (0, catch_async_1.default)((req, res) => __awaiter(void 
     (0, manage_response_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
-        message: 'Password changed successfully!',
+        message: "Password changed successfully!",
         data: result,
     });
 }));
@@ -67,8 +67,17 @@ const forget_password = (0, catch_async_1.default)((req, res) => __awaiter(void 
     (0, manage_response_1.default)(res, {
         statusCode: http_status_1.default.OK,
         success: true,
-        message: 'Reset password link sent to your email!',
+        message: "Reset password link sent to your email!",
         data: null,
+    });
+}));
+const logoutRemoveToken = (0, catch_async_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { userId, deviceToken } = req === null || req === void 0 ? void 0 : req.body;
+    yield auth_service_1.auth_services.logoutRemoveToken(userId, deviceToken);
+    (0, manage_response_1.default)(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: "Logout successFull",
     });
 }));
 exports.auth_controllers = {
@@ -76,4 +85,5 @@ exports.auth_controllers = {
     refresh_token,
     change_password,
     forget_password,
+    logoutRemoveToken
 };

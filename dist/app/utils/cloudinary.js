@@ -38,11 +38,13 @@ const uploadImgToCloudinary = (name, filePath, folder) => __awaiter(void 0, void
         api_secret: configs_1.configs.cloudinary.cloud_api_secret,
     });
     try {
+        console.log('naemedfdf---', name, filePath);
         const uploadResult = yield cloudinary_1.v2.uploader.upload(filePath, {
             folder,
             public_id: name,
             timeout: 60000,
         });
+        console.log('upload result ', uploadResult);
         return uploadResult;
     }
     catch (error) {

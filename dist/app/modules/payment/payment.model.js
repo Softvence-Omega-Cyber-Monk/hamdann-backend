@@ -42,7 +42,7 @@ const PaymentSchema = new mongoose_1.Schema({
     userId: { type: mongoose_1.Schema.Types.ObjectId, ref: "User" },
     plan: {
         type: String,
-        enum: ["basic", "professional", "premium"],
+        enum: ["starter", "advance", "starterYearly", "advanceYearly"],
     },
     isSubscription: { type: Boolean, default: false },
     // ✅ Common fields

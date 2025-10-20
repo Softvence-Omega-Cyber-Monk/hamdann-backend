@@ -14,7 +14,7 @@ authRoute.post(
 
 authRoute.post(
   "/refresh-token",
-  auth("Admin", "Buyer", "Seller"),
+  // auth("Admin", "Buyer", "Seller"),
   auth_controllers.refresh_token
 );
 authRoute.post(

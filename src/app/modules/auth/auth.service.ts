@@ -96,18 +96,21 @@ const refresh_token_from_db = async (token: string) => {
     throw new Error("You are not authorized!");
   }
 
-  const userData = await Account_Model.findOne({
+  // const userData = await Account_Model.findOne({
+  //   email: decodedData.email,
+  //   status: "ACTIVE",
+  //   isDeleted: false,
+  // });
+
+
+    const userData: any = await User_Model.findOne({
     email: decodedData.email,
-    status: "ACTIVE",
     isDeleted: false,
   });
 
   const accessToken = jwtHelpers.generateToken(
-    {
-      email: userData?.email,
-      role: userData?.role,
-    },
-    configs.jwt.accessToken_secret as Secret,
+    { userId: userData?._id, email: userData?.email, role: userData?.role },
+    configs?.jwt.accessToken_secret as string,
     configs.jwt.accessToken_expires as string
   );
 

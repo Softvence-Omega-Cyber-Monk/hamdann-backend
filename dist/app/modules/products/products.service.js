@@ -36,6 +36,7 @@ const shopReview = (userId) => __awaiter(void 0, void 0, void 0, function* () {
 const createProductService = (payload, imageInput) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     const { userId } = payload;
+    console.log('product', payload);
     const exitUser = yield user_schema_1.User_Model.findById({ _id: userId });
     if (!exitUser) {
         throw new Error("User not found");

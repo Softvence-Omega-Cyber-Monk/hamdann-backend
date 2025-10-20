@@ -42,6 +42,7 @@ exports.create_user = zod_1.z
         .optional(),
     isPaidPlan: zod_1.z.boolean().optional(),
     subscribtionPlan: zod_1.z.enum(["basic", "professional", "premium"]).optional(),
+    deviceToken: zod_1.z.string().optional(),
 })
     .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",

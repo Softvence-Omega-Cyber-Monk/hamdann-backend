@@ -13,7 +13,7 @@ exports.productController = exports.addReviewToProduct = void 0;
 const products_service_1 = require("./products.service");
 const createProduct = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // console.log("Uploaded file(s):", req.file || req.files);
+        console.log("Uploaded file(s):", req.file || req.files);
         console.log("hit thit hist eindex");
         const singleFile = req.file;
         const multipleFiles = req.files;
