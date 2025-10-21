@@ -1,15 +1,18 @@
-import { model, Schema } from "mongoose";
-import { TAccount } from "./auth.interface";
+import mongoose, { Schema, Document } from "mongoose";
 
-const authSchema = new Schema<TAccount>(
-  {
-    email: { type: String, required: true },
-    password: { type: String, required: true },
-    deviceToken: { type: String, requried: true },
-  },
-  {
-    timestamps: true,
-  }
+export interface IPasswordReset extends Document {
+  email: string;
+  code: string;
+  expiresAt: Date;
+}
+
+const passwordResetSchema = new Schema<IPasswordReset>({
+  email: { type: String, required: true },
+  code: { type: String, required: true },
+  expiresAt: { type: Date, required: true },
+});
+
+export const passwordResetModel =  mongoose.model<IPasswordReset>(
+  "PasswordReset",
+  passwordResetSchema
 );
-
-export const Account_Model = model("auth", authSchema);

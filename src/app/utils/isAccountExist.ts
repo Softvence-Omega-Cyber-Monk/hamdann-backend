@@ -1,4 +1,4 @@
-import { Account_Model } from "../modules/auth/auth.schema"
+
 import { User_Model } from "../modules/user/user.schema";
 import { AppError } from "./app_error"
 import httpStatus from 'http-status';
