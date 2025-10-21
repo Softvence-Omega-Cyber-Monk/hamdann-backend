@@ -70,7 +70,7 @@ const get_single_user = catchAsync(async (req, res) => {
 const googleAuthLogin = catchAsync(async (req, res) => {
 
   const data = req.body;
-  console.log('controller data ', data)
+
   const result = await user_service.googleAuthLogin(data);
 
   manageResponse(res, {

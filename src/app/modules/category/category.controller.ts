@@ -8,7 +8,7 @@ export const CategoryController = {
       const { name } = req.body;
       const file = req.file;
 
-      console.log("Uploaded file:", file);
+      // console.log("Uploaded file:", file);
 
       // Pass the actual file path to the service
       const filePath = file ? file.path : undefined;

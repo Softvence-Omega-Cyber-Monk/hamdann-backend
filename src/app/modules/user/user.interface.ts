@@ -29,8 +29,8 @@ export type TUser = {
   role: "Buyer" | "Seller" | "Admin";
   name: string;
   email: string;
-  password: string;
-  confirmPassword: string;
+  password?: string | null;
+  confirmPassword?: string;
   fcmToken?: string | null;
   isDeleted?: boolean;
   address?: TAddress;

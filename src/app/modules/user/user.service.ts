@@ -45,7 +45,7 @@ export const user_service = {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    const hashedPassword = await bcrypt.hash(userData?.password as string, 10);
 
     const user = new User_Model({
       ...userData,
@@ -64,9 +64,23 @@ export const user_service = {
     }
     return user;
   },
-  googleAuthLogin: async (data: { name: string; email: string }) => {
-    const isExitUser = await User_Model.findOne({email: email})
-    console.log('exit ', isExitUser)
+  googleAuthLogin: async (data: {
+    name: string;
+    email: string;
+    password: string | null;
+    confirmPassword: string | null;
+    role: string;
+  }) => {
+    console.log(data);
+    const isExitUser = await User_Model.findOne({ email: data.email });
+
+    if (isExitUser) {
+      return isExitUser;
+    }
+
+    const res = await User_Model.create(data);
+    console.log("res", res);
+    return res;
   },
 
   // Get all users
