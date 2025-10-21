@@ -28,15 +28,14 @@ export const uploadImgToCloudinary = async (
   });
 
   try {
-
-    console.log('naemedfdf---',name,filePath)
+    console.log("naemedfdf---", name, filePath);
     const uploadResult = await cloudinary.uploader.upload(filePath, {
       folder,
       public_id: name,
       timeout: 60000,
     });
 
-    console.log('upload result ', uploadResult)
+    console.log("upload result ", uploadResult);
 
     return uploadResult;
   } catch (error) {

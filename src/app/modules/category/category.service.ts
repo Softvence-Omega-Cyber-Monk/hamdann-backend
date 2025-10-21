@@ -7,8 +7,7 @@ export const CategoryService = {
     try {
       let imageUrl = payload.image || "";
 
-
-      console.log('paylaod', payload, filePath)
+      console.log("paylaod", payload, filePath);
 
       // If image file exists, upload to Cloudinary
       if (filePath) {
@@ -17,7 +16,7 @@ export const CategoryService = {
           .toString(36)
           .substring(7)}`;
 
-          console.log('ima', imageName, filePath)
+        console.log("ima", imageName, filePath);
 
         const uploadResult = await uploadImgToCloudinary(
           imageName, // Use generated name instead of category name
@@ -69,8 +68,34 @@ export const CategoryService = {
   },
 
   // Update category
-  async updateCategory(id: string, payload: Partial<TCategory>) {
-    return await Category.findByIdAndUpdate(id, payload, { new: true });
+  async updateCategory(id: string, name: string, filePath: any) {
+    let imageUrl = "";
+
+    console.log("update service paylaod", name, filePath);
+
+    // If image file exists, upload to Cloudinary
+    if (filePath) {
+      // Generate a unique name for the image
+      const imageName = `category-${Date.now()}-${Math.random()
+        .toString(36)
+        .substring(7)}`;
+
+      console.log("ima", imageName, filePath);
+
+      const uploadResult = await uploadImgToCloudinary(
+        imageName, // Use generated name instead of category name
+        filePath,
+        "categories"
+      );
+      imageUrl = uploadResult.secure_url;
+    }
+
+    // Validate that we have an image URL
+    if (!imageUrl) {
+      throw new Error("Category image is required");
+    }
+    console.log("uploaded image url ", imageUrl);
+    // return await Category.findByIdAndUpdate(id, payload, { new: true });
   },
 
   // Delete category
