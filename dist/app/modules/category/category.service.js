@@ -32,6 +32,10 @@ exports.CategoryService = {
                 if (!imageUrl) {
                     throw new Error("Category image is required");
                 }
+                const isExitsCategory = yield category_model_1.Category.findOne({ name: payload.name });
+                if (isExitsCategory) {
+                    throw new Error("The category is already exits ");
+                }
                 const category = new category_model_1.Category({
                     name: payload.name,
                     image: imageUrl,

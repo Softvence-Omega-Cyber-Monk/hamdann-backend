@@ -142,9 +142,10 @@ const createCheckoutSessionService = (orderId) => __awaiter(void 0, void 0, void
         const seller = yield user_schema_1.User_Model.findById(sellerId);
         if (!seller)
             continue;
-        let stripeAccountId = seller.stripeAccount;
+        let account;
+        let stripeAccountId = seller.stripeAccountId;
         if (!stripeAccountId) {
-            const account = yield stripe_config_1.stripe.accounts.create({
+            account = yield stripe_config_1.stripe.accounts.create({
                 type: "standard",
                 country: "AE", // same as platform
                 email: seller.email,
@@ -155,11 +156,13 @@ const createCheckoutSessionService = (orderId) => __awaiter(void 0, void 0, void
                 },
             });
             stripeAccountId = account.id;
-            seller.stripeAccount = stripeAccountId;
+            seller.stripeAccountId = stripeAccountId;
             yield seller.save();
         }
+        console.log("Accounts:", account);
         sellerAccounts.push({ sellerId, stripeAccountId, amount });
     }
+    console.log("Seller Accounts:", sellerAccounts);
     // 4️⃣ Total amount
     const totalAmount = sellerAccounts.reduce((sum, s) => sum + s.amount, 0);
     // 5️⃣ Create Stripe Checkout session

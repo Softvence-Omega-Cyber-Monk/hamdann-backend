@@ -43,7 +43,7 @@ exports.user_service = {
             }
         }
         // Hash password
-        const hashedPassword = yield bcrypt_1.default.hash(userData.password, 10);
+        const hashedPassword = yield bcrypt_1.default.hash(userData === null || userData === void 0 ? void 0 : userData.password, 10);
         const user = new user_schema_1.User_Model(Object.assign(Object.assign({}, userData), { password: hashedPassword, confirmPassword: hashedPassword }));
         return yield user.save();
     }),
@@ -54,6 +54,16 @@ exports.user_service = {
             throw new Error("User not found");
         }
         return user;
+    }),
+    googleAuthLogin: (data) => __awaiter(void 0, void 0, void 0, function* () {
+        console.log(data);
+        const isExitUser = yield user_schema_1.User_Model.findOne({ email: data.email });
+        if (isExitUser) {
+            return isExitUser;
+        }
+        const res = yield user_schema_1.User_Model.create(data);
+        console.log("res", res);
+        return res;
     }),
     // Get all users
     getAllUsers: () => __awaiter(void 0, void 0, void 0, function* () {

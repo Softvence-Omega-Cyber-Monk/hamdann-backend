@@ -75,6 +75,16 @@ const get_single_user = (0, catch_async_1.default)((req, res) => __awaiter(void 
         data: result,
     });
 }));
+const googleAuthLogin = (0, catch_async_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const data = req.body;
+    const result = yield user_service_1.user_service.googleAuthLogin(data);
+    (0, manage_response_1.default)(res, {
+        success: true,
+        statusCode: http_status_1.default.OK,
+        message: "User fetched successfully",
+        data: result,
+    });
+}));
 const get_all_users = (0, catch_async_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield user_service_1.user_service.getAllUsers();
     (0, manage_response_1.default)(res, {
@@ -208,6 +218,7 @@ const deletePaymentMethod = (req, res) => __awaiter(void 0, void 0, void 0, func
 });
 exports.user_controllers = {
     create_user,
+    googleAuthLogin,
     get_single_user,
     get_all_users,
     myProfile,

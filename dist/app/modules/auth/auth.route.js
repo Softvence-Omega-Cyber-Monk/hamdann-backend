@@ -10,10 +10,15 @@ const auth_1 = __importDefault(require("../../middlewares/auth"));
 const auth_validation_1 = require("./auth.validation");
 const authRoute = (0, express_1.Router)();
 authRoute.post("/login", (0, request_validator_1.default)(auth_validation_1.auth_validation.login_validation), auth_controller_1.auth_controllers.login_user);
-authRoute.post("/refresh-token", (0, auth_1.default)("Admin", "Buyer", "Seller"), auth_controller_1.auth_controllers.refresh_token);
+authRoute.post("/refresh-token", 
+// auth("Admin", "Buyer", "Seller"),
+auth_controller_1.auth_controllers.refresh_token);
 authRoute.post("/change-password", (0, auth_1.default)("Buyer", "Seller", "Admin"), auth_controller_1.auth_controllers.change_password);
-authRoute.post("/forgot-password", 
-// RequestValidator(auth_validation.forgotPassword),
-auth_controller_1.auth_controllers.forget_password);
 authRoute.post("/logout", auth_controller_1.auth_controllers.logoutRemoveToken);
+// Step 1: Request reset code
+authRoute.post("/forgot-password", auth_controller_1.auth_controllers.requestPasswordReset);
+// Step 2: Verify code
+authRoute.post("/verify-code", auth_controller_1.auth_controllers.verifyResetCode);
+// Step 3: Reset password
+authRoute.post("/reset-password", auth_controller_1.auth_controllers.resetPassword);
 exports.default = authRoute;

@@ -8,8 +8,8 @@ exports.create_user = zod_1.z
     role: zod_1.z.enum(["Admin", "Buyer", "Seller"]),
     name: zod_1.z.string().min(2, "Name is required"),
     email: zod_1.z.string().email("Invalid email"),
-    password: zod_1.z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: zod_1.z.string().min(6),
+    password: zod_1.z.string().optional(),
+    confirmPassword: zod_1.z.string().optional(),
     fcmToken: zod_1.z.string().optional(),
     address: zod_1.z
         .object({

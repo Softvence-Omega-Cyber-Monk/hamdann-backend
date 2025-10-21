@@ -115,7 +115,7 @@ const change_password_from_db = async (
   user: JwtPayload,
   payload: { oldPassword: string; newPassword: string }
 ) => {
-  const isExistAccount = await isAccountExist(user?.email);
+  const isExistAccount : any = await isAccountExist(user?.email);
 
   if (!isExistAccount) {
     throw new AppError("Account not found", httpStatus.NOT_FOUND);
@@ -123,7 +123,7 @@ const change_password_from_db = async (
 
   const isCorrectPassword = await bcrypt.compare(
     payload.oldPassword,
-    isExistAccount.password
+    isExistAccount?.password  as string
   );
 
   // console.log("match pass",isCorrectPassword);

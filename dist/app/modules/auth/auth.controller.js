@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.auth_controllers = void 0;
+exports.auth_controllers = exports.resetPassword = exports.verifyResetCode = exports.requestPasswordReset = void 0;
 const configs_1 = require("../../configs");
 const catch_async_1 = __importDefault(require("../../utils/catch_async"));
 const manage_response_1 = __importDefault(require("../../utils/manage_response"));
@@ -61,16 +61,6 @@ const change_password = (0, catch_async_1.default)((req, res) => __awaiter(void 
         data: result,
     });
 }));
-const forget_password = (0, catch_async_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { email } = req === null || req === void 0 ? void 0 : req.body;
-    yield auth_service_1.auth_services.forget_password_from_db(email);
-    (0, manage_response_1.default)(res, {
-        statusCode: http_status_1.default.OK,
-        success: true,
-        message: "Reset password link sent to your email!",
-        data: null,
-    });
-}));
 const logoutRemoveToken = (0, catch_async_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { userId, deviceToken } = req === null || req === void 0 ? void 0 : req.body;
     yield auth_service_1.auth_services.logoutRemoveToken(userId, deviceToken);
@@ -80,10 +70,45 @@ const logoutRemoveToken = (0, catch_async_1.default)((req, res) => __awaiter(voi
         message: "Logout successFull",
     });
 }));
+const requestPasswordReset = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { email } = req.body;
+        const result = yield auth_service_1.auth_services.requestPasswordReset(email);
+        res.status(200).json({ message: "Verification code sent", result });
+    }
+    catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+exports.requestPasswordReset = requestPasswordReset;
+const verifyResetCode = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { email, code } = req.body;
+        const result = yield auth_service_1.auth_services.verifyResetCode(email, code);
+        res.status(200).json({ message: "Code verified successfully", result });
+    }
+    catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+exports.verifyResetCode = verifyResetCode;
+const resetPassword = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { email, code, newPassword } = req.body;
+        yield auth_service_1.auth_services.resetPassword(email, code, newPassword);
+        res.status(200).json({ message: "Password reset successful" });
+    }
+    catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+});
+exports.resetPassword = resetPassword;
 exports.auth_controllers = {
     login_user,
     refresh_token,
     change_password,
-    forget_password,
-    logoutRemoveToken
+    logoutRemoveToken,
+    requestPasswordReset: exports.requestPasswordReset,
+    verifyResetCode: exports.verifyResetCode,
+    resetPassword: exports.resetPassword,
 };

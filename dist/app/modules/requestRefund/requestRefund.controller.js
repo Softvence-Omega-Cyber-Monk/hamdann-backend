@@ -45,7 +45,8 @@ const createRefundRequest = (req, res) => __awaiter(void 0, void 0, void 0, func
             describeIssue,
             productImage: [],
             preferredResolution: preferredResolution,
-            isAccepted: false
+            isAccepted: false,
+            isRejected: false,
         };
         const refundRequest = yield requestRefund_service_1.RequestRefundService.createRefundRequest(refundData, req.files);
         res.status(201).json({
@@ -101,8 +102,32 @@ const acceptRefundRequestController = (req, res) => __awaiter(void 0, void 0, vo
         });
     }
 });
+const rejectRefundRequest = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { refundId } = req.params;
+        const { rejectionReason } = req.body;
+        const result = yield requestRefund_service_1.RequestRefundService.rejectRefundRequest(refundId, rejectionReason);
+        console.log(result);
+        res.status(200).json({
+            success: true,
+            message: "Refund request rejected successfully",
+            data: {
+                isRejected: result === null || result === void 0 ? void 0 : result.isRejected,
+                rejectionReason: result === null || result === void 0 ? void 0 : result.rejectionReason,
+                orderId: result === null || result === void 0 ? void 0 : result.orderId
+            },
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+});
 exports.RequestRefundController = {
     createRefundRequest,
     getRefundRequestByIdController,
     acceptRefundRequestController,
+    rejectRefundRequest,
 };

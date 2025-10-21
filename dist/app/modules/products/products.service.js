@@ -50,6 +50,9 @@ const createProductService = (payload, imageInput) => __awaiter(void 0, void 0, 
     if (!exitUser.productAddedPowerQuantity) {
         throw new Error("Please subscribe to a plan to add products");
     }
+    // if (!exitUser.stripeAccountId) {
+    //   throw new Error("Please ensure you set stripeAccountId on your profile section");
+    // }
     // Check if user has unlimited power or remaining power > 0
     if (exitUser.productAddedPowerQuantity !== "unlimited") {
         const currentProductCount = yield products_model_1.Product.countDocuments({ userId });
