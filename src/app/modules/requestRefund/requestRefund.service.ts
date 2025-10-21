@@ -113,8 +113,69 @@ const acceptRefundRequest = async (
   }
 };
 
+const rejectRefundRequest = async (
+  refundId: string,
+  rejectionReason?: string
+): Promise<IrequestRefund | null> => {
+  console.log("RefundID",refundId)
+  if (!Types.ObjectId.isValid(refundId)) {
+    throw new Error("Invalid refund request ID");
+  }
+
+  try {
+    // Find the refund request first
+    const refundRequest = await RequestRefund.findOne({ orderId: refundId });
+    console.log('request ', refundRequest);
+    
+    if (!refundRequest) {
+      throw new Error("Refund request not found");
+    }
+
+    // Check if already rejected
+    if (refundRequest.isRejected) {
+      throw new Error("Refund request is already rejected");
+    }
+
+    // Check if it was previously accepted
+    if (refundRequest.isAccepted) {
+      throw new Error("Cannot reject an already accepted refund request");
+    }
+
+    // Update isRejected to true and add rejection details
+    const updateData: any = {
+      isRejected: true,
+      rejectedAt: new Date(),
+    };
+
+    if (rejectionReason) {
+      updateData.rejectionReason = rejectionReason;
+    }
+
+    const updatedRefundRequest = await RequestRefund.findOneAndUpdate(
+      { orderId: refundId },
+      { $set: updateData },
+      { new: true }
+    );
+
+    // Update order status to reflect rejection
+    await Order.findByIdAndUpdate(
+      refundId,
+      {
+        status: "return_rejected",
+        "statusDates.returnRejectedAt": new Date(),
+      },
+      { new: true }
+    );
+
+    return updatedRefundRequest;
+  } catch (error: any) {
+    throw new Error(`Failed to reject refund request: ${error.message}`);
+  }
+};
+
 export const RequestRefundService = {
   createRefundRequest,
   getRefundRequestByIdService,
   acceptRefundRequest,
+  rejectRefundRequest,
 };

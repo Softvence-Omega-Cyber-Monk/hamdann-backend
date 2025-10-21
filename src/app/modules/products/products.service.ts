@@ -61,6 +61,10 @@ const createProductService = async (
     throw new Error("Please subscribe to a plan to add products");
   }
 
+  // if (!exitUser.stripeAccountId) {
+  //   throw new Error("Please ensure you set stripeAccountId on your profile section");
+  // }
+
   // Check if user has unlimited power or remaining power > 0
   if (exitUser.productAddedPowerQuantity !== "unlimited") {
     const currentProductCount = await Product.countDocuments({ userId });

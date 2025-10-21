@@ -4,6 +4,7 @@ import { Payment } from "./payment.model";
 import { User_Model } from "../user/user.schema";
 import { Order } from "../order/order.model";
 import { Product } from "../products/products.model";
+import { AppError } from "../../utils/app_error";
 
 // export const createCheckoutSessionService = async (orderId: string) => {
 //   const orderAmount: any = await Order.findById(orderId);
@@ -149,10 +150,11 @@ export const createCheckoutSessionService = async (orderId: string) => {
   for (const [sellerId, amount] of sellerTotals.entries()) {
     const seller = await User_Model.findById(sellerId);
     if (!seller) continue;
+    let account;
 
-    let stripeAccountId = (seller as any).stripeAccount;
+    let stripeAccountId = (seller as any).stripeAccountId;
     if (!stripeAccountId) {
-      const account = await stripe.accounts.create({
+      account = await stripe.accounts.create({
         type: "standard",
         country: "AE", // same as platform
         email: seller.email,
@@ -163,12 +165,15 @@ export const createCheckoutSessionService = async (orderId: string) => {
         },
       });
       stripeAccountId = account.id;
-      (seller as any).stripeAccount = stripeAccountId;
+      (seller as any).stripeAccountId = stripeAccountId;
       await seller.save();
     }
+    console.log("Accounts:", account);
 
     sellerAccounts.push({ sellerId, stripeAccountId, amount });
   }
+  console.log("Seller Accounts:", sellerAccounts);
+  
 
   // 4️⃣ Total amount
   const totalAmount = sellerAccounts.reduce((sum, s) => sum + s.amount, 0);
