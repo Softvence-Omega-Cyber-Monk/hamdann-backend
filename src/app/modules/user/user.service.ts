@@ -5,6 +5,8 @@ import { Types } from "mongoose";
 import { cleanRegex } from "zod/v4/core/util.cjs";
 import { uploadImgToCloudinary } from "../../utils/cloudinary";
 import { email } from "zod";
+import { jwtHelpers } from "../../utils/JWT";
+import { configs } from "../../configs";
 
 export const user_service = {
   createUser: async (
@@ -72,15 +74,56 @@ export const user_service = {
     role: string;
   }) => {
     console.log(data);
-    const isExitUser = await User_Model.findOne({ email: data.email });
+    const userexit: any = await User_Model.findOne({ email: data.email });
 
-    if (isExitUser) {
-      return 'This email is already exits'
+    if (userexit) {
+      const accessToken = jwtHelpers.generateToken(
+        { userId: userexit?._id, email: userexit?.email, role: userexit?.role },
+        configs?.jwt.accessToken_secret as string,
+        configs.jwt.accessToken_expires as string
+      );
+
+      const refreshToken = jwtHelpers.generateToken(
+        { userId: userexit?._id, email: userexit?.email, role: userexit?.role },
+        configs.jwt.refreshToken_secret as string,
+        configs.jwt.refreshToken_expires as string
+      );
+
+      console.log(accessToken, refreshToken);
+      // 6️⃣ Return response
+      return {
+        message: 'User already exits',
+        accessToken,
+        refreshToken,
+        role: userexit.role,
+        userId: userexit._id,
+      };
     }
 
-    const res = await User_Model.create(data);
-    console.log("res", res);
-    return res;
+    // console.log('user', user)
+    const user = await User_Model.create(data);
+    // console.log("res", res);
+
+    const accessToken = jwtHelpers.generateToken(
+      { userId: user?._id, email: user?.email, role: user?.role },
+      configs?.jwt.accessToken_secret as string,
+      configs.jwt.accessToken_expires as string
+    );
+
+    const refreshToken = jwtHelpers.generateToken(
+      { userId: user?._id, email: user?.email, role: user?.role },
+      configs.jwt.refreshToken_secret as string,
+      configs.jwt.refreshToken_expires as string
+    );
+
+    console.log(accessToken, refreshToken);
+    // 6️⃣ Return response
+    return {
+      accessToken,
+      refreshToken,
+      role: user.role,
+      userId: user._id,
+    };
   },
 
   // Get all users
