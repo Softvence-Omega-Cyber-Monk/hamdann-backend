@@ -34,6 +34,12 @@ export const CategoryService = {
         throw new Error("Category image is required");
       }
 
+      const isExitsCategory = await Category.findOne({ name: payload.name });
+
+      if (isExitsCategory) {
+        throw new Error("The category is already exits ");
+      }
+
       const category = new Category({
         name: payload.name,
         image: imageUrl,
