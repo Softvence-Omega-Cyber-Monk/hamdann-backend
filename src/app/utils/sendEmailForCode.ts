@@ -12,7 +12,7 @@ export const sendEmailForCode = async ({ to, subject, text }: any) => {
   // console.log("transport ", transporter);
 
   await transporter.sendMail({
-    from: `"TutorLink" <${process.env.SMTP_USER}>`,
+    from: `"" <${process.env.SMTP_USER}>`,
     to,
     subject,
     text,

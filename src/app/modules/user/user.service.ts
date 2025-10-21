@@ -4,9 +4,9 @@ import bcrypt from "bcrypt";
 import { Types } from "mongoose";
 import { cleanRegex } from "zod/v4/core/util.cjs";
 import { uploadImgToCloudinary } from "../../utils/cloudinary";
+import { email } from "zod";
 
 export const user_service = {
-
   createUser: async (
     userData: TUser & { businessLogoFile?: Express.Multer.File }
   ) => {
@@ -50,14 +50,11 @@ export const user_service = {
     const user = new User_Model({
       ...userData,
       password: hashedPassword,
-      confirmPassword: hashedPassword, 
+      confirmPassword: hashedPassword,
     });
 
     return await user.save();
   },
-
-
-
 
   // Get single user by ID
   getUserById: async (id: string) => {
@@ -67,12 +64,9 @@ export const user_service = {
     }
     return user;
   },
-  googleAuthLogin: async (id: string) => {
-    const user = await User_Model.findById(id);
-    if (!user) {
-      throw new Error("User not found");
-    }
-    return user;
+  googleAuthLogin: async (data: { name: string; email: string }) => {
+    const isExitUser = await User_Model.findOne({email: email})
+    console.log('exit ', isExitUser)
   },
 
   // Get all users

@@ -5,36 +5,16 @@ export const CategoryController = {
   // Create
   async create(req: Request, res: Response) {
     try {
+      const { name } = req.body;
       const file = req.file;
-
-      // 🧹 Sanitize body keys (remove spaces)
-      const sanitizedBody: any = {};
-      Object.keys(req.body).forEach((key) => {
-        sanitizedBody[key.trim()] = req.body[key];
-      });
-
-      const { name } = sanitizedBody;
-
-      if (!name) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Category name is required" });
-      }
-
-      // If no file uploaded but image URL provided in body
-      if (!file && !sanitizedBody.img) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Category image is required" });
-      }
 
       console.log("Uploaded file:", file);
 
       // Pass the actual file path to the service
       const filePath = file ? file.path : undefined;
       const category = await CategoryService.createCategory(
-        { name, image: sanitizedBody.img }, // payload
-        filePath // file path for upload
+        { name }, 
+        filePath 
       );
 
       res.status(201).json({

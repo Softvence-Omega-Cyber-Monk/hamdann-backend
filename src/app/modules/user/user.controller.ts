@@ -69,9 +69,9 @@ const get_single_user = catchAsync(async (req, res) => {
 });
 const googleAuthLogin = catchAsync(async (req, res) => {
 
-  console.log('hit in login google ')
-  const { id } = req.params;
-  const result = await user_service.getUserById(id);
+  const data = req.body;
+  console.log('controller data ', data)
+  const result = await user_service.googleAuthLogin(data);
 
   manageResponse(res, {
     success: true,

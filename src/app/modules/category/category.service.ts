@@ -3,7 +3,7 @@ import { TCategory } from "./category.interface";
 import { Category } from "./category.model";
 
 export const CategoryService = {
-  async createCategory(payload: TCategory, filePath?: string) {
+  async createCategory(payload: any, filePath?: string) {
     try {
       let imageUrl = payload.image || "";
 
