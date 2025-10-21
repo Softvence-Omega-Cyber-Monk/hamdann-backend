@@ -7,15 +7,14 @@ export const CategoryController = {
     try {
       const { name } = req.body;
       const file = req.file;
+      console.log('file ', file)
 
       // console.log("Uploaded file:", file);
 
       // Pass the actual file path to the service
       const filePath = file ? file.path : undefined;
-      const category = await CategoryService.createCategory(
-        { name }, 
-        filePath 
-      );
+
+      const category = await CategoryService.createCategory({ name }, filePath);
 
       res.status(201).json({
         success: true,

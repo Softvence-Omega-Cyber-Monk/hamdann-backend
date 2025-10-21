@@ -7,12 +7,8 @@ export const CategoryService = {
     try {
       let imageUrl = payload.image || "";
 
-      console.log(
-        "Service received - payload:",
-        payload,
-        "filePath:",
-        filePath
-      );
+
+      console.log('paylaod', payload, filePath)
 
       // If image file exists, upload to Cloudinary
       if (filePath) {
@@ -20,6 +16,8 @@ export const CategoryService = {
         const imageName = `category-${Date.now()}-${Math.random()
           .toString(36)
           .substring(7)}`;
+
+          console.log('ima', imageName, filePath)
 
         const uploadResult = await uploadImgToCloudinary(
           imageName, // Use generated name instead of category name
