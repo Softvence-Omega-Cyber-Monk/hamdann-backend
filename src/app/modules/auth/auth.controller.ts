@@ -56,16 +56,6 @@ const change_password = catchAsync(async (req, res) => {
   });
 });
 
-// const forget_password = catchAsync(async (req, res) => {
-//   const { email } = req?.body;
-//   await auth_services.forget_password_from_db(email);
-//   manageResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: "Reset password link sent to your email!",
-//     data: null,
-//   });
-// });
 const logoutRemoveToken = catchAsync(async (req, res) => {
   const { userId, deviceToken } = req?.body;
   await auth_services.logoutRemoveToken(userId, deviceToken);
@@ -110,7 +100,7 @@ export const auth_controllers = {
   login_user,
   refresh_token,
   change_password,
-  // forget_password,
+
   logoutRemoveToken,
 
   requestPasswordReset,

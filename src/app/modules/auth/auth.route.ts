@@ -24,11 +24,6 @@ authRoute.post(
 );
 
 authRoute.post("/logout", auth_controllers.logoutRemoveToken);
-// authRoute.post(
-//   "/forgot-password",
-//   // RequestValidator(auth_validation.forgotPassword),
-//   auth_controllers.forget_password
-// );
 
 // Step 1: Request reset code
 authRoute.post("/forgot-password", auth_controllers.requestPasswordReset);

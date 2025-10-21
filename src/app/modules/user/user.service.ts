@@ -56,8 +56,18 @@ export const user_service = {
     return await user.save();
   },
 
+
+
+
   // Get single user by ID
   getUserById: async (id: string) => {
+    const user = await User_Model.findById(id);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return user;
+  },
+  googleAuthLogin: async (id: string) => {
     const user = await User_Model.findById(id);
     if (!user) {
       throw new Error("User not found");

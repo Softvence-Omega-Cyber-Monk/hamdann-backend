@@ -145,39 +145,7 @@ const change_password_from_db = async (
   return "Password changed successful.";
 };
 
-// const forget_password_from_db = async (email: string) => {
-//   const isAccountExists = await isAccountExist(email);
-//   const resetToken = jwtHelpers.generateToken(
-//     {
-//       email: isAccountExists.email,
-//       role: isAccountExists.role,
-//     },
-//     configs.jwt.resetToken_secret as Secret,
-//     configs.jwt.resetToken_expires as string
-//   );
 
-//   const resetPasswordLink = `${configs.jwt.front_end_url}/reset?token=${resetToken}&email=${isAccountExists.email}`;
-//   const emailTemplate = `<p>Click the link below to reset your password:</p><a href="${resetPasswordLink}">Reset Password</a>`;
-
-//   await sendMail({
-//     to: email,
-//     subject: "Password reset successful!",
-//     textBody: "Your password is successfully reset.",
-//     htmlBody: emailTemplate,
-//   });
-
-//   return "Check your email for reset link";
-// };
-
-// const logoutRemoveToken = async (email: string) => {
-//   const updatedUser = await User_Model.findOneAndUpdate(
-//     { email },
-//     { $unset: { deviceToken: "" } }, // 👈 removes the field entirely
-//     { new: true } // returns updated document
-//   );
-
-//   return updatedUser;
-// };
 export const logoutRemoveToken = async (
   userId: string,
   deviceToken: string

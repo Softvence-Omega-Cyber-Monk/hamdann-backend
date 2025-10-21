@@ -31,6 +31,7 @@ userRoute.post(
 
 // Get single user by ID
 userRoute.get("/get-single/:id", user_controllers.get_single_user);
+userRoute.post("/googleAuthLogin", user_controllers.googleAuthLogin);
 
 // Get all users
 userRoute.get("/getAll", user_controllers.get_all_users);
