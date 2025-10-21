@@ -46,7 +46,8 @@ const createRefundRequest = async (req: Request, res: Response) => {
       describeIssue,
       productImage: [],
       preferredResolution: preferredResolution as "Refund Amount" | "Replacement",
-      isAccepted: false
+      isAccepted: false,
+      isRejected: false,
     };
 
     const refundRequest = await RequestRefundService.createRefundRequest(
@@ -109,9 +110,37 @@ const acceptRefundRequestController = async (req: Request, res: Response) => {
     });
   }
 };
+const rejectRefundRequest = async (req: Request, res: Response) => {
+  try {
+    const { refundId } = req.params;
+    const { rejectionReason } = req.body;
+
+    const result = await RequestRefundService.rejectRefundRequest(
+      refundId,
+      rejectionReason
+    );
+    console.log(result);
+
+    res.status(200).json({
+      success: true,
+      message: "Refund request rejected successfully",
+      data: {
+        isRejected: result?.isRejected,
+        rejectionReason: result?.rejectionReason,
+        orderId: result?.orderId
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 export const RequestRefundController = {
   createRefundRequest,
   getRefundRequestByIdController,
   acceptRefundRequestController,
+  rejectRefundRequest,
 };

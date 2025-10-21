@@ -110,9 +110,11 @@ const verifySubscriptionPayment = async (req: Request, res: Response) => {
 };
 
 
+
 export const paymentController = {
   createCheckoutSession,
   verifyPayment,
   createSubscriptionSession,
   verifySubscriptionPayment,
+
 }

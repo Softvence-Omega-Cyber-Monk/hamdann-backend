@@ -11,15 +11,14 @@ router.post(
   RequestRefundController.createRefundRequest
 );
 // Get single refund request by ID
-router.get(
-  "/:id",
-  RequestRefundController.getRefundRequestByIdController
-);
+router.get("/:id", RequestRefundController.getRefundRequestByIdController);
 // Accept refund request
 router.patch(
   "/:id/accept",
   RequestRefundController.acceptRefundRequestController
 );
 
+// Reject refund request route
+router.patch("/:refundId/reject", RequestRefundController.rejectRefundRequest);
 
 export const RequestRefundRoutes = router;
