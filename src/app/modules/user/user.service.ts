@@ -75,7 +75,7 @@ export const user_service = {
     const isExitUser = await User_Model.findOne({ email: data.email });
 
     if (isExitUser) {
-      return isExitUser;
+      return 'This email is already exits'
     }
 
     const res = await User_Model.create(data);
