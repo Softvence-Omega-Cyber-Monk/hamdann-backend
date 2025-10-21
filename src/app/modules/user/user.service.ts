@@ -4,9 +4,11 @@ import bcrypt from "bcrypt";
 import { Types } from "mongoose";
 import { cleanRegex } from "zod/v4/core/util.cjs";
 import { uploadImgToCloudinary } from "../../utils/cloudinary";
+import { email } from "zod";
+import { jwtHelpers } from "../../utils/JWT";
+import { configs } from "../../configs";
 
 export const user_service = {
-
   createUser: async (
     userData: TUser & { businessLogoFile?: Express.Multer.File }
   ) => {
@@ -45,12 +47,12 @@ export const user_service = {
     }
 
     // Hash password
-    const hashedPassword = await bcrypt.hash(userData.password, 10);
+    const hashedPassword = await bcrypt.hash(userData?.password as string, 10);
 
     const user = new User_Model({
       ...userData,
       password: hashedPassword,
-      confirmPassword: hashedPassword, 
+      confirmPassword: hashedPassword,
     });
 
     return await user.save();
@@ -63,6 +65,65 @@ export const user_service = {
       throw new Error("User not found");
     }
     return user;
+  },
+  googleAuthLogin: async (data: {
+    name: string;
+    email: string;
+    password: string | null;
+    confirmPassword: string | null;
+    role: string;
+  }) => {
+    console.log(data);
+    const userexit: any = await User_Model.findOne({ email: data.email });
+
+    if (userexit) {
+      const accessToken = jwtHelpers.generateToken(
+        { userId: userexit?._id, email: userexit?.email, role: userexit?.role },
+        configs?.jwt.accessToken_secret as string,
+        configs.jwt.accessToken_expires as string
+      );
+
+      const refreshToken = jwtHelpers.generateToken(
+        { userId: userexit?._id, email: userexit?.email, role: userexit?.role },
+        configs.jwt.refreshToken_secret as string,
+        configs.jwt.refreshToken_expires as string
+      );
+
+      console.log(accessToken, refreshToken);
+      // 6️⃣ Return response
+      return {
+        message: 'User already exits',
+        accessToken,
+        refreshToken,
+        role: userexit.role,
+        userId: userexit._id,
+      };
+    }
+
+    // console.log('user', user)
+    const user = await User_Model.create(data);
+    // console.log("res", res);
+
+    const accessToken = jwtHelpers.generateToken(
+      { userId: user?._id, email: user?.email, role: user?.role },
+      configs?.jwt.accessToken_secret as string,
+      configs.jwt.accessToken_expires as string
+    );
+
+    const refreshToken = jwtHelpers.generateToken(
+      { userId: user?._id, email: user?.email, role: user?.role },
+      configs.jwt.refreshToken_secret as string,
+      configs.jwt.refreshToken_expires as string
+    );
+
+    console.log(accessToken, refreshToken);
+    // 6️⃣ Return response
+    return {
+      accessToken,
+      refreshToken,
+      role: user.role,
+      userId: user._id,
+    };
   },
 
   // Get all users

@@ -3,16 +3,12 @@ import { TCategory } from "./category.interface";
 import { Category } from "./category.model";
 
 export const CategoryService = {
-  async createCategory(payload: TCategory, filePath?: string) {
+  async createCategory(payload: any, filePath?: string) {
     try {
       let imageUrl = payload.image || "";
 
-      console.log(
-        "Service received - payload:",
-        payload,
-        "filePath:",
-        filePath
-      );
+
+      console.log('paylaod', payload, filePath)
 
       // If image file exists, upload to Cloudinary
       if (filePath) {
@@ -20,6 +16,8 @@ export const CategoryService = {
         const imageName = `category-${Date.now()}-${Math.random()
           .toString(36)
           .substring(7)}`;
+
+          console.log('ima', imageName, filePath)
 
         const uploadResult = await uploadImgToCloudinary(
           imageName, // Use generated name instead of category name
@@ -32,6 +30,12 @@ export const CategoryService = {
       // Validate that we have an image URL
       if (!imageUrl) {
         throw new Error("Category image is required");
+      }
+
+      const isExitsCategory = await Category.findOne({ name: payload.name });
+
+      if (isExitsCategory) {
+        throw new Error("The category is already exits ");
       }
 
       const category = new Category({

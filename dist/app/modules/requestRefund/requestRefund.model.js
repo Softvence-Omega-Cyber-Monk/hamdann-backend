@@ -43,6 +43,7 @@ const RequestRefundSchema = new mongoose_1.Schema({
     },
     refundReason: { type: String, required: true },
     describeIssue: { type: String, required: true },
+    rejectionReason: { type: String },
     productImage: [{ type: String, required: true }],
     preferredResolution: {
         type: String,
@@ -50,5 +51,6 @@ const RequestRefundSchema = new mongoose_1.Schema({
         enum: ["Refund Amount", "Replacement"],
     },
     isAccepted: { type: Boolean, default: false },
+    isRejected: { type: Boolean, default: false },
 }, { timestamps: true });
 exports.RequestRefund = mongoose_1.default.model("RequestRefund", RequestRefundSchema);

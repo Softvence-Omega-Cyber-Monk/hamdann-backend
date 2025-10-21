@@ -604,7 +604,7 @@ const getProductListWithStatusBySellerIdService = (sellerId_1, ...args_1) => __a
         pages: Math.ceil(total / limit),
     };
 });
-const getRecentOrdersForSellerService = (sellerId_1, ...args_1) => __awaiter(void 0, [sellerId_1, ...args_1], void 0, function* (sellerId, page = 1, limit = 10) {
+const getRecentOrdersForSellerService = (sellerId, page, limit) => __awaiter(void 0, void 0, void 0, function* () {
     const currentPage = Math.max(1, page);
     const currentLimit = Math.max(1, limit);
     const skip = (currentPage - 1) * currentLimit;

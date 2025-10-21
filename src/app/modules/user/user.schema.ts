@@ -46,8 +46,8 @@ const UserSchema = new Schema<TUser>(
     role: { type: String, required: true, enum: ["Admin", "Buyer", "Seller"] },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true },
-    password: { type: String, required: true },
-    confirmPassword: { type: String, required: true },
+    password: { type: String,  },
+    confirmPassword: { type: String,  },
     fcmToken: { type: String, default: null },
 
     isDeleted: { type: Boolean, default: false },

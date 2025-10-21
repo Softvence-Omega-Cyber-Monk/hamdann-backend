@@ -7,8 +7,8 @@ export const create_user = z
     role: z.enum(["Admin", "Buyer", "Seller"]),
     name: z.string().min(2, "Name is required"),
     email: z.string().email("Invalid email"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string().min(6),
+    password: z.string().optional(),
+    confirmPassword: z.string().optional(),
     fcmToken: z.string().optional(),
     address: z
       .object({
@@ -41,9 +41,9 @@ export const create_user = z
         businessLogo: z.string().optional(),
       })
       .optional(),
-      isPaidPlan: z.boolean().optional(),
-      subscribtionPlan: z.enum(["basic", "professional", "premium"]).optional(),
-      deviceToken: z.string().optional(),
+    isPaidPlan: z.boolean().optional(),
+    subscribtionPlan: z.enum(["basic", "professional", "premium"]).optional(),
+    deviceToken: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",

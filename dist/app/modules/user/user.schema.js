@@ -35,8 +35,8 @@ const UserSchema = new mongoose_1.Schema({
     role: { type: String, required: true, enum: ["Admin", "Buyer", "Seller"] },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true, lowercase: true },
-    password: { type: String, required: true },
-    confirmPassword: { type: String, required: true },
+    password: { type: String, },
+    confirmPassword: { type: String, },
     fcmToken: { type: String, default: null },
     isDeleted: { type: Boolean, default: false },
     address: { type: AddressSchema, default: {} },
@@ -61,12 +61,15 @@ const UserSchema = new mongoose_1.Schema({
     isPaidPlan: { type: Boolean, default: false },
     subscribtionPlan: {
         type: String,
-        enum: ["basic", "professional", "premium"],
+        enum: ["starter", "advance", "starterYearly", "advanceYearly"],
     },
     productAddedPowerQuantity: {
         type: mongoose_1.Schema.Types.Mixed,
-        enum: [50, 200, "unlimited"],
+        enum: [20, 240, "unlimited"],
     },
+    deviceToken: { type: String, default: null }, // for single device plans
+    deviceTokens: { type: [String], default: [] }, // for multiple device plans
+    stripeAccountId: { type: String },
 }, {
     versionKey: false,
     timestamps: true,

@@ -4,6 +4,7 @@ import catchAsync from "../../utils/catch_async";
 import manageResponse from "../../utils/manage_response";
 import { auth_services } from "./auth.service";
 import httpStatus from "http-status";
+import { Request, Response } from "express";
 
 const login_user = catchAsync(async (req, res) => {
   // console.log(' req body form controller ',req.body)
@@ -55,16 +56,6 @@ const change_password = catchAsync(async (req, res) => {
   });
 });
 
-const forget_password = catchAsync(async (req, res) => {
-  const { email } = req?.body;
-  await auth_services.forget_password_from_db(email);
-  manageResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Reset password link sent to your email!",
-    data: null,
-  });
-});
 const logoutRemoveToken = catchAsync(async (req, res) => {
   const { userId, deviceToken } = req?.body;
   await auth_services.logoutRemoveToken(userId, deviceToken);
@@ -75,10 +66,44 @@ const logoutRemoveToken = catchAsync(async (req, res) => {
   });
 });
 
+export const requestPasswordReset = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    const result = await auth_services.requestPasswordReset(email);
+    res.status(200).json({ message: "Verification code sent", result });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const verifyResetCode = async (req: Request, res: Response) => {
+  try {
+    const { email, code } = req.body;
+    const result = await auth_services.verifyResetCode(email, code);
+    res.status(200).json({ message: "Code verified successfully", result });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    await auth_services.resetPassword(email, code, newPassword);
+    res.status(200).json({ message: "Password reset successful" });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};
+
 export const auth_controllers = {
   login_user,
   refresh_token,
   change_password,
-  forget_password,
-  logoutRemoveToken
+
+  logoutRemoveToken,
+
+  requestPasswordReset,
+  verifyResetCode,
+  resetPassword,
 };

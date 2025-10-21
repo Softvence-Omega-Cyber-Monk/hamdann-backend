@@ -36,6 +36,7 @@ const shopReview = (userId) => __awaiter(void 0, void 0, void 0, function* () {
 const createProductService = (payload, imageInput) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     const { userId } = payload;
+    console.log('product', payload);
     const exitUser = yield user_schema_1.User_Model.findById({ _id: userId });
     if (!exitUser) {
         throw new Error("User not found");
@@ -49,6 +50,9 @@ const createProductService = (payload, imageInput) => __awaiter(void 0, void 0, 
     if (!exitUser.productAddedPowerQuantity) {
         throw new Error("Please subscribe to a plan to add products");
     }
+    // if (!exitUser.stripeAccountId) {
+    //   throw new Error("Please ensure you set stripeAccountId on your profile section");
+    // }
     // Check if user has unlimited power or remaining power > 0
     if (exitUser.productAddedPowerQuantity !== "unlimited") {
         const currentProductCount = yield products_model_1.Product.countDocuments({ userId });

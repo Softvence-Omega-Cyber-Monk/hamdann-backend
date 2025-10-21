@@ -93,8 +93,49 @@ const acceptRefundRequest = (refundId) => __awaiter(void 0, void 0, void 0, func
         throw new Error(`Failed to accept refund request: ${error.message}`);
     }
 });
+const rejectRefundRequest = (refundId, rejectionReason) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("RefundID", refundId);
+    if (!mongoose_1.Types.ObjectId.isValid(refundId)) {
+        throw new Error("Invalid refund request ID");
+    }
+    try {
+        // Find the refund request first
+        const refundRequest = yield requestRefund_model_1.RequestRefund.findOne({ orderId: refundId });
+        console.log('request ', refundRequest);
+        if (!refundRequest) {
+            throw new Error("Refund request not found");
+        }
+        // Check if already rejected
+        if (refundRequest.isRejected) {
+            throw new Error("Refund request is already rejected");
+        }
+        // Check if it was previously accepted
+        if (refundRequest.isAccepted) {
+            throw new Error("Cannot reject an already accepted refund request");
+        }
+        // Update isRejected to true and add rejection details
+        const updateData = {
+            isRejected: true,
+            rejectedAt: new Date(),
+        };
+        if (rejectionReason) {
+            updateData.rejectionReason = rejectionReason;
+        }
+        const updatedRefundRequest = yield requestRefund_model_1.RequestRefund.findOneAndUpdate({ orderId: refundId }, { $set: updateData }, { new: true });
+        // Update order status to reflect rejection
+        yield order_model_1.Order.findByIdAndUpdate(refundId, {
+            status: "return_rejected",
+            "statusDates.returnRejectedAt": new Date(),
+        }, { new: true });
+        return updatedRefundRequest;
+    }
+    catch (error) {
+        throw new Error(`Failed to reject refund request: ${error.message}`);
+    }
+});
 exports.RequestRefundService = {
     createRefundRequest,
     getRefundRequestByIdService,
     acceptRefundRequest,
+    rejectRefundRequest,
 };

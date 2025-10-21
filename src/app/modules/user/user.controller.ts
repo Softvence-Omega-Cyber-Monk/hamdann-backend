@@ -67,6 +67,19 @@ const get_single_user = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const googleAuthLogin = catchAsync(async (req, res) => {
+
+  const data = req.body;
+
+  const result = await user_service.googleAuthLogin(data);
+
+  manageResponse(res, {
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "User fetched successfully",
+    data: result,
+  });
+});
 
 const get_all_users = catchAsync(async (req, res) => {
   const result = await user_service.getAllUsers();
@@ -229,6 +242,7 @@ const deletePaymentMethod = async (req: Request, res: Response) => {
 
 export const user_controllers = {
   create_user,
+  googleAuthLogin,
   get_single_user,
   get_all_users,
   myProfile,

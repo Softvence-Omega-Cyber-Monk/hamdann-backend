@@ -46,8 +46,6 @@ const ProductSchema = new mongoose_1.Schema({
     category: {
         type: String,
         required: true,
-        trim: true,
-        enum: ["Fashion", "Food", "Beauty", "Perfume"], // restrict categories
     },
     brand: { type: String, trim: true },
     shopName: { type: String, trim: true, default: null },

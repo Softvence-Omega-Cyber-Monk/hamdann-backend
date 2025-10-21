@@ -45,38 +45,89 @@ app.get("/", (req, res) => {
     });
 });
 // ✅ Success payment route
+// app.get("/payment-success", async (req: Request, res: Response) => {
+//   try {
+//     const { session_id } = req.query;
+//     if (!session_id) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Session ID required" });
+//     }
+//     const session = await stripe.checkout.sessions.retrieve(
+//       session_id as string
+//     );
+//     if (session.payment_status === "paid") {
+//       const payment = await Payment.findOneAndUpdate(
+//         { paymentIntentId: session.id },
+//         { paymentStatus: "succeeded" },
+//         { new: true }
+//       );
+//       const orderId = session.metadata?.orderId;
+//       // 2️⃣ Update Order status + statusDates
+//       const order = await Order.findByIdAndUpdate(
+//         orderId,
+//         {
+//           status: "payment_processed",
+//           "statusDates.paymentProcessedAt": new Date(), // ✅ update nested field
+//         },
+//         { new: true }
+//       ).populate({
+//         path: "items.productId",
+//         select: "name price image", // populate product info
+//       });
+//       return res.status(200).json({
+//         success: true,
+//         message: "Payment successful",
+//         session,
+//         payment,
+//         order,
+//       });
+//     }
+//     res
+//       .status(200)
+//       .json({ success: false, message: "Payment not completed", session });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: (error as Error).message });
+//   }
+// });
 app.get("/payment-success", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
+    var _a, _b;
     try {
         const { session_id } = req.query;
-        if (!session_id) {
-            return res
-                .status(400)
-                .json({ success: false, message: "Session ID required" });
-        }
+        if (!session_id)
+            return res.status(400).json({ success: false, message: "Session ID required" });
         const session = yield stripe_config_1.stripe.checkout.sessions.retrieve(session_id);
         if (session.payment_status === "paid") {
+            // Update payment status
             const payment = yield payment_model_1.Payment.findOneAndUpdate({ paymentIntentId: session.id }, { paymentStatus: "succeeded" }, { new: true });
+            // Update order
             const orderId = (_a = session.metadata) === null || _a === void 0 ? void 0 : _a.orderId;
-            // 2️⃣ Update Order status + statusDates
             const order = yield order_model_1.Order.findByIdAndUpdate(orderId, {
                 status: "payment_processed",
-                "statusDates.paymentProcessedAt": new Date(), // ✅ update nested field
-            }, { new: true }).populate({
-                path: "items.productId",
-                select: "name price image", // populate product info
-            });
+                "statusDates.payment_processed": new Date(),
+            }, { new: true }).populate("items.productId");
+            // 🔹 Transfer to sellers
+            if ((_b = session.metadata) === null || _b === void 0 ? void 0 : _b.sellers) {
+                const sellers = JSON.parse(session.metadata.sellers);
+                for (const { stripeAccountId, amount, sellerId, orderId } of sellers) {
+                    // ⚠️ Make sure amount is in cents
+                    yield stripe_config_1.stripe.transfers.create({
+                        amount: Math.round(amount * 100),
+                        currency: session.currency || "aed",
+                        destination: stripeAccountId,
+                        metadata: { orderId, sellerId },
+                    });
+                }
+            }
             return res.status(200).json({
                 success: true,
-                message: "Payment successful",
+                message: "Payment successful and transfers completed",
                 session,
                 payment,
                 order,
             });
         }
-        res
-            .status(200)
-            .json({ success: false, message: "Payment not completed", session });
+        res.status(200).json({ success: false, message: "Payment not completed", session });
     }
     catch (error) {
         res.status(500).json({ success: false, message: error.message });

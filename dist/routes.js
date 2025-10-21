@@ -15,10 +15,12 @@ const payment_route_1 = require("./app/modules/payment/payment.route");
 const notification_route_1 = require("./app/modules/notifications/notification.route");
 const wishListedProducts_route_1 = require("./app/modules/wishListedProducts/wishListedProducts.route");
 const requestRefund_route_1 = require("./app/modules/requestRefund/requestRefund.route");
+const category_route_1 = require("./app/modules/category/category.route");
 const appRouter = (0, express_1.Router)();
 const moduleRoutes = [
     { path: '/auth', route: auth_route_1.default },
     { path: "/user", route: user_route_1.default },
+    { path: "/category", route: category_route_1.categoryRoute },
     { path: "/product", route: products_route_1.productRoutes },
     { path: "/cart", route: cart_route_1.CartRoute },
     { path: "/order", route: order_route_1.OrderRoute },

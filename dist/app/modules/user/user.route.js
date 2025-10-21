@@ -24,6 +24,7 @@ userRoute.post("/create", cloudinary_1.upload.fields([
 ]), user_controller_1.user_controllers.create_user);
 // Get single user by ID
 userRoute.get("/get-single/:id", user_controller_1.user_controllers.get_single_user);
+userRoute.post("/googleAuthLogin", user_controller_1.user_controllers.googleAuthLogin);
 // Get all users
 userRoute.get("/getAll", user_controller_1.user_controllers.get_all_users);
 userRoute.get("/myProfile", (0, auth_1.default)("Admin", "Buyer", "Seller"), user_controller_1.user_controllers.myProfile);

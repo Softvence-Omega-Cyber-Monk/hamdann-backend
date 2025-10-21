@@ -14,7 +14,7 @@ authRoute.post(
 
 authRoute.post(
   "/refresh-token",
-  auth("Admin", "Buyer", "Seller"),
+  // auth("Admin", "Buyer", "Seller"),
   auth_controllers.refresh_token
 );
 authRoute.post(
@@ -22,11 +22,16 @@ authRoute.post(
   auth("Buyer", "Seller", "Admin"),
   auth_controllers.change_password
 );
-authRoute.post(
-  "/forgot-password",
-  // RequestValidator(auth_validation.forgotPassword),
-  auth_controllers.forget_password
-);
+
 authRoute.post("/logout", auth_controllers.logoutRemoveToken);
+
+// Step 1: Request reset code
+authRoute.post("/forgot-password", auth_controllers.requestPasswordReset);
+
+// Step 2: Verify code
+authRoute.post("/verify-code", auth_controllers.verifyResetCode);
+
+// Step 3: Reset password
+authRoute.post("/reset-password", auth_controllers.resetPassword);
 
 export default authRoute;

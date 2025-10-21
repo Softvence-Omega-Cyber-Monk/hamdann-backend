@@ -11,7 +11,7 @@ exports.ProductSchema = zod_1.z.object({
     userId: zod_1.z.string().min(1, "User ID is required"),
     name: zod_1.z.string().min(2, "Product name must be at least 2 characters"),
     sku: zod_1.z.string().min(1, "SKU is required"),
-    category: zod_1.z.enum(["Fashion", "Food", "Beauty", "Perfume"]),
+    category: zod_1.z.string(),
     brand: zod_1.z.string().optional(),
     shopName: zod_1.z.string().optional().nullable(),
     weight: zod_1.z.number().optional(),

@@ -14,4 +14,6 @@ router.post("/create", cloudinary_1.uploadMultiple, requestRefund_controller_1.R
 router.get("/:id", requestRefund_controller_1.RequestRefundController.getRefundRequestByIdController);
 // Accept refund request
 router.patch("/:id/accept", requestRefund_controller_1.RequestRefundController.acceptRefundRequestController);
+// Reject refund request route
+router.patch("/:refundId/reject", requestRefund_controller_1.RequestRefundController.rejectRefundRequest);
 exports.RequestRefundRoutes = router;
