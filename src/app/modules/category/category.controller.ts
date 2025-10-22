@@ -61,11 +61,10 @@ export const CategoryController = {
 
   // Update
   async update(req: Request, res: Response) {
-    const name = req?.body;
+    const data = req?.body;
     const file = req.file;
 
-    console.log("in controller ", name);
-    console.log("in controller ", file);
+    // console.log("in controller ", file);
 
     // console.log("Uploaded file:", file);
 
@@ -75,7 +74,7 @@ export const CategoryController = {
     try {
       const category = await CategoryService.updateCategory(
         req.params.id,
-        name,
+        data.name,
         filePath
       );
       // if (!category)

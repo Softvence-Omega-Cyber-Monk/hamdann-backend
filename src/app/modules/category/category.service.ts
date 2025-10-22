@@ -69,6 +69,9 @@ export const CategoryService = {
 
   // Update category
   async updateCategory(id: string, name: string, filePath: any) {
+    const categoryName = typeof name === "string" ? name : name;
+    console.log("name________:", categoryName);
+
     let imageUrl = "";
 
     console.log("update service paylaod", name, filePath);
@@ -80,7 +83,7 @@ export const CategoryService = {
         .toString(36)
         .substring(7)}`;
 
-      console.log("ima", imageName, filePath);
+      // console.log("ima", imageName, filePath);
 
       const uploadResult = await uploadImgToCloudinary(
         imageName, // Use generated name instead of category name
@@ -94,8 +97,13 @@ export const CategoryService = {
     if (!imageUrl) {
       throw new Error("Category image is required");
     }
-    console.log("uploaded image url ", imageUrl);
-    // return await Category.findByIdAndUpdate(id, payload, { new: true });
+
+    console.log("name fdgfd ttttt ", categoryName);
+    return await Category.findByIdAndUpdate(
+      id,
+      { name: categoryName, image: imageUrl },
+      { new: true }
+    );
   },
 
   // Delete category
