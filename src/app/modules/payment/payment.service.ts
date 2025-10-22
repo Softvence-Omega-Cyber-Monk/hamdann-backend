@@ -174,7 +174,6 @@ export const createCheckoutSessionService = async (orderId: string) => {
     sellerAccounts.push({ sellerId, stripeAccountId, amount });
   }
   console.log("Seller Accounts:", sellerAccounts);
-  
 
   // 4️⃣ Total amount
   const totalAmount = sellerAccounts.reduce((sum, s) => sum + s.amount, 0);
@@ -209,7 +208,6 @@ export const createCheckoutSessionService = async (orderId: string) => {
 
   return session.url;
 };
-
 
 export const createSubscriptionSessionService = async (
   userId: string,
@@ -362,77 +360,346 @@ export const verifySubscriptionPaymentService = async (sessionId: string) => {
   return { success: false, message: "Payment not completed", session: null };
 };
 
+// payment.service.ts
+// export const createSubscriptionService = async (
+//   userId: string,
+//   plan: "starter" | "advance" | "starterYearly" | "advanceYearly",
+//   card: { number: string; expiry_month: number; expiry_year: number; cvv: string }
+// ) => {
+//   try {
+//     console.log(`🟡 Starting subscription for user ${userId}, plan: ${plan}`);
+
+//     // Validate environment variables
+//     if (!process.env.CHECKOUT_SECRET_KEY) {
+//       throw new Error("Payment gateway configuration missing: CHECKOUT_SECRET_KEY");
+//     }
+
+//     const planConfigs: Record<string, { amount: number; interval: string }> = {
+//       starter: { amount: 69, interval: "month" },
+//       advance: { amount: 199, interval: "month" },
+//       starterYearly: { amount: 699, interval: "year" },
+//       advanceYearly: { amount: 1999, interval: "year" },
+//     };
+
+//     const planConfig = planConfigs[plan];
+//     if (!planConfig) throw new Error(`Invalid plan: ${plan}`);
+
+//     const user = await User_Model.findById(userId);
+//     if (!user) throw new Error("User not found");
+
+//     // ✅ Create card token with better error handling
+//     console.log("🟡 Creating card token...");
+//     let tokenRes;
+//     try {
+//       tokenRes = await checkout.tokens.request({
+//         type: "card",
+//         number: card.number.replace(/\s/g, ''), // Remove spaces
+//         expiry_month: card.expiry_month,
+//         expiry_year: card.expiry_year,
+//         cvv: card.cvv,
+//       }) as { token: string };
+//     } catch (tokenError: any) {
+//       console.error("🔴 Token creation failed:", tokenError);
+//       throw new Error(`Payment authentication failed: ${tokenError.message}`);
+//     }
+
+//     if (!tokenRes.token) {
+//       throw new Error("Failed to create card token");
+//     }
+
+//     // Rest of your payment processing code...
+//     const paymentRes = await checkout.payments.request({
+//       source: { type: "token", token: tokenRes.token },
+//       amount: planConfig.amount * 100,
+//       currency: "AED",
+//       capture: true,
+//       reference: `sub_${userId}_${Date.now()}`,
+//       "3ds": { enabled: false },
+//       metadata: { userId, plan, interval: planConfig.interval },
+//     }) as { id: string };
+
+//     // Update user and save payment records...
+//     await User_Model.findByIdAndUpdate(userId, {
+//       isPaidPlan: true,
+//       paidPlan: plan,
+//       subscribtionPlan: plan,
+//     });
+
+//     await Payment.create({
+//       userId,
+//       plan,
+//       amount: planConfig.amount,
+//       currency: "AED",
+//       paymentIntentId: paymentRes.id,
+//       paymentStatus: "succeeded",
+//       mode: "subscription",
+//     });
+
+//     return {
+//       success: true,
+//       message: "Subscription activated successfully",
+//       subscription: {
+//         plan,
+//         amount: planConfig.amount,
+//         interval: planConfig.interval,
+//         nextBillingDate: getNextBillingDate(planConfig.interval),
+//       },
+//     };
+//   } catch (error: any) {
+//     console.error("🔴 Service Error:", error);
+
+//     // Handle specific authentication errors
+//     if (error.message.includes('AuthenticationError') || error.message.includes('Authentication failed')) {
+//       throw new Error("Payment gateway authentication failed. Please check API credentials.");
+//     }
+
+//     throw error;
+//   }
+// };
+// payment.service.ts - Temporary fix
+// export const createSubscriptionService = async (
+//   userId: string,
+//   plan: "starter" | "advance" | "starterYearly" | "advanceYearly",
+//   card: {
+//     number: string;
+//     expiry_month: number;
+//     expiry_year: number;
+//     cvv: string;
+//   }
+// ) => {
+//   try {
+//     console.log(`🟡 Starting subscription for user ${userId}, plan: ${plan}`);
+
+//     const planConfigs: Record<string, { amount: number; interval: string }> = {
+//       starter: { amount: 69, interval: "month" },
+//       advance: { amount: 199, interval: "month" },
+//       starterYearly: { amount: 699, interval: "year" },
+//       advanceYearly: { amount: 1999, interval: "year" },
+//     };
+
+//     const planConfig = planConfigs[plan];
+//     if (!planConfig) throw new Error(`Invalid plan: ${plan}`);
+
+//     const user = await User_Model.findById(userId);
+//     if (!user) throw new Error("User not found");
+
+//     // Determine product slots based on plan
+//     let productAddedPowerQuantity: number | "unlimited";
+//     if (plan === "starter") {
+//       productAddedPowerQuantity = 20;
+//     } else if (plan === "starterYearly") {
+//       productAddedPowerQuantity = 240;
+//     } else {
+//       productAddedPowerQuantity = "unlimited";
+//     }
+
+//     // ✅ Create card token
+//     console.log("🟡 Creating card token...");
+//     const tokenRes = (await checkout.tokens.request({
+//       type: "card",
+//       number: card.number.replace(/\s/g, ""),
+//       expiry_month: card.expiry_month,
+//       expiry_year: card.expiry_year,
+//       cvv: card.cvv,
+//     })) as { token: string };
+
+//     if (!tokenRes.token) {
+//       throw new Error("Failed to create card token");
+//     }
+
+//     // ✅ Make payment WITHOUT processing channel temporarily
+//     console.log("🟡 Processing payment...");
+//     const paymentPayload: any = {
+//       source: { type: "token", token: tokenRes.token },
+//       amount: planConfig.amount * 100,
+//       currency: "AED",
+//       capture: true,
+//       reference: `sub_${userId}_${Date.now()}`,
+//       "3ds": { enabled: false },
+//       metadata: { userId, plan, interval: planConfig.interval },
+//     };
+
+//     // Only add processing channel if it's valid and required
+//     if (
+//       process.env.CHECKOUT_PROCESSING_CHANNEL_ID &&
+//       process.env.CHECKOUT_PROCESSING_CHANNEL_ID.startsWith("pc_") &&
+//       process.env.CHECKOUT_PROCESSING_CHANNEL_ID.length > 10
+//     ) {
+//       paymentPayload.processing_channel_id =
+//         process.env.CHECKOUT_PROCESSING_CHANNEL_ID;
+//     }
+
+//     console.log("Payment payload:", JSON.stringify(paymentPayload, null, 2));
+
+//     const paymentRes = (await checkout.payments.request(paymentPayload)) as {
+//       id: string;
+//       status: string;
+//     };
+
+//     console.log("🟢 Payment successful:", paymentRes);
+
+//     // ✅ Update user and save payment
+//     await User_Model.findByIdAndUpdate(userId, {
+//       isPaidPlan: true,
+//       paidPlan: plan,
+//       subscribtionPlan: plan,
+//       productAddedPowerQuantity: productAddedPowerQuantity,
+//       subscriptionUpdatedAt: new Date(),
+//     });
+
+//     await Payment.create({
+//       userId,
+//       plan,
+//       amount: planConfig.amount,
+//       currency: "AED",
+//       paymentIntentId: paymentRes.id,
+//       paymentStatus: "succeeded",
+//       mode: "subscription",
+//       paymentDate: new Date(),
+//     });
+
+//     return {
+//       success: true,
+//       message: "Subscription activated successfully",
+//       subscription: {
+//         plan,
+//         amount: planConfig.amount,
+//         interval: planConfig.interval,
+//         nextBillingDate: getNextBillingDate(planConfig.interval),
+//       },
+//     };
+//   } catch (error: any) {
+//     console.error("🔴 Service Error:", error);
+//     throw error;
+//   }
+// };
 export const createSubscriptionService = async (
   userId: string,
   plan: "starter" | "advance" | "starterYearly" | "advanceYearly",
-  card: { number: string; expiry_month: number; expiry_year: number; cvv: string }
+  card: {
+    number: string;
+    expiry_month: number;
+    expiry_year: number;
+    cvv: string;
+  }
 ) => {
-  const planConfigs: Record<string, { amount: number; interval: string }> = {
-    starter: { amount: 69, interval: "month" },
-    advance: { amount: 199, interval: "month" },
-    starterYearly: { amount: 699, interval: "year" },
-    advanceYearly: { amount: 1999, interval: "year" },
-  };
+  try {
+    console.log(`🟡 Starting subscription for user ${userId}, plan: ${plan}`);
 
-  const planConfig = planConfigs[plan];
-  if (!planConfig) throw new Error(`Invalid plan: ${plan}`);
+    const planConfigs: Record<string, { amount: number; interval: string }> = {
+      starter: { amount: 69, interval: "month" },
+      advance: { amount: 199, interval: "month" },
+      starterYearly: { amount: 699, interval: "year" },
+      advanceYearly: { amount: 1999, interval: "year" },
+    };
 
-  const user = await User_Model.findById(userId);
-  if (!user) throw new Error("User not found");
+    const planConfig = planConfigs[plan];
+    if (!planConfig) throw new Error(`Invalid plan: ${plan}`);
 
-  // Create card token
-  const tokenRes = await checkout.tokens.request({
-    type: "card",
-    number: card.number,
-    expiry_month: card.expiry_month,
-    expiry_year: card.expiry_year,
-    cvv: card.cvv,
-  }) as { token: string };
+    const user = await User_Model.findById(userId);
+    if (!user) throw new Error("User not found");
 
-  // Make payment
-  const paymentRes = await checkout.payments.request({
-    source: { type: "token", token: tokenRes.token },
-    amount: planConfig.amount * 100,
-    currency: "AED",
-    capture: true,
-    reference: `sub_${userId}_${Date.now()}`,
-    "3ds": { enabled: false },
-    metadata: { userId, plan, interval: planConfig.interval },
-  }) as { id: string };
+    // Determine product slots based on plan
+    let productAddedPowerQuantity: number | "unlimited";
+    if (plan === "starter") {
+      productAddedPowerQuantity = 20;
+    } else if (plan === "starterYearly") {
+      productAddedPowerQuantity = 240;
+    } else {
+      productAddedPowerQuantity = "unlimited";
+    }
 
-  // Update user subscription info
-  await User_Model.findByIdAndUpdate(userId, {
-    isPaidPlan: true,
-    paidPlan: plan,
-    subscribtionPlan: plan,
-  });
+    // Calculate subscription expiry date
+    const subscriptionUpdatedAt = new Date();
+    const subscriptionExpiryDate = new Date();
+    
+    if (plan === "starter" || plan === "advance") {
+      // Monthly plans: 1 month from now
+      subscriptionExpiryDate.setMonth(subscriptionExpiryDate.getMonth() + 1);
+    } else {
+      // Yearly plans: 1 year from now
+      subscriptionExpiryDate.setFullYear(subscriptionExpiryDate.getFullYear() + 1);
+    }
 
-  // Save payment record
-  await Payment.create({
-    userId,
-    plan,
-    amount: planConfig.amount,
-    currency: "AED",
-    paymentIntentId: paymentRes.id,
-    paymentStatus: "succeeded",
-    mode: "subscription",
-  });
+    // ✅ Create card token
+    console.log("🟡 Creating card token...");
+    const tokenRes = (await checkout.tokens.request({
+      type: "card",
+      number: card.number.replace(/\s/g, ""),
+      expiry_month: card.expiry_month,
+      expiry_year: card.expiry_year,
+      cvv: card.cvv,
+    })) as { token: string };
 
-  return {
-    success: true,
-    message: "Subscription activated successfully",
-    subscription: {
+    if (!tokenRes.token) {
+      throw new Error("Failed to create card token");
+    }
+
+    // ✅ Make payment
+    console.log("🟡 Processing payment...");
+    const paymentPayload: any = {
+      source: { type: "token", token: tokenRes.token },
+      amount: planConfig.amount * 100,
+      currency: "AED",
+      capture: true,
+      reference: `sub_${userId}_${Date.now()}`,
+      "3ds": { enabled: false },
+      metadata: { userId, plan, interval: planConfig.interval },
+    };
+
+    if (
+      process.env.CHECKOUT_PROCESSING_CHANNEL_ID &&
+      process.env.CHECKOUT_PROCESSING_CHANNEL_ID.startsWith("pc_") &&
+      process.env.CHECKOUT_PROCESSING_CHANNEL_ID.length > 10
+    ) {
+      paymentPayload.processing_channel_id =
+        process.env.CHECKOUT_PROCESSING_CHANNEL_ID;
+    }
+
+    const paymentRes = (await checkout.payments.request(paymentPayload)) as {
+      id: string;
+      status: string;
+    };
+
+    console.log("🟢 Payment successful:", paymentRes);
+
+    // ✅ Update user and save payment
+    await User_Model.findByIdAndUpdate(userId, {
+      isPaidPlan: true,
+      paidPlan: plan,
+      subscribtionPlan: plan,
+      productAddedPowerQuantity: productAddedPowerQuantity,
+      subscriptionUpdatedAt: subscriptionUpdatedAt,
+      subscriptionExpiryDate: subscriptionExpiryDate,
+      isSubscriptionActive: true,
+    });
+
+    await Payment.create({
+      userId,
       plan,
       amount: planConfig.amount,
-      interval: planConfig.interval,
-      nextBillingDate: getNextBillingDate(planConfig.interval),
-    },
-  };
+      currency: "AED",
+      paymentIntentId: paymentRes.id,
+      paymentStatus: "succeeded",
+      mode: "subscription",
+      paymentDate: new Date(),
+      subscriptionExpiryDate: subscriptionExpiryDate,
+    });
+
+    return {
+      success: true,
+      message: "Subscription activated successfully",
+      subscription: {
+        plan,
+        amount: planConfig.amount,
+        interval: planConfig.interval,
+        nextBillingDate: subscriptionExpiryDate.toISOString(),
+        productAddedPowerQuantity: productAddedPowerQuantity,
+      },
+    };
+  } catch (error: any) {
+    console.error("🔴 Service Error:", error);
+    throw error;
+  }
 };
 
-function getNextBillingDate(interval: string) {
-  const now = new Date();
-  if (interval === "month") now.setMonth(now.getMonth() + 1);
-  else now.setFullYear(now.getFullYear() + 1);
-  return now.toISOString();
-}

@@ -47,5 +47,7 @@ export type TUser = {
   deviceToken?:string , 
   deviceTokens?: string[]
   stripeAccountId?: string;
+  subscriptionExpiryDate?: Date;
+  isSubscriptionActive?: boolean;
 
 };

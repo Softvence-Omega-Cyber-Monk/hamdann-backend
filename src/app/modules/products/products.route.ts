@@ -2,10 +2,11 @@ import express from "express";
 import { productController } from "./products.controller";
 import { upload, uploadMultiple, uploadSingle } from "../../utils/cloudinary";
 import auth from "../../middlewares/auth";
+import { checkUserSubscription } from "../../middlewares/subscriptionCheck";
 
 const router = express.Router();
 
-router.post("/create", upload.any(), productController.createProduct); // ✅ Create product
+router.post("/create", upload.any(), checkUserSubscription, productController.createProduct); // ✅ Create product
 // router.put("/update/:id", productController.updateProduct); // ✅ Update product
 router.put(
   "/update/:id",

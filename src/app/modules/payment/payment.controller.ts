@@ -109,22 +109,84 @@ const verifySubscriptionPayment = async (req: Request, res: Response) => {
   }
 };
 
+// export const createSubscriptionController = async (req: Request, res: Response) => {
+//   try {
+//     const { userId, plan, card } = req.body;
+
+//     if (!userId || !plan || !card) {
+//       return res.status(400).json({ success: false, message: "Missing required fields" });
+//     }
+
+//     const subscription = await createSubscriptionService(userId, plan, card);
+
+//     return res.status(200).json({ success: true, data: subscription });
+//   } catch (error: any) {
+//     console.error("Subscription error full details:", error); // 🔥 Log full error
+//     return res.status(500).json({
+//       success: false,
+//       message: error.message || "Server Error",
+//       details: error.response || null, // Optional: add SDK response details if any
+//     });
+//   }
+// };
+// payment.controller.ts
 export const createSubscriptionController = async (req: Request, res: Response) => {
   try {
     const { userId, plan, card } = req.body;
 
     if (!userId || !plan || !card) {
-      return res.status(400).json({ success: false, message: "Missing required fields" });
+      return res.status(400).json({ 
+        success: false, 
+        message: "Missing required fields: userId, plan, or card" 
+      });
+    }
+
+    // Validate card details
+    if (!card.number || !card.expiry_month || !card.expiry_year || !card.cvv) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid card details"
+      });
     }
 
     const subscription = await createSubscriptionService(userId, plan, card);
 
-    return res.status(200).json({ success: true, data: subscription });
+    return res.status(200).json({ 
+      success: true, 
+      data: subscription 
+    });
   } catch (error: any) {
-    console.error("Subscription error:", error);
-    return res.status(500).json({ success: false, message: error.message || "Server Error" });
+    console.error("🔴 Subscription Error Details:");
+    console.error("Message:", error.message);
+    console.error("Stack:", error.stack);
+    console.error("Full Error:", JSON.stringify(error, null, 2));
+    
+    // Check for specific error types
+    if (error.message?.includes("Invalid plan")) {
+      return res.status(400).json({
+        success: false,
+        message: error.message
+      });
+    }
+    
+    if (error.message?.includes("User not found")) {
+      return res.status(404).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Internal Server Error",
+      // Only include details in development
+      ...(process.env.NODE_ENV === 'development' && {
+        details: error.response?.data || error.stack
+      })
+    });
   }
 };
+
 
 
 export const paymentController = {
