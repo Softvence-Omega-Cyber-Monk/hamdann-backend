@@ -7,7 +7,7 @@ export const CategoryController = {
     try {
       const { name } = req.body;
       const file = req.file;
-      console.log('file ', file)
+      console.log("file ", file);
 
       // console.log("Uploaded file:", file);
 
@@ -61,15 +61,27 @@ export const CategoryController = {
 
   // Update
   async update(req: Request, res: Response) {
+    const name = req?.body;
+    const file = req.file;
+
+    console.log("in controller ", name);
+    console.log("in controller ", file);
+
+    // console.log("Uploaded file:", file);
+
+    // Pass the actual file path to the service
+    const filePath = file ? file.path : undefined;
+
     try {
       const category = await CategoryService.updateCategory(
         req.params.id,
-        req.body
+        name,
+        filePath
       );
-      if (!category)
-        return res
-          .status(404)
-          .json({ success: false, message: "Category not found" });
+      // if (!category)
+      //   return res
+      //     .status(404)
+      //     .json({ success: false, message: "Category not found" });
       res.status(200).json({
         success: true,
         message: "Category update successfull",
