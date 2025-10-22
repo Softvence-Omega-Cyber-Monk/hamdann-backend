@@ -158,6 +158,32 @@ export const user_service = {
     const existingUser = await User_Model.findById(id);
     if (!existingUser) throw new Error("User not found");
 
+    // FIX: Handle individual address fields from form-data
+    const addressFields = ["state", "city", "zip", "streetAddress"];
+    let hasAddressData = false;
+    const newAddress: any = {};
+
+    // Check if any address fields are present and non-empty
+    addressFields.forEach((field) => {
+      if (
+        updateData[field as keyof typeof updateData] &&
+        String(updateData[field as keyof typeof updateData]).trim() !== ""
+      ) {
+        newAddress[field] = updateData[field as keyof typeof updateData];
+        hasAddressData = true;
+        // Remove the individual field from updateData
+        delete updateData[field as keyof typeof updateData];
+      }
+    });
+    // If we have address data, structure it properly
+    if (hasAddressData) {
+      const existingUserObj = existingUser.toObject();
+      (updateData as any).address = {
+        ...(existingUserObj.address || {}), 
+        ...newAddress, 
+      };
+    }
+
     // Handle image upload if file exists
     if (updateData.profileImageFile) {
       try {
