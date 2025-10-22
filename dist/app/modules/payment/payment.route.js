@@ -15,4 +15,5 @@ router.get("/payment-success", payment_controller_1.paymentController.verifyPaym
 router.post("/subscription/create", (0, auth_1.default)("Admin", "Seller"), payment_controller_1.paymentController.createSubscriptionSession);
 // ✅ Verify subscription payment success
 router.get("/subscription/verify", payment_controller_1.paymentController.verifySubscriptionPayment);
+router.post("/checkout/subscription", payment_controller_1.paymentController.createSubscriptionController);
 exports.paymentRoutes = router;

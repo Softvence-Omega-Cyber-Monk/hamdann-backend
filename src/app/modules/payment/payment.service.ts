@@ -5,6 +5,7 @@ import { User_Model } from "../user/user.schema";
 import { Order } from "../order/order.model";
 import { Product } from "../products/products.model";
 import { AppError } from "../../utils/app_error";
+import { checkout } from "../../configs/checkout.config";
 
 // export const createCheckoutSessionService = async (orderId: string) => {
 //   const orderAmount: any = await Order.findById(orderId);
@@ -360,3 +361,78 @@ export const verifySubscriptionPaymentService = async (sessionId: string) => {
 
   return { success: false, message: "Payment not completed", session: null };
 };
+
+export const createSubscriptionService = async (
+  userId: string,
+  plan: "starter" | "advance" | "starterYearly" | "advanceYearly",
+  card: { number: string; expiry_month: number; expiry_year: number; cvv: string }
+) => {
+  const planConfigs: Record<string, { amount: number; interval: string }> = {
+    starter: { amount: 69, interval: "month" },
+    advance: { amount: 199, interval: "month" },
+    starterYearly: { amount: 699, interval: "year" },
+    advanceYearly: { amount: 1999, interval: "year" },
+  };
+
+  const planConfig = planConfigs[plan];
+  if (!planConfig) throw new Error(`Invalid plan: ${plan}`);
+
+  const user = await User_Model.findById(userId);
+  if (!user) throw new Error("User not found");
+
+  // Create card token
+  const tokenRes = await checkout.tokens.request({
+    type: "card",
+    number: card.number,
+    expiry_month: card.expiry_month,
+    expiry_year: card.expiry_year,
+    cvv: card.cvv,
+  }) as { token: string };
+
+  // Make payment
+  const paymentRes = await checkout.payments.request({
+    source: { type: "token", token: tokenRes.token },
+    amount: planConfig.amount * 100,
+    currency: "AED",
+    capture: true,
+    reference: `sub_${userId}_${Date.now()}`,
+    "3ds": { enabled: false },
+    metadata: { userId, plan, interval: planConfig.interval },
+  }) as { id: string };
+
+  // Update user subscription info
+  await User_Model.findByIdAndUpdate(userId, {
+    isPaidPlan: true,
+    paidPlan: plan,
+    subscribtionPlan: plan,
+  });
+
+  // Save payment record
+  await Payment.create({
+    userId,
+    plan,
+    amount: planConfig.amount,
+    currency: "AED",
+    paymentIntentId: paymentRes.id,
+    paymentStatus: "succeeded",
+    mode: "subscription",
+  });
+
+  return {
+    success: true,
+    message: "Subscription activated successfully",
+    subscription: {
+      plan,
+      amount: planConfig.amount,
+      interval: planConfig.interval,
+      nextBillingDate: getNextBillingDate(planConfig.interval),
+    },
+  };
+};
+
+function getNextBillingDate(interval: string) {
+  const now = new Date();
+  if (interval === "month") now.setMonth(now.getMonth() + 1);
+  else now.setFullYear(now.getFullYear() + 1);
+  return now.toISOString();
+}

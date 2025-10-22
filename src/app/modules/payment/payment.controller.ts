@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createCheckoutSessionService, createSubscriptionSessionService,  verifySubscriptionPaymentService } from "./payment.service";
+import { createCheckoutSessionService, createSubscriptionSessionService,  verifySubscriptionPaymentService, createSubscriptionService } from "./payment.service";
 import { stripe } from "../../configs/stripe.config";
 import { Payment } from "./payment.model";
 import { Order } from "../order/order.model";
@@ -109,6 +109,22 @@ const verifySubscriptionPayment = async (req: Request, res: Response) => {
   }
 };
 
+export const createSubscriptionController = async (req: Request, res: Response) => {
+  try {
+    const { userId, plan, card } = req.body;
+
+    if (!userId || !plan || !card) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
+
+    const subscription = await createSubscriptionService(userId, plan, card);
+
+    return res.status(200).json({ success: true, data: subscription });
+  } catch (error: any) {
+    console.error("Subscription error:", error);
+    return res.status(500).json({ success: false, message: error.message || "Server Error" });
+  }
+};
 
 
 export const paymentController = {
@@ -116,5 +132,6 @@ export const paymentController = {
   verifyPayment,
   createSubscriptionSession,
   verifySubscriptionPayment,
+  createSubscriptionController,
 
 }
