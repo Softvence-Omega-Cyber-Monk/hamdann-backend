@@ -6,12 +6,57 @@ import {
   uploadMultipleImages,
 } from "../../utils/cloudinary";
 import { User_Model } from "../user/user.schema";
-import mongoose from "mongoose";
+import mongoose, { Mongoose } from "mongoose";
 import { sendNotification } from "../../utils/notificationHelper";
 
 interface ReviewInput {
   rating: number;
   comment?: string;
+}
+
+interface ProductQueryOptions {
+  sort?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+// Get single product statistic
+interface ProductStats {
+  totalSales: number;
+  revenue: number;
+  totalOrders: number;
+  deliveredOrders: number;
+  conversionRate: number;
+}
+interface InventoryStatus {
+  availableStock: number;
+  stockStatus: "In Stock" | "Out of Stock" | "Low Stock";
+  lowStockThreshold: number;
+  lastRestock?: string;
+  // needsRestock: boolean;
+}
+
+interface ProductQuery {
+  name?: { $regex: string; $options: string };
+}
+
+interface PaginatedProducts {
+  products: any[];
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalProducts: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+    nextPage: number | null;
+    prevPage: number | null;
+  };
+}
+
+export interface PaginationOptions {
+  page: number;
+  limit: number;
 }
 
 const shopReview = async (userId: any) => {
@@ -28,13 +73,6 @@ const shopReview = async (userId: any) => {
   ]);
   return reviews;
 };
-interface ProductQueryOptions {
-  sort?: string;
-  search?: string;
-  page?: number;
-  limit?: number;
-}
-
 
 const createProductService = async (
   payload: IProduct,
@@ -42,7 +80,7 @@ const createProductService = async (
 ) => {
   const { userId } = payload;
 
-  console.log('product', payload)
+  console.log("product", payload);
 
   const exitUser = await User_Model.findById({ _id: userId });
   if (!exitUser) {
@@ -68,9 +106,11 @@ const createProductService = async (
   // Check if user has unlimited power or remaining power > 0
   if (exitUser.productAddedPowerQuantity !== "unlimited") {
     const currentProductCount = await Product.countDocuments({ userId });
-    
+
     if (currentProductCount >= exitUser.productAddedPowerQuantity) {
-      throw new Error(`You have reached your product limit of ${exitUser.productAddedPowerQuantity}. Please upgrade your plan to add more products.`);
+      throw new Error(
+        `You have reached your product limit of ${exitUser.productAddedPowerQuantity}. Please upgrade your plan to add more products.`
+      );
     }
   }
 
@@ -104,13 +144,14 @@ const createProductService = async (
 
   // Decrement productAddedPowerQuantity only if it's not "unlimited"
   if (exitUser.productAddedPowerQuantity !== "unlimited") {
-    await User_Model.findByIdAndUpdate(
-      userId,
-      {
-        $inc: { productAddedPowerQuantity: -1 }
-      }
+    await User_Model.findByIdAndUpdate(userId, {
+      $inc: { productAddedPowerQuantity: -1 },
+    });
+    console.log(
+      `Product added. Remaining power: ${
+        exitUser.productAddedPowerQuantity - 1
+      }`
     );
-    console.log(`Product added. Remaining power: ${exitUser.productAddedPowerQuantity - 1}`);
   }
 
   // Notify all customers
@@ -194,27 +235,6 @@ const updateProductService = async (
   return product;
 };
 
-export interface PaginationOptions {
-  page: number;
-  limit: number;
-}
-
-interface ProductQuery {
-  name?: { $regex: string; $options: string };
-}
-
-interface PaginatedProducts {
-  products: any[];
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalProducts: number;
-    hasNextPage: boolean;
-    hasPrevPage: boolean;
-    nextPage: number | null;
-    prevPage: number | null;
-  };
-}
 const getAllProductsService = async (
   page: number = 1,
   limit: number = 10,
@@ -524,14 +544,6 @@ const getInventoryStatusService = async (userId: string) => {
   return inventoryStatus;
 };
 
-interface InventoryStatus {
-  availableStock: number;
-  stockStatus: "In Stock" | "Out of Stock" | "Low Stock";
-  lowStockThreshold: number;
-  lastRestock?: string;
-  // needsRestock: boolean;
-}
-
 // Get inventory status for a specific product
 const getInventoryStatusForSingleProduct = async (
   productId: string
@@ -617,14 +629,6 @@ const updateProductQuantity = async (
   };
 };
 
-// Get single product statistic
-interface ProductStats {
-  totalSales: number;
-  revenue: number;
-  totalOrders: number;
-  deliveredOrders: number;
-  conversionRate: number;
-}
 const getSingleProductStats = async (
   productId: string
 ): Promise<ProductStats> => {
@@ -670,6 +674,24 @@ const getSingleProductStats = async (
   };
 };
 
+// Service to fetch sales trends
+export const getSalesTrends = async (sellerId: string) => {
+  try {
+    // Step 1: Find the seller's products
+    const sellerProducts = await Product.find({ userId: sellerId });
+
+    const totalSales = sellerProducts.reduce((acc, product) => {
+      return acc + product.salesCount;
+    }, 0);
+
+    console.log("totalSales", totalSales);
+    
+  } catch (error) {
+    console.error("Error fetching sales data: ", error);
+    throw new Error("Error fetching sales data");
+  }
+};
+
 export const productService = {
   createProductService,
   updateProductService,
@@ -686,4 +708,5 @@ export const productService = {
   getInventoryStatusForSingleProduct,
   updateProductQuantity,
   getSingleProductStats,
+  getSalesTrends,
 };

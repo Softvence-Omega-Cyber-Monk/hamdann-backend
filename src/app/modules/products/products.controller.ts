@@ -187,7 +187,10 @@ const getBestSellingProductsService = async (req: Request, res: Response) => {
   }
 };
 
-const getSellerBestSellingProductsController = async (req: Request, res: Response) => {
+const getSellerBestSellingProductsController = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const { userId } = req.params;
     const { page, limit, sea } = req.query;
@@ -195,29 +198,30 @@ const getSellerBestSellingProductsController = async (req: Request, res: Respons
     if (!userId) {
       return res.status(400).json({
         success: false,
-        message: "User ID is required"
+        message: "User ID is required",
       });
     }
 
     const pageNumber = page ? parseInt(page as string) : null;
     const limitNumber = limit ? parseInt(limit as string) : null;
 
-
-    const result = await productService.getSellerBestSellingProductsService(userId, {
-      page: pageNumber,
-      limit: limitNumber
-    });
+    const result = await productService.getSellerBestSellingProductsService(
+      userId,
+      {
+        page: pageNumber,
+        limit: limitNumber,
+      }
+    );
 
     res.status(200).json(result);
   } catch (error: any) {
     console.error("Error fetching seller best selling products:", error);
     res.status(500).json({
       success: false,
-      message: error.message || "Failed to fetch best selling products"
+      message: error.message || "Failed to fetch best selling products",
     });
   }
 };
-
 
 const getProductStats = async (req: Request, res: Response) => {
   try {
@@ -418,6 +422,18 @@ const handleGetSingleProductStats = async (
   }
 };
 
+const getSalesTrendsController = async (req: Request, res: Response) => {
+  const sellerId = req.params.sellerId;
+  try {
+    const salesData = await productService.getSalesTrends(sellerId);
+    res.json(salesData); // Send the aggregated data as the response
+  } catch (error: any) {
+    res
+      .status(500)
+      .json({ error: error.message || "Error fetching sales data" });
+  }
+};
+
 export const productController = {
   createProduct,
   updateProduct,
@@ -436,4 +452,5 @@ export const productController = {
   handleGetInventoryStatus,
   handleUpdateQuantity,
   handleGetSingleProductStats,
+  getSalesTrendsController,
 };

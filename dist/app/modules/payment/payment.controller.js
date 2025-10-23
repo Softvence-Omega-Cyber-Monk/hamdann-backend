@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.paymentController = void 0;
+exports.paymentController = exports.createSubscriptionController = void 0;
 const payment_service_1 = require("./payment.service");
 const stripe_config_1 = require("../../configs/stripe.config");
 const payment_model_1 = require("./payment.model");
@@ -101,9 +101,25 @@ const verifySubscriptionPayment = (req, res) => __awaiter(void 0, void 0, void 0
         });
     }
 });
+const createSubscriptionController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { userId, plan, card } = req.body;
+        if (!userId || !plan || !card) {
+            return res.status(400).json({ success: false, message: "Missing required fields" });
+        }
+        const subscription = yield (0, payment_service_1.createSubscriptionService)(userId, plan, card);
+        return res.status(200).json({ success: true, data: subscription });
+    }
+    catch (error) {
+        console.error("Subscription error:", error);
+        return res.status(500).json({ success: false, message: error.message || "Server Error" });
+    }
+});
+exports.createSubscriptionController = createSubscriptionController;
 exports.paymentController = {
     createCheckoutSession,
     verifyPayment,
     createSubscriptionSession,
     verifySubscriptionPayment,
+    createSubscriptionController: exports.createSubscriptionController,
 };

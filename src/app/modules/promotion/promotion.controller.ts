@@ -9,6 +9,9 @@ import {
   getAllPromotionsService,
   updatePromotionService,
   getSellerPromotionsService,
+  getPromotionAnalyticsService,
+  incrementView,
+  getSingleSellerPromotionAnalyticsService,
 } from "./promotion.service";
 import { v2 as cloudinary } from "cloudinary";
 import { configs } from "../../configs";
@@ -24,7 +27,6 @@ export const createPromotion = async (req: Request, res: Response) => {
   try {
     const validatedData = CreatePromotionSchema.parse(req.body);
 
-
     let imageUrl = "";
     if (req.file?.buffer) {
       const result: any = await new Promise((resolve, reject) => {
@@ -37,7 +39,7 @@ export const createPromotion = async (req: Request, res: Response) => {
       imageUrl = result.secure_url;
     }
 
-    const dataToSave :any = {
+    const dataToSave: any = {
       ...validatedData,
       startDate: new Date(validatedData.startDate),
       endDate: new Date(validatedData.endDate),
@@ -75,7 +77,7 @@ export const getAllPromotions = async (req: Request, res: Response) => {
 // ✅ UPDATE PROMOTION
 export const updatePromotion = async (req: Request, res: Response) => {
   try {
-    const { id  } = req.params;
+    const { id } = req.params;
     const validatedData = UpdatePromotionSchema.parse(req.body);
 
     let imageUrl: string | undefined;
@@ -90,7 +92,7 @@ export const updatePromotion = async (req: Request, res: Response) => {
       imageUrl = result.secure_url;
     }
 
-    const dataToUpdate : any= {
+    const dataToUpdate: any = {
       ...validatedData,
       ...(validatedData.startDate && {
         startDate: new Date(validatedData.startDate),
@@ -111,8 +113,6 @@ export const updatePromotion = async (req: Request, res: Response) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
-
-
 
 // ✅ PAUSE PROMOTION
 export const pausePromotion = async (req: Request, res: Response) => {
@@ -144,5 +144,62 @@ export const getSellerPromotions = async (req: Request, res: Response) => {
     res.status(200).json({ success: true, data: promotions });
   } catch (error: any) {
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const incrementViewControllser = async (req: Request, res: Response) => {
+  try {
+    const promotion = await incrementView(req.params.id);
+    if (!promotion) {
+      return res.status(404).json({ message: "Promotion not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      totalView: promotion.totalView,
+    });
+  } catch (err) {
+    res.status(500).json({
+      message: "Error updating view",
+      error: (err as Error).message,
+    });
+  }
+};
+
+//get single promotion analytis
+export const getPromotionAnalytics = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const analytics = await getPromotionAnalyticsService(id);
+    res.status(200).json({
+      success: true,
+      data: analytics,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// single seller promotion analytis 
+export const getPromotgetSingleSellerPromotionAnalyticsController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const analytics = await getSingleSellerPromotionAnalyticsService(id);
+
+    res.status(200).json({
+      success: true,
+      data: analytics,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };

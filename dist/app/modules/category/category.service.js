@@ -17,13 +17,14 @@ exports.CategoryService = {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 let imageUrl = payload.image || "";
-                console.log("Service received - payload:", payload, "filePath:", filePath);
+                console.log("paylaod", payload, filePath);
                 // If image file exists, upload to Cloudinary
                 if (filePath) {
                     // Generate a unique name for the image
                     const imageName = `category-${Date.now()}-${Math.random()
                         .toString(36)
                         .substring(7)}`;
+                    console.log("ima", imageName, filePath);
                     const uploadResult = yield (0, cloudinary_1.uploadImgToCloudinary)(imageName, // Use generated name instead of category name
                     filePath, "categories");
                     imageUrl = uploadResult.secure_url;
@@ -65,9 +66,29 @@ exports.CategoryService = {
         });
     },
     // Update category
-    updateCategory(id, payload) {
+    updateCategory(id, name, filePath) {
         return __awaiter(this, void 0, void 0, function* () {
-            return yield category_model_1.Category.findByIdAndUpdate(id, payload, { new: true });
+            const categoryName = typeof name === "string" ? name : name;
+            console.log("name________:", categoryName);
+            let imageUrl = "";
+            console.log("update service paylaod", name, filePath);
+            // If image file exists, upload to Cloudinary
+            if (filePath) {
+                // Generate a unique name for the image
+                const imageName = `category-${Date.now()}-${Math.random()
+                    .toString(36)
+                    .substring(7)}`;
+                // console.log("ima", imageName, filePath);
+                const uploadResult = yield (0, cloudinary_1.uploadImgToCloudinary)(imageName, // Use generated name instead of category name
+                filePath, "categories");
+                imageUrl = uploadResult.secure_url;
+            }
+            // Validate that we have an image URL
+            if (!imageUrl) {
+                throw new Error("Category image is required");
+            }
+            console.log("name fdgfd ttttt ", categoryName);
+            return yield category_model_1.Category.findByIdAndUpdate(id, { name: categoryName, image: imageUrl }, { new: true });
         });
     },
     // Delete category

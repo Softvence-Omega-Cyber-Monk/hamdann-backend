@@ -18,6 +18,7 @@ exports.CategoryController = {
             try {
                 const { name } = req.body;
                 const file = req.file;
+                console.log("file ", file);
                 // console.log("Uploaded file:", file);
                 // Pass the actual file path to the service
                 const filePath = file ? file.path : undefined;
@@ -73,12 +74,18 @@ exports.CategoryController = {
     // Update
     update(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
+            const data = req === null || req === void 0 ? void 0 : req.body;
+            const file = req.file;
+            // console.log("in controller ", file);
+            // console.log("Uploaded file:", file);
+            // Pass the actual file path to the service
+            const filePath = file ? file.path : undefined;
             try {
-                const category = yield category_service_1.CategoryService.updateCategory(req.params.id, req.body);
-                if (!category)
-                    return res
-                        .status(404)
-                        .json({ success: false, message: "Category not found" });
+                const category = yield category_service_1.CategoryService.updateCategory(req.params.id, data.name, filePath);
+                // if (!category)
+                //   return res
+                //     .status(404)
+                //     .json({ success: false, message: "Category not found" });
                 res.status(200).json({
                     success: true,
                     message: "Category update successfull",

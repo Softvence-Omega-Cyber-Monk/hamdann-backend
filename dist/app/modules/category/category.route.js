@@ -8,6 +8,6 @@ const router = (0, express_1.Router)();
 router.post("/create", cloudinary_1.uploadSingle, category_controller_1.CategoryController.create);
 router.get("/getAll", category_controller_1.CategoryController.getAll);
 router.get("/getSingle/:id", category_controller_1.CategoryController.getById);
-router.put("/update/:id", category_controller_1.CategoryController.update);
+router.put("/update/:id", cloudinary_1.uploadSingle, category_controller_1.CategoryController.update);
 router.delete("/delete/:id", category_controller_1.CategoryController.delete);
 exports.categoryRoute = router;

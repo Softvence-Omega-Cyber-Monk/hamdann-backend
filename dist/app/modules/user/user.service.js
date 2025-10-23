@@ -17,6 +17,8 @@ const user_schema_1 = require("./user.schema");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const mongoose_1 = require("mongoose");
 const cloudinary_1 = require("../../utils/cloudinary");
+const JWT_1 = require("../../utils/JWT");
+const configs_1 = require("../../configs");
 exports.user_service = {
     createUser: (userData) => __awaiter(void 0, void 0, void 0, function* () {
         console.log("user data ", userData);
@@ -57,13 +59,33 @@ exports.user_service = {
     }),
     googleAuthLogin: (data) => __awaiter(void 0, void 0, void 0, function* () {
         console.log(data);
-        const isExitUser = yield user_schema_1.User_Model.findOne({ email: data.email });
-        if (isExitUser) {
-            return isExitUser;
+        const userexit = yield user_schema_1.User_Model.findOne({ email: data.email });
+        if (userexit) {
+            const accessToken = JWT_1.jwtHelpers.generateToken({ userId: userexit === null || userexit === void 0 ? void 0 : userexit._id, email: userexit === null || userexit === void 0 ? void 0 : userexit.email, role: userexit === null || userexit === void 0 ? void 0 : userexit.role }, configs_1.configs === null || configs_1.configs === void 0 ? void 0 : configs_1.configs.jwt.accessToken_secret, configs_1.configs.jwt.accessToken_expires);
+            const refreshToken = JWT_1.jwtHelpers.generateToken({ userId: userexit === null || userexit === void 0 ? void 0 : userexit._id, email: userexit === null || userexit === void 0 ? void 0 : userexit.email, role: userexit === null || userexit === void 0 ? void 0 : userexit.role }, configs_1.configs.jwt.refreshToken_secret, configs_1.configs.jwt.refreshToken_expires);
+            console.log(accessToken, refreshToken);
+            // 6️⃣ Return response
+            return {
+                message: 'User already exits',
+                accessToken,
+                refreshToken,
+                role: userexit.role,
+                userId: userexit._id,
+            };
         }
-        const res = yield user_schema_1.User_Model.create(data);
-        console.log("res", res);
-        return res;
+        // console.log('user', user)
+        const user = yield user_schema_1.User_Model.create(data);
+        // console.log("res", res);
+        const accessToken = JWT_1.jwtHelpers.generateToken({ userId: user === null || user === void 0 ? void 0 : user._id, email: user === null || user === void 0 ? void 0 : user.email, role: user === null || user === void 0 ? void 0 : user.role }, configs_1.configs === null || configs_1.configs === void 0 ? void 0 : configs_1.configs.jwt.accessToken_secret, configs_1.configs.jwt.accessToken_expires);
+        const refreshToken = JWT_1.jwtHelpers.generateToken({ userId: user === null || user === void 0 ? void 0 : user._id, email: user === null || user === void 0 ? void 0 : user.email, role: user === null || user === void 0 ? void 0 : user.role }, configs_1.configs.jwt.refreshToken_secret, configs_1.configs.jwt.refreshToken_expires);
+        console.log(accessToken, refreshToken);
+        // 6️⃣ Return response
+        return {
+            accessToken,
+            refreshToken,
+            role: user.role,
+            userId: user._id,
+        };
     }),
     // Get all users
     getAllUsers: () => __awaiter(void 0, void 0, void 0, function* () {
@@ -80,6 +102,25 @@ exports.user_service = {
         const existingUser = yield user_schema_1.User_Model.findById(id);
         if (!existingUser)
             throw new Error("User not found");
+        // FIX: Handle individual address fields from form-data
+        const addressFields = ["state", "city", "zip", "streetAddress"];
+        let hasAddressData = false;
+        const newAddress = {};
+        // Check if any address fields are present and non-empty
+        addressFields.forEach((field) => {
+            if (updateData[field] &&
+                String(updateData[field]).trim() !== "") {
+                newAddress[field] = updateData[field];
+                hasAddressData = true;
+                // Remove the individual field from updateData
+                delete updateData[field];
+            }
+        });
+        // If we have address data, structure it properly
+        if (hasAddressData) {
+            const existingUserObj = existingUser.toObject();
+            updateData.address = Object.assign(Object.assign({}, (existingUserObj.address || {})), newAddress);
+        }
         // Handle image upload if file exists
         if (updateData.profileImageFile) {
             try {

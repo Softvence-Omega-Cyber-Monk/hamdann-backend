@@ -9,12 +9,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.verifySubscriptionPaymentService = exports.createSubscriptionSessionService = exports.createCheckoutSessionService = void 0;
+exports.createSubscriptionService = exports.verifySubscriptionPaymentService = exports.createSubscriptionSessionService = exports.createCheckoutSessionService = void 0;
 const stripe_config_1 = require("../../configs/stripe.config");
 const configs_1 = require("../../configs");
 const payment_model_1 = require("./payment.model");
 const user_schema_1 = require("../user/user.schema");
 const order_model_1 = require("../order/order.model");
+const checkout_config_1 = require("../../configs/checkout.config");
 // export const createCheckoutSessionService = async (orderId: string) => {
 //   const orderAmount: any = await Order.findById(orderId);
 //   const session = await stripe.checkout.sessions.create({
@@ -324,3 +325,70 @@ const verifySubscriptionPaymentService = (sessionId) => __awaiter(void 0, void 0
     return { success: false, message: "Payment not completed", session: null };
 });
 exports.verifySubscriptionPaymentService = verifySubscriptionPaymentService;
+const createSubscriptionService = (userId, plan, card) => __awaiter(void 0, void 0, void 0, function* () {
+    const planConfigs = {
+        starter: { amount: 69, interval: "month" },
+        advance: { amount: 199, interval: "month" },
+        starterYearly: { amount: 699, interval: "year" },
+        advanceYearly: { amount: 1999, interval: "year" },
+    };
+    const planConfig = planConfigs[plan];
+    if (!planConfig)
+        throw new Error(`Invalid plan: ${plan}`);
+    const user = yield user_schema_1.User_Model.findById(userId);
+    if (!user)
+        throw new Error("User not found");
+    // Create card token
+    const tokenRes = yield checkout_config_1.checkout.tokens.request({
+        type: "card",
+        number: card.number,
+        expiry_month: card.expiry_month,
+        expiry_year: card.expiry_year,
+        cvv: card.cvv,
+    });
+    // Make payment
+    const paymentRes = yield checkout_config_1.checkout.payments.request({
+        source: { type: "token", token: tokenRes.token },
+        amount: planConfig.amount * 100,
+        currency: "AED",
+        capture: true,
+        reference: `sub_${userId}_${Date.now()}`,
+        "3ds": { enabled: false },
+        metadata: { userId, plan, interval: planConfig.interval },
+    });
+    // Update user subscription info
+    yield user_schema_1.User_Model.findByIdAndUpdate(userId, {
+        isPaidPlan: true,
+        paidPlan: plan,
+        subscribtionPlan: plan,
+    });
+    // Save payment record
+    yield payment_model_1.Payment.create({
+        userId,
+        plan,
+        amount: planConfig.amount,
+        currency: "AED",
+        paymentIntentId: paymentRes.id,
+        paymentStatus: "succeeded",
+        mode: "subscription",
+    });
+    return {
+        success: true,
+        message: "Subscription activated successfully",
+        subscription: {
+            plan,
+            amount: planConfig.amount,
+            interval: planConfig.interval,
+            nextBillingDate: getNextBillingDate(planConfig.interval),
+        },
+    };
+});
+exports.createSubscriptionService = createSubscriptionService;
+function getNextBillingDate(interval) {
+    const now = new Date();
+    if (interval === "month")
+        now.setMonth(now.getMonth() + 1);
+    else
+        now.setFullYear(now.getFullYear() + 1);
+    return now.toISOString();
+}

@@ -2,6 +2,7 @@ import { IPromotion } from "./promotion.interface";
 import { PromotionModel } from "./promotion.model";
 import { Product } from "../products/products.model";
 import mongoose from "mongoose";
+import { Order } from "../order/order.model";
 
 // ✅ CREATE PROMOTION SERVICE
 export const createPromotionService = async (payload: IPromotion) => {
@@ -83,8 +84,6 @@ export const getPromotionService = async (id: string) => {
   if (!mongoose.Types.ObjectId.isValid(id))
     throw new Error("Invalid Promotion ID");
 
-  
-
   const promotion = await PromotionModel.findById(id)
     .populate(
       "allProducts specificProducts",
@@ -139,4 +138,135 @@ export const getSellerPromotionsService = async (userId: string) => {
       "allProducts specificProducts",
       "name price category productImages  reviews  averageRating"
     );
+};
+
+export const incrementView = async (promotionId: string) => {
+  const updated = await PromotionModel.findByIdAndUpdate(
+    promotionId,
+    { $inc: { totalView: 1 } },
+    { new: true }
+  );
+  return updated;
+};
+
+//get single promotion analytis
+export const getPromotionAnalyticsService = async (promotionId: string) => {
+  const promotion = await PromotionModel.findById(promotionId);
+
+  // console.log('promotion', promotion)
+  if (!promotion) throw new Error("Promotion not found");
+
+  // ✅ Determine which products are included
+  let productIds: any[] = [];
+
+  if (promotion.applicableType === "allProducts") {
+    productIds = promotion.allProducts || [];
+  } else if (promotion.applicableType === "specificProducts") {
+    productIds = promotion.specificProducts || [];
+  } else if (promotion.applicableType === "productCategories") {
+    const products = await Product.find({
+      category: { $in: promotion.productCategories },
+    }).select("_id");
+    productIds = products.map((p) => p._id);
+  }
+
+  const topPerformingProduct = await Product.find({
+    _id: { $in: productIds },
+  }).sort({ salesCount: -1 });
+
+  console.log("procuts0", topPerformingProduct);
+
+  // ✅ Aggregate orders for those products
+  const orderStats = await Order.aggregate([
+    { $unwind: "$items" },
+    { $match: { "items.productId": { $in: productIds } } },
+    {
+      $group: {
+        _id: null,
+        totalRevenue: { $sum: "$totalAmount" },
+        totalOrders: { $sum: 1 },
+        totalQuantity: { $sum: "$items.quantity" },
+      },
+    },
+  ]);
+
+  console.log("order start", orderStats);
+
+  const totalRevenue = orderStats[0]?.totalRevenue || 0;
+  const totalOrders = orderStats[0]?.totalOrders || 0;
+
+  // console.log(totalOrders, "total order");
+
+  // ✅ Derived analytics
+  const totalViews = promotion.totalView || 0;
+
+  const redemptionRate =
+    totalViews > 0 ? ((totalOrders / totalViews) * 100).toFixed(2) : "0";
+
+  // ✅ Monthly analytics
+  const monthlyStats = await Order.aggregate([
+    { $unwind: "$items" },
+    { $match: { "items.productId": { $in: productIds } } },
+    {
+      $group: {
+        _id: { $month: "$createdAt" },
+        totalRevenue: { $sum: "$totalAmount" },
+        totalSales: { $sum: "$items.quantity" },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ]);
+
+  // console.log("monthly", monthlyStats);
+
+  return {
+    promotionName: promotion?.promotionName,
+    totalViews,
+    salesGenerated: totalRevenue,
+    redemptionRate: `${redemptionRate}%`,
+    monthlyStats,
+    topPerformingProduct: topPerformingProduct
+  };
+};
+
+// single seller promotion analytis
+export const getSingleSellerPromotionAnalyticsService = async (
+  selllerId: string
+) => {
+  const promotion = await PromotionModel.findOne({ sellerId: selllerId });
+
+  // console.log('promotion', promotion)
+  if (!promotion) throw new Error("Promotion not found");
+
+  // ✅ Determine which products are included
+  let productIds: any[] = [];
+
+  if (promotion.applicableType === "allProducts") {
+    productIds = promotion.allProducts || [];
+  } else if (promotion.applicableType === "specificProducts") {
+    productIds = promotion.specificProducts || [];
+  } else if (promotion.applicableType === "productCategories") {
+    const products = await Product.find({
+      category: { $in: promotion.productCategories },
+    }).select("_id");
+    productIds = products.map((p) => p._id);
+  }
+
+  // ✅ Monthly analytics
+  const monthlyStats = await Order.aggregate([
+    { $unwind: "$items" },
+    { $match: { "items.productId": { $in: productIds } } },
+    {
+      $group: {
+        _id: { $month: "$createdAt" },
+        totalRevenue: { $sum: "$totalAmount" },
+        totalSales: { $sum: "$items.quantity" },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ]);
+
+  return {
+    monthlyStats,
+  };
 };
