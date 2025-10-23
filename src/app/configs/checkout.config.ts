@@ -10,6 +10,8 @@
 // export const checkout = new Checkout(process.env.CHECKOUT_SECRET_KEY!);
 // config/paymentGateway.ts
 // config/paymentGateway.ts
+
+
 import { Checkout } from 'checkout-sdk-node';
 
 const checkoutConfig: any = {

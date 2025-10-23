@@ -5,6 +5,7 @@ import { Payment } from "./payment.model";
 import { Order } from "../order/order.model";
 import { User_Model } from "../user/user.schema";
 import { cleanRegex } from "zod/v4/core/util.cjs";
+import { createDirectPaymentForMultipleSellers } from "./directPayment.service";
 
 const createCheckoutSession = async (req: Request, res: Response) => {
   try {
@@ -130,7 +131,7 @@ const verifySubscriptionPayment = async (req: Request, res: Response) => {
 //   }
 // };
 // payment.controller.ts
-export const createSubscriptionController = async (req: Request, res: Response) => {
+const createSubscriptionController = async (req: Request, res: Response) => {
   try {
     const { userId, plan, card } = req.body;
 
@@ -186,7 +187,32 @@ export const createSubscriptionController = async (req: Request, res: Response) 
     });
   }
 };
+const createDirectPaymentController = async (req: Request, res: Response) => {
+  try {
+    const { orderId, card } = req.body;
 
+    if (!orderId || !card) {
+      return res.status(400).json({
+        success: false,
+        message: "orderId and card information are required",
+      });
+    }
+
+    const result = await createDirectPaymentForMultipleSellers(orderId, card);
+
+    res.status(200).json({
+      success: true,
+      message: "Payments processed successfully",
+      data: result,
+    });
+  } catch (error: any) {
+    console.error("❌ Controller Error:", error);
+    res.status(500).json({
+      success: false,
+      message: error.message || "Server error",
+    });
+  }
+};
 
 
 export const paymentController = {
@@ -195,5 +221,6 @@ export const paymentController = {
   createSubscriptionSession,
   verifySubscriptionPayment,
   createSubscriptionController,
+  createDirectPaymentController,
 
 }
