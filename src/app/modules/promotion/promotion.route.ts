@@ -8,6 +8,7 @@ import {
   getSellerPromotions,
   getPromotionAnalytics,
   incrementViewControllser,
+  getPromotgetSingleSellerPromotionAnalyticsController,
 } from "./promotion.controller";
 import { promotionUpload } from "./promotion.multer";
 
@@ -42,5 +43,6 @@ router.get("/singl_user_promotioin/:userId", getSellerPromotions);
 router.patch("/view/:id", incrementViewControllser);
 
 router.get("/analytics/:id", getPromotionAnalytics);
+router.get("/Single-seller-analytics/:id", getPromotgetSingleSellerPromotionAnalyticsController);
 
 export const PromotionRoute = router;

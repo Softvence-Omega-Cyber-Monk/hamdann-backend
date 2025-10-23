@@ -10,7 +10,8 @@ import {
   updatePromotionService,
   getSellerPromotionsService,
   getPromotionAnalyticsService,
-  incrementView
+  incrementView,
+  getSingleSellerPromotionAnalyticsService,
 } from "./promotion.service";
 import { v2 as cloudinary } from "cloudinary";
 import { configs } from "../../configs";
@@ -165,12 +166,32 @@ export const incrementViewControllser = async (req: Request, res: Response) => {
   }
 };
 
-//get single analytis
+//get single promotion analytis
 export const getPromotionAnalytics = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const analytics = await getPromotionAnalyticsService(id);
-    console.log("analytis", analytics);
+    res.status(200).json({
+      success: true,
+      data: analytics,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// single seller promotion analytis 
+export const getPromotgetSingleSellerPromotionAnalyticsController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { id } = req.params;
+    const analytics = await getSingleSellerPromotionAnalyticsService(id);
+
     res.status(200).json({
       success: true,
       data: analytics,

@@ -170,6 +170,12 @@ export const getPromotionAnalyticsService = async (promotionId: string) => {
     productIds = products.map((p) => p._id);
   }
 
+  const topPerformingProduct = await Product.find({
+    _id: { $in: productIds },
+  }).sort({ salesCount: -1 });
+
+  console.log("procuts0", topPerformingProduct);
+
   // ✅ Aggregate orders for those products
   const orderStats = await Order.aggregate([
     { $unwind: "$items" },
@@ -184,17 +190,15 @@ export const getPromotionAnalyticsService = async (promotionId: string) => {
     },
   ]);
 
-  console.log('order start', orderStats)
+  console.log("order start", orderStats);
 
   const totalRevenue = orderStats[0]?.totalRevenue || 0;
   const totalOrders = orderStats[0]?.totalOrders || 0;
-  const totalQuantity = orderStats[0]?.totalQuantity || 0;
 
-  console.log(totalOrders , 'total order')
+  // console.log(totalOrders, "total order");
 
   // ✅ Derived analytics
   const totalViews = promotion.totalView || 0;
-
 
   const redemptionRate =
     totalViews > 0 ? ((totalOrders / totalViews) * 100).toFixed(2) : "0";
@@ -220,6 +224,49 @@ export const getPromotionAnalyticsService = async (promotionId: string) => {
     totalViews,
     salesGenerated: totalRevenue,
     redemptionRate: `${redemptionRate}%`,
+    monthlyStats,
+    topPerformingProduct: topPerformingProduct
+  };
+};
+
+// single seller promotion analytis
+export const getSingleSellerPromotionAnalyticsService = async (
+  selllerId: string
+) => {
+  const promotion = await PromotionModel.findOne({ sellerId: selllerId });
+
+  // console.log('promotion', promotion)
+  if (!promotion) throw new Error("Promotion not found");
+
+  // ✅ Determine which products are included
+  let productIds: any[] = [];
+
+  if (promotion.applicableType === "allProducts") {
+    productIds = promotion.allProducts || [];
+  } else if (promotion.applicableType === "specificProducts") {
+    productIds = promotion.specificProducts || [];
+  } else if (promotion.applicableType === "productCategories") {
+    const products = await Product.find({
+      category: { $in: promotion.productCategories },
+    }).select("_id");
+    productIds = products.map((p) => p._id);
+  }
+
+  // ✅ Monthly analytics
+  const monthlyStats = await Order.aggregate([
+    { $unwind: "$items" },
+    { $match: { "items.productId": { $in: productIds } } },
+    {
+      $group: {
+        _id: { $month: "$createdAt" },
+        totalRevenue: { $sum: "$totalAmount" },
+        totalSales: { $sum: "$items.quantity" },
+      },
+    },
+    { $sort: { _id: 1 } },
+  ]);
+
+  return {
     monthlyStats,
   };
 };
