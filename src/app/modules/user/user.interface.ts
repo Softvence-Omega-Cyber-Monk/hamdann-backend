@@ -46,8 +46,11 @@ export type TUser = {
   productAddedPowerQuantity?: 20 | 240 | "unlimited";
   deviceToken?:string , 
   deviceTokens?: string[]
-  stripeAccountId?: string;
+  checkoutAccountId?: string;
   subscriptionExpiryDate?: Date;
   isSubscriptionActive?: boolean;
+  checkoutSecretKey?: string;
+  checkoutProcessingChannelId?: string;
+  checkoutPublicKey?: string;
 
 };

@@ -1,4 +1,5 @@
 import { stripe } from "../../configs/stripe.config";
+import axios from "axios";
 import { configs } from "../../configs";
 import { Payment } from "./payment.model";
 import { User_Model } from "../user/user.schema";
@@ -612,13 +613,15 @@ export const createSubscriptionService = async (
     // Calculate subscription expiry date
     const subscriptionUpdatedAt = new Date();
     const subscriptionExpiryDate = new Date();
-    
+
     if (plan === "starter" || plan === "advance") {
       // Monthly plans: 1 month from now
       subscriptionExpiryDate.setMonth(subscriptionExpiryDate.getMonth() + 1);
     } else {
       // Yearly plans: 1 year from now
-      subscriptionExpiryDate.setFullYear(subscriptionExpiryDate.getFullYear() + 1);
+      subscriptionExpiryDate.setFullYear(
+        subscriptionExpiryDate.getFullYear() + 1
+      );
     }
 
     // ✅ Create card token

@@ -87,9 +87,12 @@ const UserSchema = new Schema<TUser>(
     },
     deviceToken: { type: String, default: null }, // for single device plans
     deviceTokens: { type: [String], default: [] }, // for multiple device plans
-    stripeAccountId: { type: String },
+    checkoutAccountId: { type: String },
     subscriptionExpiryDate: { type: Date },
-    isSubscriptionActive: { type: Boolean}
+    isSubscriptionActive: { type: Boolean},
+    checkoutSecretKey: { type: String },
+    checkoutProcessingChannelId: { type: String },
+    checkoutPublicKey: { type: String }
   },
   {
     versionKey: false,
