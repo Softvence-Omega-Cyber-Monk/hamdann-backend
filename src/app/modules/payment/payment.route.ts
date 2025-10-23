@@ -13,5 +13,7 @@ router.post("/subscription/create",auth("Admin","Seller") , paymentController.cr
 // ✅ Verify subscription payment success
 router.get("/subscription/verify", paymentController.verifySubscriptionPayment);
 router.post("/checkout/subscription", paymentController.createSubscriptionController);
+// Checkout direct payment Buyer to Seller
+router.post('/checkout-direct-payment/create', paymentController.createDirectPaymentController );
 
 export const paymentRoutes = router;
