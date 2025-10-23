@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.categoryRoute = void 0;
+const express_1 = require("express");
+const category_controller_1 = require("./category.controller");
+const cloudinary_1 = require("../../utils/cloudinary");
+const router = (0, express_1.Router)();
+router.post("/create", cloudinary_1.uploadSingle, category_controller_1.CategoryController.create);
+router.get("/getAll", category_controller_1.CategoryController.getAll);
+router.get("/getSingle/:id", category_controller_1.CategoryController.getById);
+router.put("/update/:id", cloudinary_1.uploadSingle, category_controller_1.CategoryController.update);
+router.delete("/delete/:id", category_controller_1.CategoryController.delete);
+exports.categoryRoute = router;

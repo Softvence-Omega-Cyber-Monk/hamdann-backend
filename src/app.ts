@@ -1,31 +1,182 @@
-import express, { Request, Response } from 'express'
-import cors from 'cors';
-import globalErrorHandler from './app/middlewares/global_error_handler'
-import notFound from './app/middlewares/not_found_api'
-import cookieParser from 'cookie-parser'
-import appRouter from './routes'
+import express, { Request, Response } from "express";
+import cors from "cors";
+import globalErrorHandler from "./app/middlewares/global_error_handler";
+import notFound from "./app/middlewares/not_found_api";
+import cookieParser from "cookie-parser";
+import appRouter from "./routes";
+import { User_Model } from "./app/modules/user/user.schema";
+import bcrypt from "bcrypt";
+import { configs } from "./app/configs";
+import { paymentRoutes } from "./app/modules/payment/payment.route";
+import { stripe } from "./app/configs/stripe.config";
+import { Payment } from "./app/modules/payment/payment.model";
+import { Order } from "./app/modules/order/order.model";
+import status from "http-status";
 
 // define app
-const app = express()
+const app = express();
 
 // middleware
-app.use(cors({
-    origin: ["http://localhost:3000"]
-}))
-app.use(express.json({ limit: "100mb" }))
-app.use(express.raw())
-app.use(cookieParser())
+app.use(
+  cors({
+    origin: ["http://localhost:3000"],
+  })
+);
+app.use(express.json({ limit: "100mb" }));
+app.use(express.raw());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
-app.use("/api", appRouter)
+app.use("/api/v1", appRouter);
 
 // stating point
-app.get('/', (req: Request, res: Response) => {
-    res.status(200).json({
-        status: 'success',
-        message: 'Server is running successful !!',
-        data: null,
-    });
+app.get("/", (req: Request, res: Response) => {
+  res.status(200).json({
+    status: "success",
+    message: "Server is running successful !!",
+    data: null,
+  });
 });
+
+// ✅ Success payment route
+// app.get("/payment-success", async (req: Request, res: Response) => {
+//   try {
+//     const { session_id } = req.query;
+
+//     if (!session_id) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Session ID required" });
+//     }
+
+//     const session = await stripe.checkout.sessions.retrieve(
+//       session_id as string
+//     );
+
+//     if (session.payment_status === "paid") {
+//       const payment = await Payment.findOneAndUpdate(
+//         { paymentIntentId: session.id },
+//         { paymentStatus: "succeeded" },
+//         { new: true }
+//       );
+
+//       const orderId = session.metadata?.orderId;
+//       // 2️⃣ Update Order status + statusDates
+//       const order = await Order.findByIdAndUpdate(
+//         orderId,
+//         {
+//           status: "payment_processed",
+//           "statusDates.paymentProcessedAt": new Date(), // ✅ update nested field
+//         },
+//         { new: true }
+//       ).populate({
+//         path: "items.productId",
+//         select: "name price image", // populate product info
+//       });
+
+//       return res.status(200).json({
+//         success: true,
+//         message: "Payment successful",
+//         session,
+//         payment,
+//         order,
+//       });
+//     }
+
+//     res
+//       .status(200)
+//       .json({ success: false, message: "Payment not completed", session });
+//   } catch (error) {
+//     res.status(500).json({ success: false, message: (error as Error).message });
+//   }
+// });
+
+app.get("/payment-success", async (req: Request, res: Response) => {
+  try {
+    const { session_id } = req.query;
+    if (!session_id) return res.status(400).json({ success: false, message: "Session ID required" });
+
+    const session = await stripe.checkout.sessions.retrieve(session_id as string);
+
+    if (session.payment_status === "paid") {
+      // Update payment status
+      const payment = await Payment.findOneAndUpdate(
+        { paymentIntentId: session.id },
+        { paymentStatus: "succeeded" },
+        { new: true }
+      );
+
+      // Update order
+      const orderId = session.metadata?.orderId;
+      const order = await Order.findByIdAndUpdate(
+        orderId,
+        {
+          status: "payment_processed",
+          "statusDates.payment_processed": new Date(),
+        },
+        { new: true }
+      ).populate("items.productId");
+
+      // 🔹 Transfer to sellers
+      if (session.metadata?.sellers) {
+        const sellers = JSON.parse(session.metadata.sellers);
+        for (const { stripeAccountId, amount, sellerId, orderId } of sellers) {
+          // ⚠️ Make sure amount is in cents
+          await stripe.transfers.create({
+            amount: Math.round(amount * 100),
+            currency: session.currency || "aed",
+            destination: stripeAccountId,
+            metadata: { orderId, sellerId },
+          });
+        }
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Payment successful and transfers completed",
+        session,
+        payment,
+        order,
+      });
+    }
+
+    res.status(200).json({ success: false, message: "Payment not completed", session });
+  } catch (error) {
+    res.status(500).json({ success: false, message: (error as Error).message });
+  }
+});
+
+
+// Create Default SuperAdmin if not exists
+export const createDefaultSuperAdmin = async () => {
+  try {
+    const existingAdmin = await User_Model.findOne({
+      email: "mdsoyaibsourav11@gmail.com",
+    });
+
+    const hashedPassword = await bcrypt.hash(
+      "admin@123", // Default password for Admin
+      Number(configs.bcrypt_salt_rounds) // Ensure bcrypt_salt_rounds is correctly pulled from config
+    );
+
+    if (!existingAdmin) {
+      await User_Model.create({
+        name: "Hamdan",
+        email: "mdsoyaibsourav11@gmail.com",
+        password: hashedPassword,
+        confirmPassword: hashedPassword,
+        role: "Admin",
+        country: "Global",
+      });
+      console.log("✅ Default Admin created.");
+    } else {
+      console.log("ℹ️ SAdmin already exists.");
+    }
+  } catch (error) {
+    console.error("❌ Failed to create Default Admin:", error);
+  }
+};
+
+createDefaultSuperAdmin();
 
 // global error handler
 app.use(globalErrorHandler);

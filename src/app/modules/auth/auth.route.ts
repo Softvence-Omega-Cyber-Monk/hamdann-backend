@@ -1,46 +1,37 @@
 import { Router } from "express";
 import { auth_controllers } from "./auth.controller";
 import RequestValidator from "../../middlewares/request_validator";
-import { auth_validation } from "./auth.validation";
 import auth from "../../middlewares/auth";
+import { auth_validation } from "./auth.validation";
 
-const authRoute = Router()
+const authRoute = Router();
 
-authRoute.post("/register", RequestValidator(auth_validation.register_validation), auth_controllers.register_user)
-authRoute.post("/login", RequestValidator(auth_validation.login_validation), auth_controllers.login_user)
-
-authRoute.get(
-    '/me',
-    auth("ADMIN", "USER"),
-    auth_controllers.get_my_profile,
-);
-
-authRoute.post('/refresh-token', auth_controllers.refresh_token);
 authRoute.post(
-    '/change-password',
-    auth("ADMIN", "USER"),
-    RequestValidator(auth_validation.changePassword),
-    auth_controllers.change_password,
-);
-authRoute.post(
-    '/forgot-password',
-    RequestValidator(auth_validation.forgotPassword),
-    auth_controllers.forget_password,
-);
-authRoute.post(
-    '/reset-password',
-    RequestValidator(auth_validation.resetPassword),
-    auth_controllers.reset_password,
+  "/login",
+  RequestValidator(auth_validation.login_validation),
+  auth_controllers.login_user
 );
 
 authRoute.post(
-    "/verified-account",
-    RequestValidator(auth_validation.verified_account),
-    auth_controllers.verified_account
-)
+  "/refresh-token",
+  // auth("Admin", "Buyer", "Seller"),
+  auth_controllers.refresh_token
+);
 authRoute.post(
-    "/new-verification-link",
-    RequestValidator(auth_validation.forgotPassword),
-    auth_controllers.get_new_verification_link
-)
+  "/change-password",
+  auth("Buyer", "Seller", "Admin"),
+  auth_controllers.change_password
+);
+
+authRoute.post("/logout", auth_controllers.logoutRemoveToken);
+
+// Step 1: Request reset code
+authRoute.post("/forgot-password", auth_controllers.requestPasswordReset);
+
+// Step 2: Verify code
+authRoute.post("/verify-code", auth_controllers.verifyResetCode);
+
+// Step 3: Reset password
+authRoute.post("/reset-password", auth_controllers.resetPassword);
+
 export default authRoute;
