@@ -43,7 +43,7 @@ export type TUser = {
   businessLogo?: string;
   isPaidPlan?: boolean;
   subscribtionPlan?: "starter" |  "advance" | "starterYearly" | "advanceYearly";
-  productAddedPowerQuantity?: 20 | 240 | "unlimited";
+  productAddedPowerQuantity?: number | "unlimited";
   deviceToken?:string , 
   deviceTokens?: string[]
   checkoutAccountId?: string;

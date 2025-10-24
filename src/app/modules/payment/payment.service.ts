@@ -7,6 +7,7 @@ import { Order } from "../order/order.model";
 import { Product } from "../products/products.model";
 import { AppError } from "../../utils/app_error";
 import { checkout } from "../../configs/checkout.config";
+import { Subscription } from "../subscriptions/subscription.model";
 
 // export const createCheckoutSessionService = async (orderId: string) => {
 //   const orderAmount: any = await Order.findById(orderId);
@@ -585,13 +586,31 @@ export const createSubscriptionService = async (
   }
 ) => {
   try {
-    console.log(`🟡 Starting subscription for user ${userId}, plan: ${plan}`);
+    // console.log(`🟡 Starting subscription for user ${userId}, plan: ${plan}`);
+
+     // 🧠 Determine which base plan it belongs to
+    const planType =
+      plan === "starter" || plan === "starterYearly" ? "starter" : "advance";
+
+    // Fetch plan details from DB
+    const planDoc = await Subscription.findOne({ title: new RegExp(planType, "i") });
+
+    if (!planDoc) {
+      throw new Error(`Plan configuration not found for ${planType}`);
+    }
+
+    // Determine interval and amount
+    const isYearly = plan.endsWith("Yearly");
+    const amount = isYearly ? planDoc.priceYearly : planDoc.priceMonthly;
+    const interval = isYearly ? "year" : "month";
+
+    // console.log(`💰 Plan amount: ${amount}, Interval: ${interval}`);
 
     const planConfigs: Record<string, { amount: number; interval: string }> = {
-      starter: { amount: 69, interval: "month" },
-      advance: { amount: 199, interval: "month" },
-      starterYearly: { amount: 699, interval: "year" },
-      advanceYearly: { amount: 1999, interval: "year" },
+      starter: { amount: amount, interval: interval },
+      advance: { amount: amount, interval: interval },
+      starterYearly: { amount: amount, interval: interval },
+      advanceYearly: { amount: amount, interval: interval },
     };
 
     const planConfig = planConfigs[plan];
@@ -603,9 +622,9 @@ export const createSubscriptionService = async (
     // Determine product slots based on plan
     let productAddedPowerQuantity: number | "unlimited";
     if (plan === "starter") {
-      productAddedPowerQuantity = 20;
+      productAddedPowerQuantity = planDoc.productAddedPowerQuantity as number;
     } else if (plan === "starterYearly") {
-      productAddedPowerQuantity = 240;
+      productAddedPowerQuantity = 12 * (planDoc.productAddedPowerQuantity as number);
     } else {
       productAddedPowerQuantity = "unlimited";
     }
@@ -625,7 +644,7 @@ export const createSubscriptionService = async (
     }
 
     // ✅ Create card token
-    console.log("🟡 Creating card token...");
+    // console.log("🟡 Creating card token...");
     const tokenRes = (await checkout.tokens.request({
       type: "card",
       number: card.number.replace(/\s/g, ""),
@@ -639,7 +658,7 @@ export const createSubscriptionService = async (
     }
 
     // ✅ Make payment
-    console.log("🟡 Processing payment...");
+    // console.log("🟡 Processing payment...");
     const paymentPayload: any = {
       source: { type: "token", token: tokenRes.token },
       amount: planConfig.amount * 100,
@@ -664,7 +683,7 @@ export const createSubscriptionService = async (
       status: string;
     };
 
-    console.log("🟢 Payment successful:", paymentRes);
+    // console.log("🟢 Payment successful:", paymentRes);
 
     // ✅ Update user and save payment
     await User_Model.findByIdAndUpdate(userId, {
@@ -706,3 +725,25 @@ export const createSubscriptionService = async (
   }
 };
 
+export const getTotalSubscriptionAmountService = async () => {
+  const result = await Payment.aggregate([
+    {
+      $match: {
+        isSubscription: true,
+        paymentStatus: "succeeded",
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalAmount: { $sum: "$amount" },
+        totalCount: { $sum: 1 },
+      },
+    },
+  ]);
+
+  return {
+    totalAmount: result[0]?.totalAmount || 0,
+    totalCount: result[0]?.totalCount || 0,
+  };
+};
