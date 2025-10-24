@@ -11,6 +11,8 @@ import { notificationRoutes } from './app/modules/notifications/notification.rou
 import { withlistProductsRoutes } from './app/modules/wishListedProducts/wishListedProducts.route';
 import { RequestRefundRoutes } from './app/modules/requestRefund/requestRefund.route'
 import { categoryRoute } from './app/modules/category/category.route';
+import { subscriptionRoutes } from './app/modules/subscriptions/subscription.route';
+import path from 'path';
 
 
 const appRouter = Router();
@@ -28,6 +30,7 @@ const moduleRoutes = [
     { path: "/notification", route: notificationRoutes },
     { path: "/wishListProducts", route: withlistProductsRoutes },
     { path: "/request-refund", route: RequestRefundRoutes },
+    { path: "/subscription-plan", route: subscriptionRoutes },
 
 
 ];

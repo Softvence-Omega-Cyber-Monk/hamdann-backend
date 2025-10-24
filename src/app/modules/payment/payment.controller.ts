@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { createCheckoutSessionService, createSubscriptionSessionService,  verifySubscriptionPaymentService, createSubscriptionService } from "./payment.service";
+import { createCheckoutSessionService, createSubscriptionSessionService,  verifySubscriptionPaymentService, createSubscriptionService, getTotalSubscriptionAmountService } from "./payment.service";
 import { stripe } from "../../configs/stripe.config";
 import { Payment } from "./payment.model";
 import { Order } from "../order/order.model";
@@ -213,6 +213,26 @@ const createDirectPaymentController = async (req: Request, res: Response) => {
     });
   }
 };
+const getTotalSubscriptionAmountController = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const result = await getTotalSubscriptionAmountService();
+    res.status(200).json({
+      success: true,
+      message: "Total subscription amount fetched successfully",
+      data: result,
+    });
+  } catch (error: any) {
+    console.error("Error fetching total subscription amount:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
 
 
 export const paymentController = {
@@ -222,5 +242,6 @@ export const paymentController = {
   verifySubscriptionPayment,
   createSubscriptionController,
   createDirectPaymentController,
+  getTotalSubscriptionAmountController,
 
 }

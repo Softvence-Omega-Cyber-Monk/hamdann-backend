@@ -83,7 +83,7 @@ const UserSchema = new Schema<TUser>(
     },
     productAddedPowerQuantity: {
       type: Schema.Types.Mixed,
-      enum: [20, 240, "unlimited"],
+      enum: [Number, "unlimited"],
     },
     deviceToken: { type: String, default: null }, // for single device plans
     deviceTokens: { type: [String], default: [] }, // for multiple device plans
