@@ -100,7 +100,7 @@ const createProductService = async (
   }
 
   if (!exitUser.checkoutAccountId && !exitUser.checkoutProcessingChannelId) {
-    throw new Error("Please ensure you set checkoutAccountId abd checkoutProcessingChannelId on your profile section ");
+    throw new Error("Please ensure you set checkoutAccountId and checkoutProcessingChannelId on your profile section ");
   }
 
   // Check if user has unlimited power or remaining power > 0

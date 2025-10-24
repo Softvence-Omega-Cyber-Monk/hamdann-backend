@@ -575,6 +575,155 @@ export const verifySubscriptionPaymentService = async (sessionId: string) => {
 //     throw error;
 //   }
 // };
+// export const createSubscriptionService = async (
+//   userId: string,
+//   plan: "starter" | "advance" | "starterYearly" | "advanceYearly",
+//   card: {
+//     number: string;
+//     expiry_month: number;
+//     expiry_year: number;
+//     cvv: string;
+//   }
+// ) => {
+//   try {
+//     // console.log(`🟡 Starting subscription for user ${userId}, plan: ${plan}`);
+
+//      // 🧠 Determine which base plan it belongs to
+//     const planType =
+//       plan === "starter" || plan === "starterYearly" ? "starter" : "advance";
+
+//     // Fetch plan details from DB
+//     const planDoc = await Subscription.findOne({ title: new RegExp(planType, "i") });
+
+//     if (!planDoc) {
+//       throw new Error(`Plan configuration not found for ${planType}`);
+//     }
+
+//     // Determine interval and amount
+//     const isYearly = plan.endsWith("Yearly");
+//     const amount = isYearly ? planDoc.priceYearly : planDoc.priceMonthly;
+//     const interval = isYearly ? "year" : "month";
+
+//     // console.log(`💰 Plan amount: ${amount}, Interval: ${interval}`);
+
+//     const planConfigs: Record<string, { amount: number; interval: string }> = {
+//       starter: { amount: amount, interval: interval },
+//       advance: { amount: amount, interval: interval },
+//       starterYearly: { amount: amount, interval: interval },
+//       advanceYearly: { amount: amount, interval: interval },
+//     };
+
+//     const planConfig = planConfigs[plan];
+//     if (!planConfig) throw new Error(`Invalid plan: ${plan}`);
+
+//     const user = await User_Model.findById(userId);
+//     if (!user) throw new Error("User not found");
+
+//     // Determine product slots based on plan
+//     let productAddedPowerQuantity: number | "unlimited";
+//     if (plan === "starter") {
+//       productAddedPowerQuantity = planDoc.productAddedPowerQuantity as number;
+//     } else if (plan === "starterYearly") {
+//       productAddedPowerQuantity = 12 * (planDoc.productAddedPowerQuantity as number);
+//     } else {
+//       productAddedPowerQuantity = "unlimited";
+//     }
+
+//     // Calculate subscription expiry date
+//     const subscriptionUpdatedAt = new Date();
+//     const subscriptionExpiryDate = new Date();
+
+//     if (plan === "starter" || plan === "advance") {
+//       // Monthly plans: 1 month from now
+//       subscriptionExpiryDate.setMonth(subscriptionExpiryDate.getMonth() + 1);
+//     } else {
+//       // Yearly plans: 1 year from now
+//       subscriptionExpiryDate.setFullYear(
+//         subscriptionExpiryDate.getFullYear() + 1
+//       );
+//     }
+
+//     // ✅ Create card token
+//     // console.log("🟡 Creating card token...");
+//     const tokenRes = (await checkout.tokens.request({
+//       type: "card",
+//       number: card.number.replace(/\s/g, ""),
+//       expiry_month: card.expiry_month,
+//       expiry_year: card.expiry_year,
+//       cvv: card.cvv,
+//     })) as { token: string };
+
+//     if (!tokenRes.token) {
+//       throw new Error("Failed to create card token");
+//     }
+
+//     // ✅ Make payment
+//     // console.log("🟡 Processing payment...");
+//     const paymentPayload: any = {
+//       source: { type: "token", token: tokenRes.token },
+//       amount: planConfig.amount * 100,
+//       currency: "AED",
+//       capture: true,
+//       reference: `sub_${userId}_${Date.now()}`,
+//       "3ds": { enabled: false },
+//       metadata: { userId, plan, interval: planConfig.interval },
+//     };
+
+//     if (
+//       process.env.CHECKOUT_PROCESSING_CHANNEL_ID &&
+//       process.env.CHECKOUT_PROCESSING_CHANNEL_ID.startsWith("pc_") &&
+//       process.env.CHECKOUT_PROCESSING_CHANNEL_ID.length > 10
+//     ) {
+//       paymentPayload.processing_channel_id =
+//         process.env.CHECKOUT_PROCESSING_CHANNEL_ID;
+//     }
+
+//     const paymentRes = (await checkout.payments.request(paymentPayload)) as {
+//       id: string;
+//       status: string;
+//     };
+
+
+//     // ✅ Update user and save payment
+//     await User_Model.findByIdAndUpdate(userId, {
+//       isPaidPlan: true,
+//       paidPlan: plan,
+//       subscribtionPlan: plan,
+//       productAddedPowerQuantity: productAddedPowerQuantity,
+//       subscriptionUpdatedAt: subscriptionUpdatedAt,
+//       subscriptionExpiryDate: subscriptionExpiryDate,
+//       isSubscriptionActive: true,
+//     });
+
+//     await Payment.create({
+//       userId,
+//       plan,
+//       amount: planConfig.amount,
+//       currency: "AED",
+//       paymentIntentId: paymentRes.id,
+//       paymentStatus: "succeeded",
+//       mode: "subscription",
+//       paymentDate: new Date(),
+//       subscriptionExpiryDate: subscriptionExpiryDate,
+//     });
+
+//     return {
+//       success: true,
+//       message: "Subscription activated successfully",
+//       subscription: {
+//         plan,
+//         amount: planConfig.amount,
+//         interval: planConfig.interval,
+//         nextBillingDate: subscriptionExpiryDate.toISOString(),
+//         productAddedPowerQuantity: productAddedPowerQuantity,
+//       },
+//     };
+//   } catch (error: any) {
+//     console.error("🔴 Service Error:", error);
+//     throw error;
+//   }
+// };
+
 export const createSubscriptionService = async (
   userId: string,
   plan: "starter" | "advance" | "starterYearly" | "advanceYearly",
@@ -586,14 +735,16 @@ export const createSubscriptionService = async (
   }
 ) => {
   try {
-    // console.log(`🟡 Starting subscription for user ${userId}, plan: ${plan}`);
+    console.log(`🟡 Starting subscription for user ${userId}, plan: ${plan}`);
 
-     // 🧠 Determine which base plan it belongs to
+    // 🧠 Determine which base plan it belongs to
     const planType =
       plan === "starter" || plan === "starterYearly" ? "starter" : "advance";
 
     // Fetch plan details from DB
-    const planDoc = await Subscription.findOne({ title: new RegExp(planType, "i") });
+    const planDoc = await Subscription.findOne({
+      title: new RegExp(planType, "i"),
+    });
 
     if (!planDoc) {
       throw new Error(`Plan configuration not found for ${planType}`);
@@ -604,47 +755,33 @@ export const createSubscriptionService = async (
     const amount = isYearly ? planDoc.priceYearly : planDoc.priceMonthly;
     const interval = isYearly ? "year" : "month";
 
-    // console.log(`💰 Plan amount: ${amount}, Interval: ${interval}`);
-
-    const planConfigs: Record<string, { amount: number; interval: string }> = {
-      starter: { amount: amount, interval: interval },
-      advance: { amount: amount, interval: interval },
-      starterYearly: { amount: amount, interval: interval },
-      advanceYearly: { amount: amount, interval: interval },
-    };
-
-    const planConfig = planConfigs[plan];
-    if (!planConfig) throw new Error(`Invalid plan: ${plan}`);
-
+    // Get user info
     const user = await User_Model.findById(userId);
     if (!user) throw new Error("User not found");
 
-    // Determine product slots based on plan
+    // Determine product limit based on plan
     let productAddedPowerQuantity: number | "unlimited";
-    if (plan === "starter") {
-      productAddedPowerQuantity = planDoc.productAddedPowerQuantity as number;
-    } else if (plan === "starterYearly") {
-      productAddedPowerQuantity = 12 * (planDoc.productAddedPowerQuantity as number);
+    if (planType === "starter") {
+      productAddedPowerQuantity = isYearly
+        ? 12 * (planDoc.productAddedPowerQuantity as number)
+        : (planDoc.productAddedPowerQuantity as number);
     } else {
       productAddedPowerQuantity = "unlimited";
     }
 
-    // Calculate subscription expiry date
+    // Subscription dates
     const subscriptionUpdatedAt = new Date();
     const subscriptionExpiryDate = new Date();
 
-    if (plan === "starter" || plan === "advance") {
-      // Monthly plans: 1 month from now
+    if (interval === "month") {
       subscriptionExpiryDate.setMonth(subscriptionExpiryDate.getMonth() + 1);
     } else {
-      // Yearly plans: 1 year from now
       subscriptionExpiryDate.setFullYear(
         subscriptionExpiryDate.getFullYear() + 1
       );
     }
 
     // ✅ Create card token
-    // console.log("🟡 Creating card token...");
     const tokenRes = (await checkout.tokens.request({
       type: "card",
       number: card.number.replace(/\s/g, ""),
@@ -657,22 +794,20 @@ export const createSubscriptionService = async (
       throw new Error("Failed to create card token");
     }
 
-    // ✅ Make payment
-    // console.log("🟡 Processing payment...");
+    // ✅ Process payment
     const paymentPayload: any = {
       source: { type: "token", token: tokenRes.token },
-      amount: planConfig.amount * 100,
+      amount: amount * 100,
       currency: "AED",
       capture: true,
       reference: `sub_${userId}_${Date.now()}`,
       "3ds": { enabled: false },
-      metadata: { userId, plan, interval: planConfig.interval },
+      metadata: { userId, plan, interval },
     };
 
     if (
       process.env.CHECKOUT_PROCESSING_CHANNEL_ID &&
-      process.env.CHECKOUT_PROCESSING_CHANNEL_ID.startsWith("pc_") &&
-      process.env.CHECKOUT_PROCESSING_CHANNEL_ID.length > 10
+      process.env.CHECKOUT_PROCESSING_CHANNEL_ID.startsWith("pc_")
     ) {
       paymentPayload.processing_channel_id =
         process.env.CHECKOUT_PROCESSING_CHANNEL_ID;
@@ -683,45 +818,58 @@ export const createSubscriptionService = async (
       status: string;
     };
 
-    // console.log("🟢 Payment successful:", paymentRes);
+    // ✅ Create payment record
+    const paymentRecord = await Payment.create({
+      userId,
+      plan,
+      amount,
+      currency: "AED",
+      paymentIntentId: paymentRes.id,
+      paymentStatus: paymentRes.status === "Captured" ? "succeeded" : "failed",
+      mode: "subscription",
+      paymentDate: new Date(),
+      subscriptionExpiryDate,
+      isSubscription: true,
+    });
 
-    // ✅ Update user and save payment
+    // ✅ Update user record
     await User_Model.findByIdAndUpdate(userId, {
       isPaidPlan: true,
       paidPlan: plan,
       subscribtionPlan: plan,
-      productAddedPowerQuantity: productAddedPowerQuantity,
-      subscriptionUpdatedAt: subscriptionUpdatedAt,
-      subscriptionExpiryDate: subscriptionExpiryDate,
+      productAddedPowerQuantity,
+      subscriptionUpdatedAt,
+      subscriptionExpiryDate,
       isSubscriptionActive: true,
     });
 
-    await Payment.create({
-      userId,
-      plan,
-      amount: planConfig.amount,
-      currency: "AED",
-      paymentIntentId: paymentRes.id,
-      paymentStatus: "succeeded",
-      mode: "subscription",
-      paymentDate: new Date(),
-      subscriptionExpiryDate: subscriptionExpiryDate,
-    });
+    // ✅ Update payment status if payment captured successfully
+    if (paymentRes.status === "Authorized" || paymentRes.status === "Captured") {
+      paymentRecord.paymentStatus = "succeeded";
+      paymentRecord.amount = amount;
+      await paymentRecord.save();
+    } else {
+      paymentRecord.paymentStatus = "failed";
+      await paymentRecord.save();
+    }
 
     return {
       success: true,
-      message: "Subscription activated successfully",
+      message:
+        paymentRes.status === "Captured"
+          ? "Subscription activated successfully"
+          : "Subscription payment failed",
       subscription: {
         plan,
-        amount: planConfig.amount,
-        interval: planConfig.interval,
+        amount,
+        interval,
         nextBillingDate: subscriptionExpiryDate.toISOString(),
-        productAddedPowerQuantity: productAddedPowerQuantity,
+        productAddedPowerQuantity,
       },
     };
   } catch (error: any) {
     console.error("🔴 Service Error:", error);
-    throw error;
+    throw new Error(error.message || "Subscription creation failed");
   }
 };
 
