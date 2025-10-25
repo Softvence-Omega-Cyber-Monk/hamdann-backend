@@ -681,12 +681,22 @@ export const getSalesTrends = async (sellerId: string) => {
   try {
     // Step 1: Find the seller's products
     const sellerProducts = await Product.find({ userId: sellerId });
-    console.log("seller product", sellerProducts);
+    // console.log("seller product", sellerProducts);
 
-    // const totalSales = sellerProducts.reduce((acc, product) => {
-    //   const sales = product.price * product.salesCount;
-    //   console.log("sales", sales);
-    // }, 0);
+    const totalSalesRevenue = sellerProducts.reduce((acc, product) => {
+      const singleRevenue = product.price * product.salesCount;
+      return acc + singleRevenue;
+    }, 0);
+
+    const totalSalesOrder = sellerProducts.reduce((acc, product) => {
+      const singleOrder = product.salesCount;
+      return acc + singleOrder;
+    }, 0);
+
+    return {
+      totalSalesOrder,
+      totalSalesRevenue,
+    };
 
     // console.log("totalSales", totalSales);
   } catch (error) {
