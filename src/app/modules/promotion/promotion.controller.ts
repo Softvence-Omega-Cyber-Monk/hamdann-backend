@@ -15,6 +15,7 @@ import {
 } from "./promotion.service";
 import { v2 as cloudinary } from "cloudinary";
 import { configs } from "../../configs";
+import { PromotionModel } from "./promotion.model";
 
 cloudinary.config({
   cloud_name: configs.cloudinary.cloud_name,
@@ -119,7 +120,7 @@ export const pausePromotion = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const updatedPromotion = await updatePromotionService(id, {
-      isActive: false,
+      isActive: false, // optional, if your schema supports this
     });
     res.status(200).json({
       success: true,
@@ -130,6 +131,8 @@ export const pausePromotion = async (req: Request, res: Response) => {
     res.status(400).json({ success: false, message: error.message });
   }
 };
+
+
 
 // ✅ GET PROMOTIONS BY SELLER
 export const getSellerPromotions = async (req: Request, res: Response) => {
