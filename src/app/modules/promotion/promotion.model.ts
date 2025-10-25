@@ -38,13 +38,6 @@ const PromotionSchema = new Schema<IPromotion>(
   { timestamps: true }
 );
 
-// Automatically deactivate expired promotions
-PromotionSchema.pre("save", function (next) {
-  const now = new Date();
-  if (this.endDate < now) {
-    this.isActive = false;
-  }
-  next();
-});
+
 
 export const PromotionModel = model<IPromotion>("Promotion", PromotionSchema);

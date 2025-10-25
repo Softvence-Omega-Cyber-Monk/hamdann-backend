@@ -12,6 +12,9 @@ import { stripe } from "./app/configs/stripe.config";
 import { Payment } from "./app/modules/payment/payment.model";
 import { Order } from "./app/modules/order/order.model";
 import status from "http-status";
+import cron from "node-cron";
+import { PromotionModel } from "./app/modules/promotion/promotion.model";
+
 
 // define app
 const app = express();
@@ -36,6 +39,19 @@ app.get("/", (req: Request, res: Response) => {
     data: null,
   });
 });
+
+
+
+cron.schedule("0 0 * * *", async () => {
+  const now = new Date();
+  await PromotionModel.updateMany(
+    { endDate: { $lt: now }, isActive: true },
+    { $set: { isActive: false } }
+  );
+  console.log("✅ Expired promotions automatically deactivated");
+});
+
+
 
 // ✅ Success payment route
 // app.get("/payment-success", async (req: Request, res: Response) => {
