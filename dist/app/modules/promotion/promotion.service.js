@@ -12,10 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSellerPromotionsService = exports.updatePromotionService = exports.getAllPromotionsService = exports.getPromotionService = exports.createPromotionService = void 0;
+exports.getSingleSellerPromotionAnalyticsService = exports.getPromotionAnalyticsService = exports.incrementView = exports.getSellerPromotionsService = exports.updatePromotionService = exports.getAllPromotionsService = exports.getPromotionService = exports.createPromotionService = void 0;
 const promotion_model_1 = require("./promotion.model");
 const products_model_1 = require("../products/products.model");
 const mongoose_1 = __importDefault(require("mongoose"));
+const order_model_1 = require("../order/order.model");
 // ✅ CREATE PROMOTION SERVICE
 const createPromotionService = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
@@ -122,3 +123,115 @@ const getSellerPromotionsService = (userId) => __awaiter(void 0, void 0, void 0,
         .populate("allProducts specificProducts", "name price category productImages  reviews  averageRating");
 });
 exports.getSellerPromotionsService = getSellerPromotionsService;
+const incrementView = (promotionId) => __awaiter(void 0, void 0, void 0, function* () {
+    const updated = yield promotion_model_1.PromotionModel.findByIdAndUpdate(promotionId, { $inc: { totalView: 1 } }, { new: true });
+    return updated;
+});
+exports.incrementView = incrementView;
+//get single promotion analytis
+const getPromotionAnalyticsService = (promotionId) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    const promotion = yield promotion_model_1.PromotionModel.findById(promotionId);
+    // console.log('promotion', promotion)
+    if (!promotion)
+        throw new Error("Promotion not found");
+    // ✅ Determine which products are included
+    let productIds = [];
+    if (promotion.applicableType === "allProducts") {
+        productIds = promotion.allProducts || [];
+    }
+    else if (promotion.applicableType === "specificProducts") {
+        productIds = promotion.specificProducts || [];
+    }
+    else if (promotion.applicableType === "productCategories") {
+        const products = yield products_model_1.Product.find({
+            category: { $in: promotion.productCategories },
+        }).select("_id");
+        productIds = products.map((p) => p._id);
+    }
+    const topPerformingProduct = yield products_model_1.Product.find({
+        _id: { $in: productIds },
+    }).sort({ salesCount: -1 });
+    console.log("procuts0", topPerformingProduct);
+    // ✅ Aggregate orders for those products
+    const orderStats = yield order_model_1.Order.aggregate([
+        { $unwind: "$items" },
+        { $match: { "items.productId": { $in: productIds } } },
+        {
+            $group: {
+                _id: null,
+                totalRevenue: { $sum: "$totalAmount" },
+                totalOrders: { $sum: 1 },
+                totalQuantity: { $sum: "$items.quantity" },
+            },
+        },
+    ]);
+    console.log("order start", orderStats);
+    const totalRevenue = ((_a = orderStats[0]) === null || _a === void 0 ? void 0 : _a.totalRevenue) || 0;
+    const totalOrders = ((_b = orderStats[0]) === null || _b === void 0 ? void 0 : _b.totalOrders) || 0;
+    // console.log(totalOrders, "total order");
+    // ✅ Derived analytics
+    const totalViews = promotion.totalView || 0;
+    const redemptionRate = totalViews > 0 ? ((totalOrders / totalViews) * 100).toFixed(2) : "0";
+    // ✅ Monthly analytics
+    const monthlyStats = yield order_model_1.Order.aggregate([
+        { $unwind: "$items" },
+        { $match: { "items.productId": { $in: productIds } } },
+        {
+            $group: {
+                _id: { $month: "$createdAt" },
+                totalRevenue: { $sum: "$totalAmount" },
+                totalSales: { $sum: "$items.quantity" },
+            },
+        },
+        { $sort: { _id: 1 } },
+    ]);
+    // console.log("monthly", monthlyStats);
+    return {
+        promotionName: promotion === null || promotion === void 0 ? void 0 : promotion.promotionName,
+        totalViews,
+        salesGenerated: totalRevenue,
+        redemptionRate: `${redemptionRate}%`,
+        monthlyStats,
+        topPerformingProduct: topPerformingProduct
+    };
+});
+exports.getPromotionAnalyticsService = getPromotionAnalyticsService;
+// single seller promotion analytis
+const getSingleSellerPromotionAnalyticsService = (selllerId) => __awaiter(void 0, void 0, void 0, function* () {
+    const promotion = yield promotion_model_1.PromotionModel.findOne({ sellerId: selllerId });
+    // console.log('promotion', promotion)
+    if (!promotion)
+        throw new Error("Promotion not found");
+    // ✅ Determine which products are included
+    let productIds = [];
+    if (promotion.applicableType === "allProducts") {
+        productIds = promotion.allProducts || [];
+    }
+    else if (promotion.applicableType === "specificProducts") {
+        productIds = promotion.specificProducts || [];
+    }
+    else if (promotion.applicableType === "productCategories") {
+        const products = yield products_model_1.Product.find({
+            category: { $in: promotion.productCategories },
+        }).select("_id");
+        productIds = products.map((p) => p._id);
+    }
+    // ✅ Monthly analytics
+    const monthlyStats = yield order_model_1.Order.aggregate([
+        { $unwind: "$items" },
+        { $match: { "items.productId": { $in: productIds } } },
+        {
+            $group: {
+                _id: { $month: "$createdAt" },
+                totalRevenue: { $sum: "$totalAmount" },
+                totalSales: { $sum: "$items.quantity" },
+            },
+        },
+        { $sort: { _id: 1 } },
+    ]);
+    return {
+        monthlyStats,
+    };
+});
+exports.getSingleSellerPromotionAnalyticsService = getSingleSellerPromotionAnalyticsService;

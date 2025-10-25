@@ -65,11 +65,16 @@ const UserSchema = new mongoose_1.Schema({
     },
     productAddedPowerQuantity: {
         type: mongoose_1.Schema.Types.Mixed,
-        enum: [20, 240, "unlimited"],
+        enum: [Number, "unlimited"],
     },
     deviceToken: { type: String, default: null }, // for single device plans
     deviceTokens: { type: [String], default: [] }, // for multiple device plans
-    stripeAccountId: { type: String },
+    checkoutAccountId: { type: String },
+    subscriptionExpiryDate: { type: Date },
+    isSubscriptionActive: { type: Boolean },
+    checkoutSecretKey: { type: String },
+    checkoutProcessingChannelId: { type: String },
+    checkoutPublicKey: { type: String }
 }, {
     versionKey: false,
     timestamps: true,

@@ -95,7 +95,9 @@ app.get("/payment-success", (req, res) => __awaiter(void 0, void 0, void 0, func
     try {
         const { session_id } = req.query;
         if (!session_id)
-            return res.status(400).json({ success: false, message: "Session ID required" });
+            return res
+                .status(400)
+                .json({ success: false, message: "Session ID required" });
         const session = yield stripe_config_1.stripe.checkout.sessions.retrieve(session_id);
         if (session.payment_status === "paid") {
             // Update payment status
@@ -127,7 +129,9 @@ app.get("/payment-success", (req, res) => __awaiter(void 0, void 0, void 0, func
                 order,
             });
         }
-        res.status(200).json({ success: false, message: "Payment not completed", session });
+        res
+            .status(200)
+            .json({ success: false, message: "Payment not completed", session });
     }
     catch (error) {
         res.status(500).json({ success: false, message: error.message });

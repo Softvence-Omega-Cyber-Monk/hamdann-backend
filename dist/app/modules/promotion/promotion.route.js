@@ -17,4 +17,7 @@ router.put("/update/:id", promotion_multer_1.promotionUpload.single("promotionIm
 router.patch("/pause/:id", promotion_controller_1.pausePromotion);
 // Get seller-specific promotions
 router.get("/singl_user_promotioin/:userId", promotion_controller_1.getSellerPromotions);
+router.patch("/view/:id", promotion_controller_1.incrementViewControllser);
+router.get("/analytics/:id", promotion_controller_1.getPromotionAnalytics);
+router.get("/Single-seller-analytics/:id", promotion_controller_1.getPromotgetSingleSellerPromotionAnalyticsController);
 exports.PromotionRoute = router;
