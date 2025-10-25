@@ -1,4 +1,6 @@
 import { deleteFile, uploadImgToCloudinary } from "../../utils/cloudinary";
+import { sendNotification } from "../../utils/notificationHelper";
+import { User_Model } from "../user/user.schema";
 import { TCategory } from "./category.interface";
 import { Category } from "./category.model";
 
@@ -42,7 +44,21 @@ export const CategoryService = {
         image: imageUrl,
       });
 
-      return await category.save();
+      const res = await category.save();
+      console.log("res category", res);
+
+      if (res) {
+        const customers = await User_Model.find();
+        for (const buyer of customers) {
+          await sendNotification(
+            buyer._id.toString(),
+            "🛒 New Category Added!",
+            `${res.name} category is now available!`
+          );
+        }
+      }
+
+      return res;
     } catch (error: any) {
       console.error("Error in createCategory:", error);
 
