@@ -3,6 +3,8 @@ import { PromotionModel } from "./promotion.model";
 import { Product } from "../products/products.model";
 import mongoose from "mongoose";
 import { Order } from "../order/order.model";
+import { User_Model } from "../user/user.schema";
+import { sendNotification } from "../../utils/notificationHelper";
 
 // ✅ CREATE PROMOTION SERVICE
 export const createPromotionService = async (payload: IPromotion) => {
@@ -73,6 +75,17 @@ export const createPromotionService = async (payload: IPromotion) => {
           isNewArrival: false, // optional: disable new arrival flag
         },
       });
+    }
+
+    const customers = await User_Model.find({ role: "Buyer" });
+    for (const buyer of customers) {
+      for (const product of products) {
+        await sendNotification(
+          buyer._id.toString(),
+          " New Promotion Available",
+          `${product.name} is now available!`
+        );
+      }
     }
   }
 
@@ -262,7 +275,7 @@ export const getSingleSellerPromotionAnalyticsService = async (
   // Remove duplicate product IDs
   productIds = [...new Set(productIds)];
 
-  console.log('product id', productIds)
+  console.log("product id", productIds);
 
   // Monthly analytics
   const monthlyStats = await Order.aggregate([
