@@ -3,7 +3,6 @@ import { IPromotion } from "./promotion.interface";
 
 const PromotionSchema = new Schema<IPromotion>(
   {
-
     sellerId: { type: String, required: true },
     promotionImage: { type: String, required: true },
     promotionName: { type: String, required: true },
@@ -39,12 +38,12 @@ const PromotionSchema = new Schema<IPromotion>(
 );
 
 // Automatically deactivate expired promotions
-PromotionSchema.pre("save", function (next) {
-  const now = new Date();
-  if (this.endDate < now) {
-    this.isActive = false;
-  }
-  next();
-});
+// PromotionSchema.pre("save", function (next) {
+//   const now = new Date();
+//   if (this.endDate < now) {
+//     this.isActive = false;
+//   }
+//   next();
+// });
 
 export const PromotionModel = model<IPromotion>("Promotion", PromotionSchema);

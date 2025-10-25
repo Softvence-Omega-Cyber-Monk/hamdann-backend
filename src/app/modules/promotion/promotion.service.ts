@@ -130,7 +130,7 @@ export const getSellerPromotionsService = async (userId: string) => {
     throw new Error("Invalid User ID");
   }
   // In real use, filter promotions by seller’s products
-  return await PromotionModel.find(
+  const res =  await PromotionModel.find(
     { isActive: true, sellerId: userId } // Filter by sellerId
   )
     .sort({ endDate: 1 })
@@ -138,6 +138,10 @@ export const getSellerPromotionsService = async (userId: string) => {
       "allProducts specificProducts",
       "name price category productImages  reviews  averageRating"
     );
+
+    console.log('res', res)
+
+return res
 };
 
 export const incrementView = async (promotionId: string) => {
@@ -233,6 +237,7 @@ export const getPromotionAnalyticsService = async (promotionId: string) => {
 export const getSingleSellerPromotionAnalyticsService = async (
   sellerId: string
 ) => {
+
   // ✅ Step 1: Find all promotions by the seller
   const promotions = await PromotionModel.find({ sellerId });
 
@@ -279,6 +284,8 @@ export const getSingleSellerPromotionAnalyticsService = async (
     },
     { $sort: { _id: 1 } },
   ]);
+
+  console.log()
 
   return {
     sellerId,
