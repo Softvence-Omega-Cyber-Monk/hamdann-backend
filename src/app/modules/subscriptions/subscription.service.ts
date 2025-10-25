@@ -14,7 +14,7 @@ const createSubscriptionService = async (payload: ISubscription) => {
  * ✅ Get all subscription plans
  */
 const getAllSubscriptionsService = async () => {
-  return await Subscription.find().sort({ createdAt: -1 });
+  return await Subscription.find().sort({ createdAt: 1 });
 };
 
 /**
