@@ -856,7 +856,7 @@ export const createSubscriptionService = async (
     return {
       success: true,
       message:
-        paymentRes.status === "Captured"
+        paymentRes.status === "Authorized" || paymentRes.status === "Captured"
           ? "Subscription activated successfully"
           : "Subscription payment failed",
       subscription: {
