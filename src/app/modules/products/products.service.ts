@@ -100,7 +100,9 @@ const createProductService = async (
   }
 
   if (!exitUser.checkoutAccountId && !exitUser.checkoutProcessingChannelId) {
-    throw new Error("Please ensure you set checkoutAccountId and checkoutProcessingChannelId on your profile section ");
+    throw new Error(
+      "Please ensure you set checkoutAccountId and checkoutProcessingChannelId on your profile section "
+    );
   }
 
   // Check if user has unlimited power or remaining power > 0
@@ -679,13 +681,14 @@ export const getSalesTrends = async (sellerId: string) => {
   try {
     // Step 1: Find the seller's products
     const sellerProducts = await Product.find({ userId: sellerId });
+    console.log("seller product", sellerProducts);
 
-    const totalSales = sellerProducts.reduce((acc, product) => {
-      return acc + product.salesCount;
-    }, 0);
+    // const totalSales = sellerProducts.reduce((acc, product) => {
+    //   const sales = product.price * product.salesCount;
+    //   console.log("sales", sales);
+    // }, 0);
 
-    console.log("totalSales", totalSales);
-    
+    // console.log("totalSales", totalSales);
   } catch (error) {
     console.error("Error fetching sales data: ", error);
     throw new Error("Error fetching sales data");
