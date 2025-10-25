@@ -2,13 +2,30 @@ import { Checkout } from "checkout-sdk-node";
 import { Payment } from "./payment.model";
 import { User_Model } from "../user/user.schema";
 import { Order } from "../order/order.model";
+import { Product } from "../products/products.model";
 
 // Map Checkout payment statuses to our Payment.paymentStatus enum
 const mapCheckoutStatusToPaymentStatus = (status?: string) => {
   if (!status) return "pending";
   const s = String(status).toLowerCase();
-  if (s.includes("auth") || s.includes("paid") || s.includes("captur") || s.includes("succe") || s.includes("approved") || s.includes("authorised") || s.includes("authorized")) return "succeeded";
-  if (s.includes("declin") || s.includes("fail") || s.includes("refus") || s.includes("error") || s.includes("rejected")) return "failed";
+  if (
+    s.includes("auth") ||
+    s.includes("paid") ||
+    s.includes("captur") ||
+    s.includes("succe") ||
+    s.includes("approved") ||
+    s.includes("authorised") ||
+    s.includes("authorized")
+  )
+    return "succeeded";
+  if (
+    s.includes("declin") ||
+    s.includes("fail") ||
+    s.includes("refus") ||
+    s.includes("error") ||
+    s.includes("rejected")
+  )
+    return "failed";
   return "pending";
 };
 
@@ -19,10 +36,18 @@ const validateSellerCredentials = (seller: any) => {
     return { isValid: false, error: "Missing Checkout credentials" };
   }
 
-  const isSandboxKey = typeof seller.checkoutSecretKey === "string" && seller.checkoutSecretKey.startsWith("sk_sbox_");
-  const isLiveKey = typeof seller.checkoutSecretKey === "string" && seller.checkoutSecretKey.startsWith("sk_live_");
+  const isSandboxKey =
+    typeof seller.checkoutSecretKey === "string" &&
+    seller.checkoutSecretKey.startsWith("sk_sbox_");
+  const isLiveKey =
+    typeof seller.checkoutSecretKey === "string" &&
+    seller.checkoutSecretKey.startsWith("sk_live_");
   if (!isSandboxKey && !isLiveKey) {
-    return { isValid: false, error: "Invalid secret key format - must start with 'sk_sbox_' or 'sk_live_'" };
+    return {
+      isValid: false,
+      error:
+        "Invalid secret key format - must start with 'sk_sbox_' or 'sk_live_'",
+    };
   }
 
   return { isValid: true, environment: isSandboxKey ? "sandbox" : "live" };
@@ -54,14 +79,44 @@ export const createDirectPaymentForMultipleSellers = async (
 
   const paymentResults: any[] = [];
 
+  // DEBUG: log computed seller totals (helps explain empty payments array)
+  try {
+    const sellersDebug: any[] = [];
+    for (const [sId, amt] of sellerTotals.entries())
+      sellersDebug.push({ sellerId: sId, amount: amt });
+    console.log(
+      "Computed seller totals:",
+      JSON.stringify(sellersDebug, null, 2)
+    );
+  } catch (e) {
+    console.warn("Failed to log seller totals", e);
+  }
   for (const [sellerId, amount] of sellerTotals.entries()) {
     const seller = await User_Model.findById(sellerId);
-    if (!seller) continue;
+    if (!seller) {
+      // Instead of silently skipping, record a failed payment so caller sees why no payments were processed
+      console.warn(`Seller not found for id ${sellerId}`);
+      paymentResults.push({
+        sellerId,
+        sellerEmail: null,
+        amount,
+        success: false,
+        error: "Seller not found in users collection",
+      });
+      continue;
+    }
 
     const credentialCheck = validateSellerCredentials(seller);
     if (!credentialCheck.isValid) {
-      console.warn(`Missing checkout credentials for seller ${seller?.email || sellerId}`);
-      paymentResults.push({ sellerEmail: seller?.email || sellerId, amount, success: false, error: credentialCheck.error });
+      console.warn(
+        `Missing checkout credentials for seller ${seller?.email || sellerId}`
+      );
+      paymentResults.push({
+        sellerEmail: seller?.email || sellerId,
+        amount,
+        success: false,
+        error: credentialCheck.error,
+      });
       continue;
     }
 
@@ -74,7 +129,9 @@ export const createDirectPaymentForMultipleSellers = async (
 
       const checkout = new Checkout(seller.checkoutSecretKey, {
         environment: derivedEnvironment,
-        headers: { "Cko-Processing-Channel": seller.checkoutProcessingChannelId },
+        headers: {
+          "Cko-Processing-Channel": seller.checkoutProcessingChannelId,
+        },
       } as any);
 
       // SKIP TOKENIZATION - Use direct card payment
@@ -92,7 +149,11 @@ export const createDirectPaymentForMultipleSellers = async (
           expiry_year: card.expiry_year,
           cvv: card.cvv,
           name: "Customer",
-          billing_address: { address_line1: "Not Provided", city: "Dubai", country: "AE" },
+          billing_address: {
+            address_line1: "Not Provided",
+            city: "Dubai",
+            country: "AE",
+          },
         },
         amount: amountInCents,
         currency: order.currency?.toUpperCase() || "AED",
@@ -108,10 +169,21 @@ export const createDirectPaymentForMultipleSellers = async (
         const unmask = process.env.CHECKOUT_DEBUG_UNMASK === "true";
         const payloadForLog: any = JSON.parse(JSON.stringify(paymentPayload));
         if (!unmask) {
-          if (payloadForLog.source?.number) payloadForLog.source.number = payloadForLog.source.number.replace(/.(?=.{4})/g, "*");
-          if (payloadForLog.processing_channel_id) payloadForLog.processing_channel_id = `${payloadForLog.processing_channel_id.slice(0, 6)}...`;
+          if (payloadForLog.source?.number)
+            payloadForLog.source.number = payloadForLog.source.number.replace(
+              /.(?=.{4})/g,
+              "*"
+            );
+          if (payloadForLog.processing_channel_id)
+            payloadForLog.processing_channel_id = `${payloadForLog.processing_channel_id.slice(
+              0,
+              6
+            )}...`;
         }
-        console.log("Outgoing payment payload:", JSON.stringify(payloadForLog, null, 2));
+        console.log(
+          "Outgoing payment payload:",
+          JSON.stringify(payloadForLog, null, 2)
+        );
       } catch (logErr) {
         console.warn("Failed to log payment payload", logErr);
       }
@@ -126,7 +198,7 @@ export const createDirectPaymentForMultipleSellers = async (
       // Map status and save
       const mappedStatus = mapCheckoutStatusToPaymentStatus(paymentRes.status);
 
-      await Payment.create({
+      const res = await Payment.create({
         userId: order.userId,
         sellerId,
         amount,
@@ -137,18 +209,54 @@ export const createDirectPaymentForMultipleSellers = async (
         mode: "payment",
       });
 
-      paymentResults.push({ sellerEmail: seller.email, amount, success: true, paymentId: paymentRes.id, status: paymentRes.status, mappedStatus, approved: paymentRes.approved });
+      paymentResults.push({
+        sellerEmail: seller.email,
+        amount,
+        success: true,
+        paymentId: paymentRes.id,
+        status: paymentRes.status,
+        mappedStatus,
+        approved: paymentRes.approved,
+      });
+
+      if (res) {
+        for (const item of order.items) {
+          const product: any = item.productId;
+
+          const updatedProduct = await Product.findOneAndUpdate(
+            { _id: product._id }, // or { _id: productId }
+            { $inc: { salesCount: 1 } },
+            { new: true } // returns the updated document
+          );
+
+          console.log("pproduct", updatedProduct);
+        }
+      }
 
       console.log("=== PAYMENT DEBUG END ===");
     } catch (err: any) {
       console.error("❌ PAYMENT ERROR DETAILS:");
       console.error("Error Message:", err?.message || err);
       console.error("Error HTTP Code:", err?.http_code);
-      if (err?.body) console.error("Error Body:", JSON.stringify(err.body, null, 2));
+      if (err?.body)
+        console.error("Error Body:", JSON.stringify(err.body, null, 2));
 
-      paymentResults.push({ sellerEmail: seller.email, amount, success: false, error: err?.message || String(err), httpCode: err?.http_code });
+      paymentResults.push({
+        sellerEmail: seller.email,
+        amount,
+        success: false,
+        error: err?.message || String(err),
+        httpCode: err?.http_code,
+      });
     }
   }
 
-  return { success: paymentResults.some((p) => p.success), message: "Payments processed", data: { orderId, payments: paymentResults } };
+  return {
+    success: paymentResults.some((p) => p.success),
+    message: "Payments processed",
+    data: { orderId, payments: paymentResults },
+  };
 };
+
+
+
