@@ -3,5 +3,6 @@ export interface ISubscription {
   priceMonthly: number;
   priceYearly: number;
   productAddedPowerQuantity?: number | "unlimited";
-  features: string[];
+  featuresMonthly: string[];
+  featuresYearly: string[];
 }
