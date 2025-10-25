@@ -3,6 +3,7 @@ import { Payment } from "./payment.model";
 import { User_Model } from "../user/user.schema";
 import { Order } from "../order/order.model";
 import { Product } from "../products/products.model";
+import { Cart } from "../cart/cart.model";
 
 // Map Checkout payment statuses to our Payment.paymentStatus enum
 const mapCheckoutStatusToPaymentStatus = (status?: string) => {
@@ -232,7 +233,32 @@ export const createDirectPaymentForMultipleSellers = async (
           console.log("pproduct", updatedProduct);
           // ✅ Update order status and save
           order.status = "payment_processed";
+          order.statusDates = {
+            ...order.statusDates,
+            payment_processed: new Date(),
+          };
+          order.paymentInfo = {
+            ...order.paymentInfo,
+            paymentStatus: "paid",
+          };
           await order.save();
+
+          // ✅ Remove cart after payment
+          await Cart.updateOne(
+            { userId: order.userId },
+            {
+              $pull: {
+                items: {
+                  productId: {
+                    $in: order.items.map((i: any) => i.productId._id),
+                  },
+                },
+              },
+            }
+          );
+          console.log(
+            `🧹 Removed purchased products from cart for user ${order.userId}`
+          );
         }
       }
 

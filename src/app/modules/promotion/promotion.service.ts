@@ -3,6 +3,8 @@ import { PromotionModel } from "./promotion.model";
 import { Product } from "../products/products.model";
 import mongoose from "mongoose";
 import { Order } from "../order/order.model";
+import { User_Model } from "../user/user.schema";
+import { sendNotification } from "../../utils/notificationHelper";
 
 // ✅ CREATE PROMOTION SERVICE
 export const createPromotionService = async (payload: IPromotion) => {
@@ -74,6 +76,17 @@ export const createPromotionService = async (payload: IPromotion) => {
         },
       });
     }
+
+    const customers = await User_Model.find({ role: "Buyer" });
+    for (const buyer of customers) {
+      for (const product of products) {
+        await sendNotification(
+          buyer._id.toString(),
+          " New Promotion Available",
+          `${product.name} is now available!`
+        );
+      }
+    }
   }
 
   return promotion;
@@ -130,7 +143,7 @@ export const getSellerPromotionsService = async (userId: string) => {
     throw new Error("Invalid User ID");
   }
   // In real use, filter promotions by seller’s products
-  return await PromotionModel.find(
+  const res = await PromotionModel.find(
     { isActive: true, sellerId: userId } // Filter by sellerId
   )
     .sort({ endDate: 1 })
@@ -138,6 +151,10 @@ export const getSellerPromotionsService = async (userId: string) => {
       "allProducts specificProducts",
       "name price category productImages  reviews  averageRating"
     );
+
+  console.log("res", res);
+
+  return res;
 };
 
 export const incrementView = async (promotionId: string) => {
@@ -225,34 +242,42 @@ export const getPromotionAnalyticsService = async (promotionId: string) => {
     salesGenerated: totalRevenue,
     redemptionRate: `${redemptionRate}%`,
     monthlyStats,
-    topPerformingProduct: topPerformingProduct
+    topPerformingProduct: topPerformingProduct,
   };
 };
 
-// single seller promotion analytis
 export const getSingleSellerPromotionAnalyticsService = async (
-  selllerId: string
+  sellerId: string
 ) => {
-  const promotion = await PromotionModel.findOne({ sellerId: selllerId });
+  // Find all promotions for the seller
+  const promotions = await PromotionModel.find({ sellerId });
 
-  // console.log('promotion', promotion)
-  if (!promotion) throw new Error("Promotion not found");
-
-  // ✅ Determine which products are included
-  let productIds: any[] = [];
-
-  if (promotion.applicableType === "allProducts") {
-    productIds = promotion.allProducts || [];
-  } else if (promotion.applicableType === "specificProducts") {
-    productIds = promotion.specificProducts || [];
-  } else if (promotion.applicableType === "productCategories") {
-    const products = await Product.find({
-      category: { $in: promotion.productCategories },
-    }).select("_id");
-    productIds = products.map((p) => p._id);
+  if (!promotions || promotions.length === 0) {
+    throw new Error("Promotion not found");
   }
 
-  // ✅ Monthly analytics
+  // Collect all product IDs from all promotions
+  let productIds: any[] = [];
+
+  for (const promotion of promotions) {
+    if (promotion.applicableType === "allProducts") {
+      productIds.push(...(promotion.allProducts || []));
+    } else if (promotion.applicableType === "specificProducts") {
+      productIds.push(...(promotion.specificProducts || []));
+    } else if (promotion.applicableType === "productCategories") {
+      const products = await Product.find({
+        category: { $in: promotion.productCategories },
+      }).select("_id");
+      productIds.push(...products.map((p) => p._id));
+    }
+  }
+
+  // Remove duplicate product IDs
+  productIds = [...new Set(productIds)];
+
+  console.log("product id", productIds);
+
+  // Monthly analytics
   const monthlyStats = await Order.aggregate([
     { $unwind: "$items" },
     { $match: { "items.productId": { $in: productIds } } },
