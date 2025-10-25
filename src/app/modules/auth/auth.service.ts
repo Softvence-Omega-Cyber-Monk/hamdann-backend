@@ -35,7 +35,10 @@ export const login_user_from_db = async (payload: TLoginPayload) => {
   const singleDevicePlans = ["starter", "starterYearly"];
   const multiDevicePlans = ["advanced", "advancedYearly"];
 
-  if (singleDevicePlans.includes(user?.subscribtionPlan)) {
+  if (
+    singleDevicePlans.includes(user?.subscribtionPlan) &&
+    user.role !== "Admin"
+  ) {
     // Single-device restriction
     if (user.deviceToken && user.deviceToken !== payload.deviceToken) {
       throw new AppError(
@@ -52,7 +55,10 @@ export const login_user_from_db = async (payload: TLoginPayload) => {
   }
 
   // 4️⃣ For multi-device plans, optionally track devices (optional)
-  if (multiDevicePlans.includes(user.subscribtionPlan)) {
+  if (
+    multiDevicePlans.includes(user.subscribtionPlan) &&
+    user.role !== "Admin"
+  ) {
     if (!user.deviceTokens) user.deviceTokens = [];
     // Store up to 5 recent devices
     if (!user.deviceTokens.includes(payload.deviceToken)) {
@@ -115,7 +121,7 @@ const change_password_from_db = async (
   user: JwtPayload,
   payload: { oldPassword: string; newPassword: string }
 ) => {
-  const isExistAccount : any = await isAccountExist(user?.email);
+  const isExistAccount: any = await isAccountExist(user?.email);
 
   if (!isExistAccount) {
     throw new AppError("Account not found", httpStatus.NOT_FOUND);
@@ -123,7 +129,7 @@ const change_password_from_db = async (
 
   const isCorrectPassword = await bcrypt.compare(
     payload.oldPassword,
-    isExistAccount?.password  as string
+    isExistAccount?.password as string
   );
 
   // console.log("match pass",isCorrectPassword);
@@ -144,7 +150,6 @@ const change_password_from_db = async (
 
   return "Password changed successful.";
 };
-
 
 export const logoutRemoveToken = async (
   userId: string,
@@ -193,7 +198,7 @@ export const requestPasswordReset = async (email: string) => {
 
 export const verifyResetCode = async (email: string, code: string) => {
   const entry = await passwordResetModel.findOne({ email });
-  console.log(entry,'entry--------')
+  console.log(entry, "entry--------");
   if (!entry) throw new Error("No reset code found. Please request again.");
 
   if (entry.expiresAt.getTime() < Date.now()) {
@@ -212,7 +217,7 @@ export const resetPassword = async (
   newPassword: string
 ) => {
   const entry = await passwordResetModel.findOne({ email });
-  console.log('reset password', entry)
+  console.log("reset password", entry);
   // if (!entry || entry.code !== code)
   //   throw new Error("Invalid or expired reset code.");
 

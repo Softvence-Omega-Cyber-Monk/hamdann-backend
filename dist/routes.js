@@ -16,6 +16,7 @@ const notification_route_1 = require("./app/modules/notifications/notification.r
 const wishListedProducts_route_1 = require("./app/modules/wishListedProducts/wishListedProducts.route");
 const requestRefund_route_1 = require("./app/modules/requestRefund/requestRefund.route");
 const category_route_1 = require("./app/modules/category/category.route");
+const subscription_route_1 = require("./app/modules/subscriptions/subscription.route");
 const appRouter = (0, express_1.Router)();
 const moduleRoutes = [
     { path: '/auth', route: auth_route_1.default },
@@ -30,6 +31,7 @@ const moduleRoutes = [
     { path: "/notification", route: notification_route_1.notificationRoutes },
     { path: "/wishListProducts", route: wishListedProducts_route_1.withlistProductsRoutes },
     { path: "/request-refund", route: requestRefund_route_1.RequestRefundRoutes },
+    { path: "/subscription-plan", route: subscription_route_1.subscriptionRoutes },
 ];
 moduleRoutes.forEach(route => appRouter.use(route.path, route.route));
 exports.default = appRouter;
