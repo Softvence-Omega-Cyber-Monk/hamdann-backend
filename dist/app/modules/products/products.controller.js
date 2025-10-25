@@ -165,14 +165,14 @@ const getSellerBestSellingProductsController = (req, res) => __awaiter(void 0, v
         if (!userId) {
             return res.status(400).json({
                 success: false,
-                message: "User ID is required"
+                message: "User ID is required",
             });
         }
         const pageNumber = page ? parseInt(page) : null;
         const limitNumber = limit ? parseInt(limit) : null;
         const result = yield products_service_1.productService.getSellerBestSellingProductsService(userId, {
             page: pageNumber,
-            limit: limitNumber
+            limit: limitNumber,
         });
         res.status(200).json(result);
     }
@@ -180,7 +180,7 @@ const getSellerBestSellingProductsController = (req, res) => __awaiter(void 0, v
         console.error("Error fetching seller best selling products:", error);
         res.status(500).json({
             success: false,
-            message: error.message || "Failed to fetch best selling products"
+            message: error.message || "Failed to fetch best selling products",
         });
     }
 });
@@ -354,6 +354,18 @@ const handleGetSingleProductStats = (req, res) => __awaiter(void 0, void 0, void
         }
     }
 });
+const getSalesTrendsController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const sellerId = req.params.sellerId;
+    try {
+        const salesData = yield products_service_1.productService.getSalesTrends(sellerId);
+        res.json(salesData); // Send the aggregated data as the response
+    }
+    catch (error) {
+        res
+            .status(500)
+            .json({ error: error.message || "Error fetching sales data" });
+    }
+});
 exports.productController = {
     createProduct,
     updateProduct,
@@ -370,4 +382,5 @@ exports.productController = {
     handleGetInventoryStatus,
     handleUpdateQuantity,
     handleGetSingleProductStats,
+    getSalesTrendsController,
 };

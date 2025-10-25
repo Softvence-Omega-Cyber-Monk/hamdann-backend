@@ -9,12 +9,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.paymentController = exports.createSubscriptionController = void 0;
+exports.paymentController = void 0;
 const payment_service_1 = require("./payment.service");
 const stripe_config_1 = require("../../configs/stripe.config");
 const payment_model_1 = require("./payment.model");
 const order_model_1 = require("../order/order.model");
 const user_schema_1 = require("../user/user.schema");
+const directPayment_service_1 = require("./directPayment.service");
 const createCheckoutSession = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { orderId } = req.body;
@@ -101,25 +102,118 @@ const verifySubscriptionPayment = (req, res) => __awaiter(void 0, void 0, void 0
         });
     }
 });
+// export const createSubscriptionController = async (req: Request, res: Response) => {
+//   try {
+//     const { userId, plan, card } = req.body;
+//     if (!userId || !plan || !card) {
+//       return res.status(400).json({ success: false, message: "Missing required fields" });
+//     }
+//     const subscription = await createSubscriptionService(userId, plan, card);
+//     return res.status(200).json({ success: true, data: subscription });
+//   } catch (error: any) {
+//     console.error("Subscription error full details:", error); // 🔥 Log full error
+//     return res.status(500).json({
+//       success: false,
+//       message: error.message || "Server Error",
+//       details: error.response || null, // Optional: add SDK response details if any
+//     });
+//   }
+// };
+// payment.controller.ts
 const createSubscriptionController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c;
     try {
         const { userId, plan, card } = req.body;
         if (!userId || !plan || !card) {
-            return res.status(400).json({ success: false, message: "Missing required fields" });
+            return res.status(400).json({
+                success: false,
+                message: "Missing required fields: userId, plan, or card"
+            });
+        }
+        // Validate card details
+        if (!card.number || !card.expiry_month || !card.expiry_year || !card.cvv) {
+            return res.status(400).json({
+                success: false,
+                message: "Invalid card details"
+            });
         }
         const subscription = yield (0, payment_service_1.createSubscriptionService)(userId, plan, card);
-        return res.status(200).json({ success: true, data: subscription });
+        return res.status(200).json({
+            success: true,
+            data: subscription
+        });
     }
     catch (error) {
-        console.error("Subscription error:", error);
-        return res.status(500).json({ success: false, message: error.message || "Server Error" });
+        console.error("🔴 Subscription Error Details:");
+        console.error("Message:", error.message);
+        console.error("Stack:", error.stack);
+        console.error("Full Error:", JSON.stringify(error, null, 2));
+        // Check for specific error types
+        if ((_a = error.message) === null || _a === void 0 ? void 0 : _a.includes("Invalid plan")) {
+            return res.status(400).json({
+                success: false,
+                message: error.message
+            });
+        }
+        if ((_b = error.message) === null || _b === void 0 ? void 0 : _b.includes("User not found")) {
+            return res.status(404).json({
+                success: false,
+                message: error.message
+            });
+        }
+        return res.status(500).json(Object.assign({ success: false, message: error.message || "Internal Server Error" }, (process.env.NODE_ENV === 'development' && {
+            details: ((_c = error.response) === null || _c === void 0 ? void 0 : _c.data) || error.stack
+        })));
     }
 });
-exports.createSubscriptionController = createSubscriptionController;
+const createDirectPaymentController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { orderId, card } = req.body;
+        if (!orderId || !card) {
+            return res.status(400).json({
+                success: false,
+                message: "orderId and card information are required",
+            });
+        }
+        const result = yield (0, directPayment_service_1.createDirectPaymentForMultipleSellers)(orderId, card);
+        res.status(200).json({
+            success: true,
+            message: "Payments processed successfully",
+            data: result,
+        });
+    }
+    catch (error) {
+        console.error("❌ Controller Error:", error);
+        res.status(500).json({
+            success: false,
+            message: error.message || "Server error",
+        });
+    }
+});
+const getTotalSubscriptionAmountController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const result = yield (0, payment_service_1.getTotalSubscriptionAmountService)();
+        res.status(200).json({
+            success: true,
+            message: "Total subscription amount fetched successfully",
+            data: result,
+        });
+    }
+    catch (error) {
+        console.error("Error fetching total subscription amount:", error);
+        res.status(500).json({
+            success: false,
+            message: "Server Error",
+            error: error.message,
+        });
+    }
+});
 exports.paymentController = {
     createCheckoutSession,
     verifyPayment,
     createSubscriptionSession,
     verifySubscriptionPayment,
-    createSubscriptionController: exports.createSubscriptionController,
+    createSubscriptionController,
+    createDirectPaymentController,
+    getTotalSubscriptionAmountController,
 };

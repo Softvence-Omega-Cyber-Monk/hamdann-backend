@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getSellerPromotions = exports.pausePromotion = exports.updatePromotion = exports.getAllPromotions = exports.getPromotion = exports.createPromotion = void 0;
+exports.getPromotgetSingleSellerPromotionAnalyticsController = exports.getPromotionAnalytics = exports.incrementViewControllser = exports.getSellerPromotions = exports.pausePromotion = exports.updatePromotion = exports.getAllPromotions = exports.getPromotion = exports.createPromotion = void 0;
 const promotion_validation_1 = require("./promotion.validation");
 const promotion_service_1 = require("./promotion.service");
 const cloudinary_1 = require("cloudinary");
@@ -131,3 +131,58 @@ const getSellerPromotions = (req, res) => __awaiter(void 0, void 0, void 0, func
     }
 });
 exports.getSellerPromotions = getSellerPromotions;
+const incrementViewControllser = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const promotion = yield (0, promotion_service_1.incrementView)(req.params.id);
+        if (!promotion) {
+            return res.status(404).json({ message: "Promotion not found" });
+        }
+        res.status(200).json({
+            success: true,
+            totalView: promotion.totalView,
+        });
+    }
+    catch (err) {
+        res.status(500).json({
+            message: "Error updating view",
+            error: err.message,
+        });
+    }
+});
+exports.incrementViewControllser = incrementViewControllser;
+//get single promotion analytis
+const getPromotionAnalytics = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const analytics = yield (0, promotion_service_1.getPromotionAnalyticsService)(id);
+        res.status(200).json({
+            success: true,
+            data: analytics,
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+});
+exports.getPromotionAnalytics = getPromotionAnalytics;
+// single seller promotion analytis 
+const getPromotgetSingleSellerPromotionAnalyticsController = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const { id } = req.params;
+        const analytics = yield (0, promotion_service_1.getSingleSellerPromotionAnalyticsService)(id);
+        res.status(200).json({
+            success: true,
+            data: analytics,
+        });
+    }
+    catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message,
+        });
+    }
+});
+exports.getPromotgetSingleSellerPromotionAnalyticsController = getPromotgetSingleSellerPromotionAnalyticsController;

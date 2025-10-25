@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productService = exports.addProductReviewService = void 0;
+exports.productService = exports.getSalesTrends = exports.addProductReviewService = void 0;
 const products_model_1 = require("./products.model");
 const order_model_1 = require("../order/order.model");
 const cloudinary_1 = require("../../utils/cloudinary");
@@ -36,7 +36,7 @@ const shopReview = (userId) => __awaiter(void 0, void 0, void 0, function* () {
 const createProductService = (payload, imageInput) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     const { userId } = payload;
-    console.log('product', payload);
+    console.log("product", payload);
     const exitUser = yield user_schema_1.User_Model.findById({ _id: userId });
     if (!exitUser) {
         throw new Error("User not found");
@@ -50,9 +50,9 @@ const createProductService = (payload, imageInput) => __awaiter(void 0, void 0, 
     if (!exitUser.productAddedPowerQuantity) {
         throw new Error("Please subscribe to a plan to add products");
     }
-    // if (!exitUser.stripeAccountId) {
-    //   throw new Error("Please ensure you set stripeAccountId on your profile section");
-    // }
+    if (!exitUser.checkoutAccountId && !exitUser.checkoutProcessingChannelId) {
+        throw new Error("Please ensure you set checkoutAccountId and checkoutProcessingChannelId on your profile section ");
+    }
     // Check if user has unlimited power or remaining power > 0
     if (exitUser.productAddedPowerQuantity !== "unlimited") {
         const currentProductCount = yield products_model_1.Product.countDocuments({ userId });
@@ -78,7 +78,7 @@ const createProductService = (payload, imageInput) => __awaiter(void 0, void 0, 
     // Decrement productAddedPowerQuantity only if it's not "unlimited"
     if (exitUser.productAddedPowerQuantity !== "unlimited") {
         yield user_schema_1.User_Model.findByIdAndUpdate(userId, {
-            $inc: { productAddedPowerQuantity: -1 }
+            $inc: { productAddedPowerQuantity: -1 },
         });
         console.log(`Product added. Remaining power: ${exitUser.productAddedPowerQuantity - 1}`);
     }
@@ -463,6 +463,22 @@ const getSingleProductStats = (productId) => __awaiter(void 0, void 0, void 0, f
         conversionRate: Number(conversionRate.toFixed(2)),
     };
 });
+// Service to fetch sales trends
+const getSalesTrends = (sellerId) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Step 1: Find the seller's products
+        const sellerProducts = yield products_model_1.Product.find({ userId: sellerId });
+        const totalSales = sellerProducts.reduce((acc, product) => {
+            return acc + product.salesCount;
+        }, 0);
+        console.log("totalSales", totalSales);
+    }
+    catch (error) {
+        console.error("Error fetching sales data: ", error);
+        throw new Error("Error fetching sales data");
+    }
+});
+exports.getSalesTrends = getSalesTrends;
 exports.productService = {
     createProductService,
     updateProductService,
@@ -479,4 +495,5 @@ exports.productService = {
     getInventoryStatusForSingleProduct,
     updateProductQuantity,
     getSingleProductStats,
+    getSalesTrends: exports.getSalesTrends,
 };
