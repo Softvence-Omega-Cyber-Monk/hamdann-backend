@@ -54,9 +54,22 @@ export const createDirectPaymentForMultipleSellers = async (
 
   const paymentResults: any[] = [];
 
+  // DEBUG: log computed seller totals (helps explain empty payments array)
+  try {
+    const sellersDebug: any[] = [];
+    for (const [sId, amt] of sellerTotals.entries()) sellersDebug.push({ sellerId: sId, amount: amt });
+    console.log('Computed seller totals:', JSON.stringify(sellersDebug, null, 2));
+  } catch (e) {
+    console.warn('Failed to log seller totals', e);
+  }
   for (const [sellerId, amount] of sellerTotals.entries()) {
     const seller = await User_Model.findById(sellerId);
-    if (!seller) continue;
+    if (!seller) {
+      // Instead of silently skipping, record a failed payment so caller sees why no payments were processed
+      console.warn(`Seller not found for id ${sellerId}`);
+      paymentResults.push({ sellerId, sellerEmail: null, amount, success: false, error: 'Seller not found in users collection' });
+      continue;
+    }
 
     const credentialCheck = validateSellerCredentials(seller);
     if (!credentialCheck.isValid) {
