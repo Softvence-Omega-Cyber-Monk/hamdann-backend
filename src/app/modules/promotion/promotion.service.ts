@@ -149,6 +149,7 @@ export const incrementView = async (promotionId: string) => {
   return updated;
 };
 
+
 //get single promotion analytis
 export const getPromotionAnalyticsService = async (promotionId: string) => {
   const promotion = await PromotionModel.findById(promotionId);
@@ -229,33 +230,46 @@ export const getPromotionAnalyticsService = async (promotionId: string) => {
   };
 };
 
-// single seller promotion analytis
 export const getSingleSellerPromotionAnalyticsService = async (
-  selllerId: string
+  sellerId: string
 ) => {
-  const promotion = await PromotionModel.findOne({ sellerId: selllerId });
+  // ✅ Step 1: Find all promotions by the seller
+  const promotions = await PromotionModel.find({ sellerId });
 
-  // console.log('promotion', promotion)
-  if (!promotion) throw new Error("Promotion not found");
-
-  // ✅ Determine which products are included
-  let productIds: any[] = [];
-
-  if (promotion.applicableType === "allProducts") {
-    productIds = promotion.allProducts || [];
-  } else if (promotion.applicableType === "specificProducts") {
-    productIds = promotion.specificProducts || [];
-  } else if (promotion.applicableType === "productCategories") {
-    const products = await Product.find({
-      category: { $in: promotion.productCategories },
-    }).select("_id");
-    productIds = products.map((p) => p._id);
+  if (!promotions || promotions.length === 0) {
+    throw new Error("No promotions found for this seller");
   }
 
-  // ✅ Monthly analytics
+  let allProductIds: string[] = [];
+
+  // ✅ Step 2: Collect product IDs from each promotion
+  for (const promo of promotions) {
+    if (promo.applicableType === "allProducts") {
+      // Get all products by this seller
+      const sellerProducts = await Product.find({ userId: sellerId }).select("_id");
+      allProductIds.push(...sellerProducts.map((p) => p._id.toString()));
+    } else if (promo.applicableType === "specificProducts") {
+      allProductIds.push(...(promo.specificProducts || []).map((id) => id.toString()));
+    } else if (promo.applicableType === "productCategories") {
+      const products = await Product.find({
+        category: { $in: promo.productCategories },
+        userId: sellerId,
+      }).select("_id");
+      allProductIds.push(...products.map((p) => p._id.toString()));
+    }
+  }
+
+  // ✅ Remove duplicates
+  allProductIds = [...new Set(allProductIds)];
+
+  if (allProductIds.length === 0) {
+    return { monthlyStats: [] };
+  }
+
+  // ✅ Step 3: Aggregate orders containing these product IDs
   const monthlyStats = await Order.aggregate([
     { $unwind: "$items" },
-    { $match: { "items.productId": { $in: productIds } } },
+    { $match: { "items.productId": { $in: allProductIds.map((id) => id) } } },
     {
       $group: {
         _id: { $month: "$createdAt" },
@@ -267,6 +281,7 @@ export const getSingleSellerPromotionAnalyticsService = async (
   ]);
 
   return {
+    sellerId,
     monthlyStats,
   };
 };
