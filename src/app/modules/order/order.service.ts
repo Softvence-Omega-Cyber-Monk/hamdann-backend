@@ -930,45 +930,30 @@ const getSellerStatisticsService = async (
       };
     }
 
-    // ✅ Filter delivered orders
-    const deliveredOrders = sellerOrders.filter(
-      (order) => order.status === "delivered"
-    );
+    // Consider orders where payment was completed. Some flows mark orders as
+    // 'payment_processed' before delivery — include those so revenue shows up
+    // for recently paid orders as well as delivered orders.
+    const paidStatuses = ["delivered", "payment_processed"];
+    const deliveredOrders = sellerOrders.filter((order) => paidStatuses.includes(order.status));
 
-    // ✅ Calculate total revenue (for delivered orders, seller’s items only)
-    const totalRevenue = deliveredOrders.reduce((sum, order) => {
+    // Calculate total revenue and products sold from paid/delivered orders.
+    let totalRevenue = 0;
+    let productsSold = 0;
+
+    for (const order of deliveredOrders) {
       const sellerItems = order.items.filter(
-        (item) =>
-          item.productId &&
-          (item.productId as any).userId?.toString() === sellerId
+        (item) => item.productId && (item.productId as any).userId?.toString() === sellerId
       );
-      const orderRevenue = sellerItems.reduce(
-        (subtotal, item) => subtotal + item.quantity * (item.productId as any).price,
-        0
-      );
-      return sum + orderRevenue;
-    }, 0);
+      for (const item of sellerItems) {
+        // Use the price recorded on the order item if available; fall back to product price
+        const itemPrice = typeof item.price === 'number' && item.price > 0 ? item.price : ((item.productId as any)?.price || 0);
+        totalRevenue += itemPrice * (item.quantity || 0);
+        productsSold += item.quantity || 0;
+      }
+    }
 
-    // ✅ Calculate total products sold (for delivered orders)
-    const productsSold = deliveredOrders.reduce((sum, order) => {
-      const sellerItems = order.items.filter(
-        (item) =>
-          item.productId &&
-          (item.productId as any).userId?.toString() === sellerId
-      );
-      return (
-        sum +
-        sellerItems.reduce((itemSum, item) => itemSum + item.quantity, 0)
-      );
-    }, 0);
-
-    // ✅ Average Order Value (based on seller's delivered orders)
-    const averageOrderValue =
-      deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0;
-
-    // ✅ Conversion rate = (delivered / total seller orders) × 100
-    const conversionRate =
-      (deliveredOrders.length / sellerOrders.length) * 100;
+    const averageOrderValue = deliveredOrders.length > 0 ? totalRevenue / deliveredOrders.length : 0;
+    const conversionRate = sellerOrders.length > 0 ? (deliveredOrders.length / sellerOrders.length) * 100 : 0;
 
     return {
       totalRevenue: Number(totalRevenue.toFixed(2)),
