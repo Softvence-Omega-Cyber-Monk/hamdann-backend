@@ -244,7 +244,21 @@ export const createDirectPaymentForMultipleSellers = async (
           await order.save();
 
           // ✅ Remove cart after payment
-          await Cart.findOneAndDelete({ Id: order._id });
+          await Cart.updateOne(
+            { userId: order.userId },
+            {
+              $pull: {
+                items: {
+                  productId: {
+                    $in: order.items.map((i: any) => i.productId._id),
+                  },
+                },
+              },
+            }
+          );
+          console.log(
+            `🧹 Removed purchased products from cart for user ${order.userId}`
+          );
         }
       }
 
