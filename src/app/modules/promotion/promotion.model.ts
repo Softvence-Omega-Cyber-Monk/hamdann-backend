@@ -42,7 +42,7 @@ const PromotionSchema = new Schema<IPromotion>(
 PromotionSchema.pre("save", function (next) {
   const now = new Date();
   if (this.endDate < now) {
-    this.isActive = false;
+    this.isActive = true;
   }
   next();
 });
