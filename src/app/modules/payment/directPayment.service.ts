@@ -232,6 +232,14 @@ export const createDirectPaymentForMultipleSellers = async (
           console.log("pproduct", updatedProduct);
           // ✅ Update order status and save
           order.status = "payment_processed";
+          order.statusDates = {
+            ...order.statusDates,
+            payment_processed: new Date(),
+          };
+          order.paymentInfo = {
+            ...order.paymentInfo,
+            paymentStatus: "paid",
+          };
           await order.save();
         }
       }
