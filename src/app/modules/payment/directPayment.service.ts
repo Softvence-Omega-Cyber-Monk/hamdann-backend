@@ -230,6 +230,9 @@ export const createDirectPaymentForMultipleSellers = async (
           );
 
           console.log("pproduct", updatedProduct);
+          // ✅ Update order status and save
+          order.status = "payment_processed";
+          await order.save();
         }
       }
 
@@ -257,6 +260,3 @@ export const createDirectPaymentForMultipleSellers = async (
     data: { orderId, payments: paymentResults },
   };
 };
-
-
-
