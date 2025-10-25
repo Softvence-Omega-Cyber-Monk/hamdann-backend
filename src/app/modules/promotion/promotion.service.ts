@@ -262,6 +262,8 @@ export const getSingleSellerPromotionAnalyticsService = async (
   // Remove duplicate product IDs
   productIds = [...new Set(productIds)];
 
+  console.log('product id', productIds)
+
   // Monthly analytics
   const monthlyStats = await Order.aggregate([
     { $unwind: "$items" },
