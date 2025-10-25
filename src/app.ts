@@ -93,9 +93,14 @@ app.get("/", (req: Request, res: Response) => {
 app.get("/payment-success", async (req: Request, res: Response) => {
   try {
     const { session_id } = req.query;
-    if (!session_id) return res.status(400).json({ success: false, message: "Session ID required" });
+    if (!session_id)
+      return res
+        .status(400)
+        .json({ success: false, message: "Session ID required" });
 
-    const session = await stripe.checkout.sessions.retrieve(session_id as string);
+    const session = await stripe.checkout.sessions.retrieve(
+      session_id as string
+    );
 
     if (session.payment_status === "paid") {
       // Update payment status
@@ -139,12 +144,13 @@ app.get("/payment-success", async (req: Request, res: Response) => {
       });
     }
 
-    res.status(200).json({ success: false, message: "Payment not completed", session });
+    res
+      .status(200)
+      .json({ success: false, message: "Payment not completed", session });
   } catch (error) {
     res.status(500).json({ success: false, message: (error as Error).message });
   }
 });
-
 
 // Create Default SuperAdmin if not exists
 export const createDefaultSuperAdmin = async () => {
