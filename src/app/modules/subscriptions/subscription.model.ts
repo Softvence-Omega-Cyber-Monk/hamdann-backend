@@ -11,7 +11,8 @@ const SubscriptionSchema = new Schema<ISubscription>(
       type: Schema.Types.Mixed,
       enum: [Number, "unlimited"],
     },
-    features: { type: [String], default: [] },
+    featuresMonthly: { type: [String], default: [] },
+    featuresYearly: { type: [String], default: [] },
   },
   { timestamps: true }
 );
