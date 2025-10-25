@@ -3,6 +3,7 @@ import { Payment } from "./payment.model";
 import { User_Model } from "../user/user.schema";
 import { Order } from "../order/order.model";
 import { Product } from "../products/products.model";
+import { Cart } from "../cart/cart.model";
 
 // Map Checkout payment statuses to our Payment.paymentStatus enum
 const mapCheckoutStatusToPaymentStatus = (status?: string) => {
@@ -241,6 +242,9 @@ export const createDirectPaymentForMultipleSellers = async (
             paymentStatus: "paid",
           };
           await order.save();
+
+          // ✅ Remove cart after payment
+          await Cart.findOneAndDelete({ userId: order.userId });
         }
       }
 
